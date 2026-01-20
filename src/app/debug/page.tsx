@@ -1,0 +1,19 @@
+export default function DebugPage() {
+  return (
+    <main className="p-8">
+      <h1 className="text-2xl font-bold mb-4">Debug</h1>
+      <pre className="bg-gray-100 p-4 rounded">
+{JSON.stringify(
+  {
+    hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+    hasAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    url: (process.env.NEXT_PUBLIC_SUPABASE_URL || "").slice(0, 35) + "...",
+  },
+  null,
+  2
+)}
+      </pre>
+    </main>
+  );
+}
+
