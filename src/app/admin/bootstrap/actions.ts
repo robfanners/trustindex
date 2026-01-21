@@ -20,7 +20,7 @@ export async function createDemoRunAction(_: CreateState): Promise<CreateState> 
     const orgName = "Verisum (Demo)";
     const title = `TrustIndex Pilot - ${new Date().toISOString().slice(0, 10)}`;
 
-    const { data: existingOrgs, error: orgFindErr } = await supabaseServer
+    const { data: existingOrgs, error: orgFindErr } = await supabaseServer()
       .from("organisations")
       .select("id")
       .eq("name", orgName)
@@ -33,7 +33,7 @@ export async function createDemoRunAction(_: CreateState): Promise<CreateState> 
     let organisationId = existingOrgs?.[0]?.id as string | undefined;
 
     if (!organisationId) {
-      const { data: orgInsert, error: orgInsertErr } = await supabaseServer
+      const { data: orgInsert, error: orgInsertErr } = await supabaseServer()
         .from("organisations")
         .insert({ name: orgName })
         .select("id")
@@ -46,7 +46,7 @@ export async function createDemoRunAction(_: CreateState): Promise<CreateState> 
       organisationId = orgInsert.id;
     }
 
-    const { data: runInsert, error: runErr } = await supabaseServer
+    const { data: runInsert, error: runErr } = await supabaseServer()
       .from("survey_runs")
       .insert({
         organisation_id: organisationId,
@@ -65,7 +65,7 @@ export async function createDemoRunAction(_: CreateState): Promise<CreateState> 
     const runId = runInsert.id as string;
     const token = randomToken(24);
 
-    const { error: inviteErr } = await supabaseServer
+    const { error: inviteErr } = await supabaseServer()
       .from("invites")
       .insert([{ run_id: runId, token }]);
 

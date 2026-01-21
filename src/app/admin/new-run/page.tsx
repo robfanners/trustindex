@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
 
 type Result = {
   runId: string;
@@ -18,13 +17,6 @@ type RecentRun = {
   mode: "explorer" | "org";
   createdAtISO: string;
 };
-
-function randomToken(length = 32) {
-  const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let out = "";
-  for (let i = 0; i < length; i++) out += chars[Math.floor(Math.random() * chars.length)];
-  return out;
-}
 
 export default function NewRunPage() {
   const MIN_ORG_RESPONDENTS = 5;
@@ -105,7 +97,7 @@ async function copyText(label: string, text: string) {
         location: location.trim() || undefined,
       };
 
-      const res = await fetch("/api/bootstrap-run", {
+      const res = await fetch("/api/create-run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -119,19 +111,7 @@ async function copyText(label: string, text: string) {
         return;
       }
 
-      const ownerToken = randomToken(32);
-      // TODO: ensure run_admin_tokens table exists with run_id/token columns.
-      const { error: ownerErr } = await supabase
-        .from("run_admin_tokens")
-        .insert({ run_id: json.runId, token: ownerToken });
-
-      if (ownerErr) {
-        setError(ownerErr.message || "Failed to create admin token");
-        setLoading(false);
-        return;
-      }
-
-      setResult({ ...(json as Result), ownerToken });
+      setResult(json as Result);
       setLoading(false);
     } catch (e: any) {
       setError(e?.message || "Unknown error");

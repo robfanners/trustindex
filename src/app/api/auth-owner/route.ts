@@ -17,7 +17,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: "Missing runId or token" }, { status: 400 });
     }
 
-    const { data, error } = await supabaseServer
+    const { data, error } = await supabaseServer()
       .from("run_admin_tokens")
       .select("run_id,token")
       .eq("run_id", runId)

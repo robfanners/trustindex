@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     const token = String(body?.token || "");
     if (!token) return NextResponse.json({ ok: false, error: "Missing token" }, { status: 400 });
 
-    const { data, error } = await supabaseServer
+    const { data, error } = await supabaseServer()
       .from("run_admin_tokens")
       .select("run_id")
       .eq("token", token)
