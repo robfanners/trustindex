@@ -56,16 +56,18 @@ export default function Home() {
 
         <div className="flex gap-4 flex-wrap">
           <a className="px-5 py-3 rounded bg-blue-600 text-white font-semibold" href="/admin/new-run">
-            Company Admin: Create a survey
-          </a>
-
-          <a className="px-5 py-3 rounded border font-semibold" href="/verisum?role=verisum&next=/admin">
-            Verisum Admin
+            Create a survey
           </a>
         </div>
+        <a className="text-sm text-gray-600 underline" href="/verisum?role=verisum&next=/admin">
+          Verisum admin →
+        </a>
 
         <div className="border rounded-lg p-6 space-y-3 max-w-2xl">
-          <h2 className="text-lg font-semibold">Resume admin</h2>
+          <h2 className="text-lg font-semibold">Resume admin access</h2>
+          <div className="text-sm text-gray-600">
+            If you already created a survey, enter your admin code to resume managing it.
+          </div>
           <div className="flex gap-3 flex-wrap items-center">
             <input
               className="flex-1 min-w-[240px] border rounded px-3 py-2"
