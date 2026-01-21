@@ -33,8 +33,9 @@ export async function POST(req: Request) {
     }
 
     const cookieName = `ti_owner_${runId}`;
+    const cookieStore = await cookies();
 
-    cookies().set(cookieName, "1", {
+    cookieStore.set(cookieName, "1", {
       httpOnly: true,
       sameSite: "lax",
       secure: cookieSecure(),
