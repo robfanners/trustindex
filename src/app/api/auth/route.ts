@@ -13,13 +13,15 @@ export async function POST(req: Request) {
   const next = body.next || "/admin/new-run";
 
   const expected =
-    role === "verisum" ? process.env.VERISUM_ADMIN_CODE : process.env.SYSADMIN_CODE;
+    role === "verisum"
+      ? process.env.VERISUM_ADMIN_CODE ?? process.env.NEXT_PUBLIC_VERISUM_ADMIN_CODE
+      : process.env.SYSADMIN_CODE ?? process.env.NEXT_PUBLIC_SYSADMIN_CODE;
 
   if (!expected) {
     return NextResponse.json(
       {
         ok: false,
-        error: `Missing ${role === "verisum" ? "VERISUM_ADMIN_CODE" : "SYSADMIN_CODE"} on server`,
+        error: `Missing ${role === "verisum" ? "VERISUM_ADMIN_CODE/NEXT_PUBLIC_VERISUM_ADMIN_CODE" : "SYSADMIN_CODE/NEXT_PUBLIC_SYSADMIN_CODE"} on server`,
       },
       { status: 500 }
     );
