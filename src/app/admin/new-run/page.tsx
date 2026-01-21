@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 type Result = {
   runId: string;
@@ -8,6 +9,7 @@ type Result = {
   surveyLinks: string[];
   dashboardLink: string;
   tokens: string[];
+  ownerToken: string;
 };
 
 type RecentRun = {
@@ -16,6 +18,13 @@ type RecentRun = {
   mode: "explorer" | "org";
   createdAtISO: string;
 };
+
+function randomToken(length = 32) {
+  const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let out = "";
+  for (let i = 0; i < length; i++) out += chars[Math.floor(Math.random() * chars.length)];
+  return out;
+}
 
 export default function NewRunPage() {
   const MIN_ORG_RESPONDENTS = 5;
@@ -110,7 +119,19 @@ async function copyText(label: string, text: string) {
         return;
       }
 
-      setResult(json as Result);
+      const ownerToken = randomToken(32);
+      // TODO: ensure run_admin_tokens table exists with run_id/token columns.
+      const { error: ownerErr } = await supabase
+        .from("run_admin_tokens")
+        .insert({ run_id: json.runId, token: ownerToken });
+
+      if (ownerErr) {
+        setError(ownerErr.message || "Failed to create admin token");
+        setLoading(false);
+        return;
+      }
+
+      setResult({ ...(json as Result), ownerToken });
       setLoading(false);
     } catch (e: any) {
       setError(e?.message || "Unknown error");
@@ -232,6 +253,19 @@ async function copyText(label: string, text: string) {
           <div className="font-semibold">Survey created</div>
           <div className="text-sm text-gray-600">
             Survey type: {result.mode === "org" ? "Organisational" : "Explorer (self-assessment)"}
+          </div>
+
+          <div className="border rounded-lg p-6 space-y-2">
+            <div className="font-semibold">Admin link</div>
+            <a
+              className="text-blue-600 underline"
+              href={`/admin/run/${result.runId}?ownerToken=${result.ownerToken}`}
+            >
+              /admin/run/{result.runId}?ownerToken={result.ownerToken}
+            </a>
+            <div className="text-xs text-gray-500">
+              Safely save this admin code. It cannot be recovered. Do not share it.
+            </div>
           </div>
 
           {result.mode === "explorer" ? (

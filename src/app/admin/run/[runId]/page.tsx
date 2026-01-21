@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 type RunRow = { id: string; mode: "explorer" | "org"; title: string };
@@ -17,6 +17,9 @@ type InviteRow = {
 export default function AdminRunPage() {
   const params = useParams<{ runId: string }>();
   const runId = params?.runId;
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const ownerToken = searchParams.get("ownerToken");
 
   const [loading, setLoading] = useState(true);
   const [run, setRun] = useState<RunRow | null>(null);
@@ -32,6 +35,7 @@ export default function AdminRunPage() {
   const [pendingFilterValue, setPendingFilterValue] = useState("");
   const [unlockCode, setUnlockCode] = useState("");
   const [unlockStatus, setUnlockStatus] = useState<string | null>(null);
+  const [authorising, setAuthorising] = useState(false);
 
   async function copyText(label: string, text: string) {
     await navigator.clipboard.writeText(text);
@@ -106,6 +110,43 @@ export default function AdminRunPage() {
 
     load();
   }, [runId]);
+
+  useEffect(() => {
+    async function run() {
+      if (!ownerToken || !runId) return;
+      setAuthorising(true);
+      try {
+        const res = await fetch("/api/auth-owner", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ runId, token: ownerToken }),
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok || !json?.ok) throw new Error(json?.error || "Access denied");
+        const url = new URL(window.location.href);
+        url.searchParams.delete("ownerToken");
+        router.replace(url.pathname + (url.search ? url.search : ""));
+      } catch {
+        router.replace(
+          `/?auth=required&role=owner&runId=${encodeURIComponent(
+            runId
+          )}&next=${encodeURIComponent(`/admin/run/${runId}`)}`
+        );
+      } finally {
+        setAuthorising(false);
+      }
+    }
+    run();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ownerToken, runId]);
+
+  if (authorising) {
+    return (
+      <main className="p-10">
+        <div className="text-gray-600">Authorising…</div>
+      </main>
+    );
+  }
 
   if (loading) {
     return (
