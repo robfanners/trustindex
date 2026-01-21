@@ -664,11 +664,13 @@ export default function AdminRunPage() {
                   onChange={(e) => setPendingFilterValue(e.target.value)}
                 >
                   <option value="">All</option>
-                  {pendingFilterValues[pendingFilterType].map((value) => (
-                    <option key={value} value={value}>
-                      {value}
-                    </option>
-                  ))}
+                  {pendingFilterValues[pendingFilterType]
+                    .filter((v): v is string => typeof v === "string" && v.length > 0)
+                    .map((value) => (
+                      <option key={value} value={value}>
+                        {value}
+                      </option>
+                    ))}
                 </select>
               </div>
             )}
