@@ -9,6 +9,7 @@ export default function Home() {
   const searchParams = useSearchParams();
 
   const authRequired = searchParams.get("auth") === "required";
+  const role = searchParams.get("role") || "verisum";
   const [resumeToken, setResumeToken] = useState("");
   const [resumeError, setResumeError] = useState<string | null>(null);
   const [resumeLoading, setResumeLoading] = useState(false);
@@ -25,7 +26,7 @@ export default function Home() {
       const json = await res.json().catch(() => ({}));
       if (!res.ok || !json?.ok) throw new Error(json?.error || "Could not find that code");
       const runId = json.runId as string;
-      router.push(`/admin/run/${runId}?ownerToken=${encodeURIComponent(resumeToken)}`);
+      router.push(`/api/auth-owner?runId=${runId}&ownerToken=${encodeURIComponent(resumeToken)}&next=/admin/run/${runId}`);
     } catch (e: any) {
       setResumeError(e?.message || "Failed");
     } finally {
@@ -63,31 +64,33 @@ export default function Home() {
           Verisum admin →
         </a>
 
-        <div className="border rounded-lg p-6 space-y-3 max-w-2xl">
-          <h2 className="text-lg font-semibold">Resume admin access</h2>
-          <div className="text-sm text-gray-600">
-            If you already created a survey, enter your admin code to resume managing it.
+        {(role === "owner" || !authRequired) && (
+          <div className="border rounded-lg p-6 space-y-3 max-w-2xl">
+            <h2 className="text-lg font-semibold">Resume admin access</h2>
+            <div className="text-sm text-gray-600">
+              If you already created a survey, enter your admin code to resume managing it.
+            </div>
+            <div className="flex gap-3 flex-wrap items-center">
+              <input
+                className="flex-1 min-w-[240px] border rounded px-3 py-2"
+                placeholder="Enter admin code"
+                value={resumeToken}
+                onChange={(e) => setResumeToken(e.target.value)}
+              />
+              <button
+                type="button"
+                className="px-4 py-2 rounded border disabled:opacity-50"
+                onClick={resumeAdmin}
+                disabled={resumeLoading || !resumeToken.trim()}
+              >
+                {resumeLoading ? "Finding…" : "Resume"}
+              </button>
+            </div>
+            {resumeError && <div className="text-sm text-red-600">{resumeError}</div>}
           </div>
-          <div className="flex gap-3 flex-wrap items-center">
-            <input
-              className="flex-1 min-w-[240px] border rounded px-3 py-2"
-              placeholder="Enter admin code"
-              value={resumeToken}
-              onChange={(e) => setResumeToken(e.target.value)}
-            />
-            <button
-              type="button"
-              className="px-4 py-2 rounded border disabled:opacity-50"
-              onClick={resumeAdmin}
-              disabled={resumeLoading || !resumeToken.trim()}
-            >
-              {resumeLoading ? "Finding…" : "Resume"}
-            </button>
-          </div>
-          {resumeError && <div className="text-sm text-red-600">{resumeError}</div>}
-        </div>
+        )}
 
-        {authRequired && (
+        {authRequired && role === "verisum" && (
           <div className="max-w-2xl">
             <AccessGate />
           </div>

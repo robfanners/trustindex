@@ -235,17 +235,30 @@ async function copyText(label: string, text: string) {
             Survey type: {result.mode === "org" ? "Organisational" : "Explorer (self-assessment)"}
           </div>
 
-          <div className="border rounded-lg p-6 space-y-2">
-            <div className="font-semibold">Admin link</div>
-            <a
-              className="text-blue-600 underline"
-              href={`/admin/run/${result.runId}?ownerToken=${result.ownerToken}`}
-            >
-              /admin/run/{result.runId}?ownerToken={result.ownerToken}
-            </a>
-            <div className="text-xs text-gray-500">
-              Safely save this admin code. It cannot be recovered. Do not share it.
+          <div className="border rounded-lg p-6 space-y-4">
+            <h2 className="text-lg font-semibold">Survey admin</h2>
+            <div className="space-y-2">
+              <div className="text-sm font-semibold text-gray-700">Admin code</div>
+              <div className="font-mono text-sm bg-gray-50 border rounded px-3 py-2 break-all">{result.ownerToken}</div>
+              <div className="text-xs text-gray-500">
+                Safely save this admin code. It cannot be recovered. Do not share it.
+              </div>
             </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                className="px-3 py-2 border rounded hover:bg-gray-50 text-sm"
+                onClick={() => copyText("Admin code copied", result.ownerToken)}
+              >
+                Copy admin code
+              </button>
+              <a
+                className="px-3 py-2 border rounded hover:bg-gray-50 text-sm inline-block"
+                href={`/api/auth-owner?runId=${result.runId}&ownerToken=${encodeURIComponent(result.ownerToken)}&next=${encodeURIComponent(`/admin/run/${result.runId}`)}`}
+              >
+                Open Survey Admin
+              </a>
+            </div>
+            {copied && <div className="text-sm text-green-700">{copied}</div>}
           </div>
 
           {result.mode === "explorer" ? (
@@ -318,36 +331,6 @@ async function copyText(label: string, text: string) {
                   Copy all survey links
                 </button>
 
-                <button
-                  className="px-3 py-2 border rounded hover:bg-gray-50 text-sm"
-                  onClick={() =>
-                    copyText("Results link copied", `${window.location.origin}${result.dashboardLink}`)
-                  }
-                >
-                  Copy results link
-                </button>
-
-                <button
-                  className="px-3 py-2 border rounded hover:bg-gray-50 text-sm"
-                  onClick={() =>
-                    copyText(
-                      "Email draft copied",
-                      `Subject: TrustIndex survey – quick input requested
-
-Hi [Name],
-
-Please complete the TrustIndex survey using your personal link below:
-(choose one link per person)
-
-${result.surveyLinks.map((p) => `${window.location.origin}${p}`).join("\n")}
-
-Thanks,
-[Your name]`
-                    )
-                  }
-                >
-                  Copy email draft
-                </button>
               </div>
 
               {copied && <div className="text-sm text-green-700">{copied}</div>}
@@ -369,12 +352,6 @@ Thanks,
                 Open email draft (edit names)
               </a>
 
-              <div className="text-sm">
-                <div className="font-semibold text-gray-700">Survey Admin</div>
-                <a className="text-blue-600 underline" href={`/admin/run/${result.runId}`}>
-                  Open Survey Admin
-                </a>
-              </div>
 
               <div className="text-xs text-gray-500">
                 Tip: paste the links into email/Slack/Teams. For organisational mode, do not reuse the same link for multiple people.

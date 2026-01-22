@@ -479,38 +479,10 @@ export default function AdminRunPage() {
         )}
       </div>
 
-      {run?.mode === "org" && (
-        <div className="border rounded-lg p-6 space-y-3">
-          <h2 className="text-xl font-semibold">Client access</h2>
-          <div className="flex flex-wrap gap-2">
-            <button
-              className="px-3 py-2 border rounded hover:bg-gray-50 text-sm"
-              onClick={() => copyText("Client results link copied", `${window.location.origin}${dashboardHref}`)}
-            >
-              Copy client results link (headline only)
-            </button>
-            <button
-              className="px-3 py-2 border rounded hover:bg-gray-50 text-sm"
-              onClick={() => {
-                sessionStorage.setItem(`ti_admin_${runId}`, "1");
-                copyText(
-                  "Admin results link copied",
-                  `${window.location.origin}${dashboardHref}\n\nAdmin access is browser-based for MVP. Open in the same browser to retain access.`
-                );
-              }}
-            >
-              Copy admin results link (full access)
-            </button>
-          </div>
-          <div className="text-xs text-gray-500">
-            Admin access is browser-based for MVP (no login yet).
-          </div>
-        </div>
-      )}
 
       {run?.mode === "org" && (
         <div className="border rounded-lg p-6 space-y-3">
-          <h2 className="text-xl font-semibold">Unlock full report (MVP)</h2>
+          <h2 className="text-xl font-semibold">Unlock full report</h2>
           <div className="space-y-2">
             <label className="text-sm text-gray-600">Unlock code</label>
             <input
@@ -534,21 +506,8 @@ export default function AdminRunPage() {
               >
                 Unlock
               </button>
-              <button
-                type="button"
-                className="text-xs text-gray-500 underline"
-                onClick={() => {
-                  localStorage.removeItem(`ti_unlocked_${runId}`);
-                  setUnlockStatus("Unlock removed for this device.");
-                }}
-              >
-                Remove unlock
-              </button>
             </div>
             {unlockStatus && <div className="text-sm text-gray-600">{unlockStatus}</div>}
-            <div className="text-xs text-gray-500">
-              This is a temporary MVP mechanism (no billing yet).
-            </div>
           </div>
         </div>
       )}
@@ -615,29 +574,6 @@ export default function AdminRunPage() {
         </div>
       )}
 
-      <div className="border rounded-lg p-6 space-y-4">
-        <h2 className="text-xl font-semibold">Save & share links</h2>
-        <div className="flex flex-wrap gap-2">
-          <button
-            className="px-3 py-2 border rounded hover:bg-gray-50 text-sm"
-            onClick={downloadLinkPack}
-          >
-            Download link pack (.txt)
-          </button>
-          <a
-            className="px-3 py-2 border rounded hover:bg-gray-50 text-sm inline-block"
-            href={
-              "mailto:?" +
-              "subject=" +
-              encodeURIComponent(`TrustIndex links – ${run?.title || "Survey"}`) +
-              "&body=" +
-              encodeURIComponent(linkPack)
-            }
-          >
-            Open email to myself
-          </a>
-        </div>
-      </div>
 
       <div className="border rounded-lg p-6 space-y-3">
         <div className="font-semibold">Survey links</div>
@@ -671,73 +607,67 @@ export default function AdminRunPage() {
         </div>
       </div>
 
-      {run?.mode === "org" && (
-        <div className="border rounded-lg p-6 space-y-4">
-          <h2 className="text-xl font-semibold">Share & chase</h2>
+      <div className="border rounded-lg p-6 space-y-4">
+        <h2 className="text-xl font-semibold">Share, save & chase</h2>
 
-          <div className="text-sm text-gray-700">
-            Copy links and send one per person (recommended for organisational mode). Use “pending” for reminders.
-          </div>
-
-          <div className="flex flex-wrap items-end gap-3">
-            <div>
-              <label className="text-xs text-gray-500">Filter pending by</label>
-              <select
-                className="mt-1 w-full border rounded px-3 py-2 text-sm"
-                value={pendingFilterType}
-                onChange={(e) => {
-                  setPendingFilterType(e.target.value as "all" | "team" | "level" | "location");
-                  setPendingFilterValue("");
-                }}
-              >
-                <option value="all">All</option>
-                <option value="team">Team</option>
-                <option value="level">Level</option>
-                <option value="location">Location</option>
-              </select>
+        {run?.mode === "org" && (
+          <>
+            <div className="text-sm text-gray-700">
+              Copy links and send one per person (recommended for organisational mode). Use "pending" for reminders.
             </div>
-            {pendingFilterType !== "all" && (
+
+            <div className="flex flex-wrap items-end gap-3">
               <div>
-                <label className="text-xs text-gray-500">Value</label>
+                <label className="text-xs text-gray-500">Filter pending by</label>
                 <select
                   className="mt-1 w-full border rounded px-3 py-2 text-sm"
-                  value={pendingFilterValue}
-                  onChange={(e) => setPendingFilterValue(e.target.value)}
+                  value={pendingFilterType}
+                  onChange={(e) => {
+                    setPendingFilterType(e.target.value as "all" | "team" | "level" | "location");
+                    setPendingFilterValue("");
+                  }}
                 >
-                  <option value="">All</option>
-                  {pendingFilterValues[pendingFilterType]
-                    .filter((v): v is string => typeof v === "string" && v.length > 0)
-                    .map((value) => (
-                      <option key={value} value={value}>
-                        {value}
-                      </option>
-                    ))}
+                  <option value="all">All</option>
+                  <option value="team">Team</option>
+                  <option value="level">Level</option>
+                  <option value="location">Location</option>
                 </select>
               </div>
-            )}
-          </div>
+              {pendingFilterType !== "all" && (
+                <div>
+                  <label className="text-xs text-gray-500">Value</label>
+                  <select
+                    className="mt-1 w-full border rounded px-3 py-2 text-sm"
+                    value={pendingFilterValue}
+                    onChange={(e) => setPendingFilterValue(e.target.value)}
+                  >
+                    <option value="">All</option>
+                    {pendingFilterValues[pendingFilterType]
+                      .filter((v): v is string => typeof v === "string" && v.length > 0)
+                      .map((value) => (
+                        <option key={value} value={value}>
+                          {value}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              )}
+            </div>
 
-          <div className="flex flex-wrap gap-2">
-            <button
-              className="px-3 py-2 border rounded hover:bg-gray-50 text-sm"
-              onClick={() => copyText("All survey links copied", surveyLinks)}
-            >
-              Copy all survey links
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button
+                className="px-3 py-2 border rounded hover:bg-gray-50 text-sm"
+                onClick={() => copyText("Pending links copied", pendingLinks)}
+              >
+                Copy pending links
+              </button>
 
-            <button
-              className="px-3 py-2 border rounded hover:bg-gray-50 text-sm"
-              onClick={() => copyText("Pending links copied", pendingLinks)}
-            >
-              Copy pending links
-            </button>
-
-            <button
-              className="px-3 py-2 border rounded hover:bg-gray-50 text-sm"
-              onClick={() =>
-                copyText(
-                  "Pending email draft copied",
-                  `Subject: Reminder: ${run?.title || "TrustIndex survey"}
+              <button
+                className="px-3 py-2 border rounded hover:bg-gray-50 text-sm"
+                onClick={() =>
+                  copyText(
+                    "Pending email draft copied",
+                    `Subject: Reminder: ${run?.title || "TrustIndex survey"}
 
 Hi,
 
@@ -746,33 +676,82 @@ Quick reminder to complete the TrustIndex survey using your personal link below:
 ${pendingLinks}
 
 Thank you.`
-                )
-              }
-            >
-              Copy email draft (pending only)
-            </button>
+                  )
+                }
+              >
+                Copy email draft (pending only)
+              </button>
 
-            <a
-              className="px-3 py-2 border rounded hover:bg-gray-50 text-sm inline-block"
-              href={
-                "mailto:?" +
-                "subject=" +
-                encodeURIComponent(`Reminder: ${run?.title || "TrustIndex survey"}`) +
-                "&body=" +
-                encodeURIComponent(
-                  `Hi,\n\nQuick reminder to complete the TrustIndex survey using your personal link below:\n\n` +
-                    pendingLinks +
-                    `\n\nThank you.`
-                )
-              }
-            >
-              Open reminder email (pending only)
-            </a>
-          </div>
+              <a
+                className="px-3 py-2 border rounded hover:bg-gray-50 text-sm inline-block"
+                href={
+                  "mailto:?" +
+                  "subject=" +
+                  encodeURIComponent(`Reminder: ${run?.title || "TrustIndex survey"}`) +
+                  "&body=" +
+                  encodeURIComponent(
+                    `Hi,\n\nQuick reminder to complete the TrustIndex survey using your personal link below:\n\n` +
+                      pendingLinks +
+                      `\n\nThank you.`
+                  )
+                }
+              >
+                Open reminder email (pending only)
+              </a>
+            </div>
+          </>
+        )}
 
-          {copied && <div className="text-sm text-green-700">{copied}</div>}
+        <div className="flex flex-wrap gap-2">
+          <button
+            className="px-3 py-2 border rounded hover:bg-gray-50 text-sm"
+            onClick={() => copyText("All survey links copied", surveyLinks)}
+          >
+            Copy all survey links
+          </button>
+
+          <button
+            className="px-3 py-2 border rounded hover:bg-gray-50 text-sm"
+            onClick={downloadLinkPack}
+          >
+            Download link pack (.txt)
+          </button>
+
+          <a
+            className="px-3 py-2 border rounded hover:bg-gray-50 text-sm inline-block"
+            href={
+              "mailto:?" +
+              "subject=" +
+              encodeURIComponent(`TrustIndex links – ${run?.title || "Survey"}`) +
+              "&body=" +
+              encodeURIComponent(
+                `${linkPack}\n\nAdmin code: [Your admin code - save this from when you created the survey]`
+              )
+            }
+          >
+            Email links & code to myself
+          </a>
+
+          {invites.length > 0 && (
+            <div className="flex flex-col gap-1">
+              <button
+                className="px-3 py-2 border rounded hover:bg-gray-50 text-sm"
+                onClick={() => {
+                  const firstLink = `${window.location.origin}/survey/${invites[0].token}`;
+                  copyText("Your survey link copied", firstLink);
+                }}
+              >
+                Your survey
+              </button>
+              <div className="text-xs text-gray-500">
+                If you are taking the survey yourself, use this link. Do not send it to other users.
+              </div>
+            </div>
+          )}
         </div>
-      )}
+
+        {copied && <div className="text-sm text-green-700">{copied}</div>}
+      </div>
 
       <a className="text-blue-600 underline" href="/admin/new-run">
         Create another survey
