@@ -44,6 +44,7 @@ export default function AdminRunPage() {
   const [authorising, setAuthorising] = useState(false);
   const [recentRuns, setRecentRuns] = useState<RecentRun[]>([]);
   const [rememberDevice, setRememberDevice] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   async function copyText(label: string, text: string) {
     await navigator.clipboard.writeText(text);
@@ -149,13 +150,13 @@ export default function AdminRunPage() {
     }
   }
 
-  useEffect(() => {
+  const loadData = async () => {
     if (!runId) return;
 
-    const load = async () => {
-      setLoading(true);
-      setError(null);
+    setLoading(true);
+    setError(null);
 
+    try {
       const { data: runData, error: runErr } = await supabase
         .from("survey_runs")
         .select("id, mode, title")
@@ -184,17 +185,39 @@ export default function AdminRunPage() {
           .order("created_at", { ascending: true });
         if (invitesBasic.error) {
           setError(`Could not load invites: ${invitesBasic.error.message}`);
-        setLoading(false);
-        return;
+          setLoading(false);
+          return;
         }
         setInvites((invitesBasic.data as InviteRow[]) || []);
       } else {
         setInvites((invitesWithSeg.data as InviteRow[]) || []);
       }
+      
+      // Update last updated timestamp on successful load
+      setLastUpdated(new Date());
       setLoading(false);
-    };
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unknown error");
+      setLoading(false);
+    }
+  };
 
-    load();
+  useEffect(() => {
+    if (!runId) return;
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [runId]);
+
+  // Polling: refresh data every 15 seconds
+  useEffect(() => {
+    if (!runId) return;
+
+    const interval = setInterval(() => {
+      loadData();
+    }, 15000); // 15 seconds
+
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [runId]);
 
   // Load remember device preference on mount
@@ -763,35 +786,82 @@ export default function AdminRunPage() {
       )}
 
 
-      <div className="border border-verisum-grey rounded-lg p-6 space-y-3">
-        <div className="font-semibold">Survey links</div>
-
-        <div className="text-sm text-verisum-grey">
-          Completed: {invites.filter((i) => i.used_at).length} · Pending:{" "}
-          {invites.filter((i) => !i.used_at).length}
+      <div className="border border-verisum-grey rounded-lg p-6 space-y-4">
+        <div>
+          <h2 className="text-xl font-semibold">Results & survey links</h2>
+          <div className="text-sm text-verisum-grey">Track progress and manage distribution in one place.</div>
         </div>
 
+        {/* Live progress line */}
+        <div className="text-base font-medium">
+          Responses received: {invites.filter((i) => i.used_at).length}
+        </div>
+        {run?.mode === "org" && (
+          <div className="text-sm text-verisum-grey">
+            Results unlock automatically at 5+ responses.
+          </div>
+        )}
+        {run?.mode === "explorer" && (
+          <div className="text-sm text-verisum-grey">
+            Explorer mode: results available immediately.
+          </div>
+        )}
+
+        {/* Live feel status line */}
+        {lastUpdated && (
+          <div className="text-xs text-verisum-grey flex items-center gap-2">
+            <span>
+              Last updated: {lastUpdated.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+            </span>
+            <button
+              type="button"
+              className="text-verisum-blue underline hover:no-underline"
+              onClick={() => loadData()}
+              disabled={loading}
+            >
+              Refresh
+            </button>
+          </div>
+        )}
+
+        {/* Primary CTA button */}
         <div className="space-y-2">
-          {invites.map((i) => (
-            <div key={i.token} className="flex items-center justify-between text-sm">
-              <div className="text-verisum-grey">
-                {i.token.slice(0, 6)}…{i.token.slice(-4)}
-              </div>
-              <div className={i.used_at ? "text-verisum-green" : "text-verisum-yellow"}>
-                {i.used_at ? "Completed" : "Pending"}
-              </div>
-            </div>
-          ))}
+          <a
+            className="inline-block px-5 py-3 rounded bg-verisum-blue text-verisum-white font-semibold hover:bg-[#2a7bb8]"
+            href={dashboardHref}
+            onClick={() => sessionStorage.setItem(`ti_admin_${runId}`, "1")}
+          >
+            View results
+          </a>
+          <div className="text-xs text-verisum-grey">
+            Results update automatically as responses arrive.
+          </div>
         </div>
 
-        <div className="text-xs text-verisum-grey">
-          Tokens are masked for safety. Each token corresponds to one survey link.
-        </div>
+        {/* Survey links list */}
+        <div className="space-y-3 pt-4 border-t border-verisum-grey">
+          <div className="font-semibold text-sm">Survey links</div>
+          <div className="text-sm text-verisum-grey">
+            Completed: {invites.filter((i) => i.used_at).length} · Pending:{" "}
+            {invites.filter((i) => !i.used_at).length}
+          </div>
 
-        <div className="text-xs text-verisum-grey">
-          {run?.mode === "org"
-            ? "Organisational mode: send one link per person. Results appear once 5+ people respond."
-            : "Explorer mode: complete the single link yourself. Results show immediately."}
+          <div className="space-y-2">
+            {invites.map((i) => (
+              <div key={i.token} className="flex items-center justify-between text-sm">
+                <div className="text-verisum-grey">
+                  {i.token.slice(0, 6)}…{i.token.slice(-4)}
+                </div>
+                <div className={i.used_at ? "text-verisum-green" : "text-verisum-yellow"}>
+                  {i.used_at ? "Completed" : "Pending"}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-xs text-verisum-grey">
+            Tokens are masked for safety. Each token corresponds to one survey link.
+          </div>
         </div>
       </div>
 
