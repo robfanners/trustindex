@@ -590,6 +590,10 @@ export default function AdminRunPage() {
         <div>
           <span className="font-semibold">Survey ID:</span> {runId}
         </div>
+        <div>
+          <span className="font-semibold">Admin Instructions:</span>{" "}
+          You can switch between recent survey admin sessions, share and chase survey links, take your own survey safely using the "Your Survey" link, and return to create new surveys.
+        </div>
       </div>
 
       <div className="border rounded-lg p-6 space-y-4">
@@ -646,20 +650,33 @@ export default function AdminRunPage() {
         {recentRuns.length > 0 && (
 
           <div className="space-y-3">
-            {recentRuns.map((r) => (
-              <div key={r.runId} className="border rounded p-4 space-y-2">
-                <div className="font-semibold text-gray-900">{r.title}</div>
-                <div className="text-xs text-gray-500">
-                  {r.mode === "org" ? "Organisational" : "Explorer"} ·{" "}
-                  {new Date(r.createdAtISO).toLocaleDateString()}
+            {recentRuns.map((r) => {
+              const isCurrentRun = r.runId === runId;
+              return (
+                <div key={r.runId} className="border rounded p-4 space-y-2">
+                  <div className="font-semibold text-gray-900">{r.title}</div>
+                  <div className="text-xs text-gray-500">
+                    {r.mode === "org" ? "Organisational" : "Explorer"} ·{" "}
+                    {new Date(r.createdAtISO).toLocaleDateString()}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {isCurrentRun ? (
+                      <button
+                        className="px-3 py-2 border rounded text-sm opacity-50 cursor-not-allowed bg-gray-100"
+                        disabled
+                        title="You are already viewing Survey Admin for this survey."
+                      >
+                        Open Survey Admin
+                      </button>
+                    ) : (
+                      <a className="px-3 py-2 border rounded hover:bg-gray-50 text-sm" href={`/admin/run/${r.runId}`}>
+                        Open Survey Admin
+                      </a>
+                    )}
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <a className="px-3 py-2 border rounded hover:bg-gray-50 text-sm" href={`/admin/run/${r.runId}`}>
-                    Open Survey Admin
-                  </a>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -916,25 +933,27 @@ export default function AdminRunPage() {
 
           {invites.length > 0 && (
             <>
-              <a
-                className="px-3 py-2 border rounded hover:bg-gray-50 text-sm inline-block"
-                href={`/survey/${invites[0].token}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Open Your Survey
-              </a>
-              <button
-                className="px-3 py-2 border rounded hover:bg-gray-50 text-sm"
-                onClick={() => {
-                  const firstLink = `${window.location.origin}/survey/${invites[0].token}`;
-                  copyText("Your survey link copied", firstLink);
-                }}
-              >
-                Copy Your Survey Link
-              </button>
               <div className="text-xs text-gray-500 w-full">
                 Do not forward. If you are taking the survey yourself, use this link.
+              </div>
+              <div className="flex flex-wrap gap-2 mt-2">
+                <a
+                  className="px-3 py-2 border rounded hover:bg-gray-50 text-sm inline-block"
+                  href={`/survey/${invites[0].token}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Open Your Survey
+                </a>
+                <button
+                  className="px-3 py-2 border rounded hover:bg-gray-50 text-sm"
+                  onClick={() => {
+                    const firstLink = `${window.location.origin}/survey/${invites[0].token}`;
+                    copyText("Your survey link copied", firstLink);
+                  }}
+                >
+                  Copy Your Survey Link
+                </button>
               </div>
             </>
           )}
