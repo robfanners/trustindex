@@ -118,48 +118,33 @@ export default function AdminRunPage() {
     return merged;
   }
 
-  function migrateHistory(fromStorage: Storage, toStorage: Storage) {
+  function migrateHistory(from: Storage, to: Storage): RecentRun[] {
     try {
-      const raw = fromStorage.getItem("ti_recent_runs");
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed)) return;
-      
-      const existing = (() => {
-        try {
-          const existingRaw = toStorage.getItem("ti_recent_runs");
-          if (!existingRaw) return [];
-          const existingParsed = JSON.parse(existingRaw);
-          return Array.isArray(existingParsed) ? existingParsed : [];
-        } catch {
-          return [];
-        }
-      })();
+      const raw = from.getItem("ti_recent_runs");
+      const parsed: RecentRun[] = raw ? JSON.parse(raw) : [];
 
-      // Merge and dedupe by runId, keeping most recent createdAtISO
-      const merged = [...existing, ...parsed].reduce((acc, entry) => {
-        const existing = acc.find((e) => e.runId === entry.runId);
-        if (!existing) {
-          acc.push(entry);
-        } else {
-          // Keep the one with more recent createdAtISO
-          const existingDate = new Date(existing.createdAtISO).getTime();
-          const entryDate = new Date(entry.createdAtISO).getTime();
-          if (entryDate > existingDate) {
-            const index = acc.indexOf(existing);
-            acc[index] = entry;
-          }
+      // read existing from target
+      const existingRaw = to.getItem("ti_recent_runs");
+      const existing: RecentRun[] = existingRaw ? JSON.parse(existingRaw) : [];
+
+      // Merge + dedupe by runId, keep most recent createdAtISO
+      const merged = [...existing, ...parsed].reduce<RecentRun[]>((acc, entry) => {
+        const found = acc.find((e: RecentRun) => e.runId === entry.runId);
+        if (!found) acc.push(entry);
+        else if (
+          new Date(entry.createdAtISO).getTime() >
+          new Date(found.createdAtISO).getTime()
+        ) {
+          Object.assign(found, entry);
         }
         return acc;
-      }, [] as RecentRun[]).sort((a, b) => 
-        new Date(b.createdAtISO).getTime() - new Date(a.createdAtISO).getTime()
-      ).slice(0, 10);
+      }, []);
 
-      toStorage.setItem("ti_recent_runs", JSON.stringify(merged));
-      fromStorage.removeItem("ti_recent_runs");
+      to.setItem("ti_recent_runs", JSON.stringify(merged));
+      from.removeItem("ti_recent_runs");
+
       return merged;
     } catch {
-      // Ignore migration errors
       return [];
     }
   }
@@ -199,8 +184,8 @@ export default function AdminRunPage() {
           .order("created_at", { ascending: true });
         if (invitesBasic.error) {
           setError(`Could not load invites: ${invitesBasic.error.message}`);
-          setLoading(false);
-          return;
+        setLoading(false);
+        return;
         }
         setInvites((invitesBasic.data as InviteRow[]) || []);
       } else {
@@ -273,7 +258,7 @@ export default function AdminRunPage() {
   if (authorising) {
     return (
       <main className="p-10">
-        <div className="text-gray-600">Authorising…</div>
+        <div className="text-verisum-grey">Authorising…</div>
       </main>
     );
   }
@@ -281,7 +266,7 @@ export default function AdminRunPage() {
   if (loading) {
     return (
       <main className="p-10">
-        <div className="text-gray-600">Loading…</div>
+        <div className="text-verisum-grey">Loading…</div>
       </main>
     );
   }
@@ -290,7 +275,7 @@ export default function AdminRunPage() {
     return (
       <main className="p-10 space-y-3">
         <h1 className="text-2xl font-bold">Survey Admin</h1>
-        <div className="text-red-600">{error || "Missing runId"}</div>
+        <div className="text-verisum-red">{error || "Missing runId"}</div>
       </main>
     );
   }
@@ -310,8 +295,8 @@ export default function AdminRunPage() {
           (i) => (i as any)[pendingFilterType] && (i as any)[pendingFilterType] === pendingFilterValue
         );
   const pendingLinks = filteredPendingInvites
-    .map((i) => `${window.location.origin}/survey/${i.token}`)
-    .join("\n");
+  .map((i) => `${window.location.origin}/survey/${i.token}`)
+  .join("\n");
   const adminUrl = `${window.location.origin}/admin/run/${runId}`;
   const resultsUrl = `${window.location.origin}${dashboardHref}`;
   const linkPack = `Survey Admin: ${adminUrl}\nResults: ${resultsUrl}\n\nSurvey links:\n${surveyLinks}`;
@@ -579,7 +564,7 @@ export default function AdminRunPage() {
     <main className="p-10 space-y-6">
       <h1 className="text-3xl font-bold">Survey Admin</h1>
 
-      <div className="border rounded-lg p-6 space-y-2">
+      <div className="border border-verisum-grey rounded-lg p-6 space-y-2">
         <div>
           <span className="font-semibold">Survey:</span> {run?.title}
         </div>
@@ -596,7 +581,7 @@ export default function AdminRunPage() {
         </div>
       </div>
 
-      <div className="border rounded-lg p-6 space-y-4">
+      <div className="border border-verisum-grey rounded-lg p-6 space-y-4">
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-lg font-semibold">
             Your recent survey admin sessions{rememberDevice ? "" : " (this browser session)"}
@@ -616,11 +601,11 @@ export default function AdminRunPage() {
                     if (newValue) {
                       // Migrate from sessionStorage to localStorage
                       const migrated = migrateHistory(sessionStorage, localStorage);
-                      setRecentRuns(migrated);
+                      setRecentRuns(migrated ?? []);
                     } else {
                       // Migrate from localStorage to sessionStorage
                       const migrated = migrateHistory(localStorage, sessionStorage);
-                      setRecentRuns(migrated);
+                      setRecentRuns(migrated ?? []);
                     }
                   } catch {
                     // Ignore errors
@@ -632,7 +617,7 @@ export default function AdminRunPage() {
             </label>
             {recentRuns.length > 0 && (
               <button
-                className="text-xs text-gray-500 underline"
+                className="text-xs text-verisum-grey underline"
                 onClick={() => {
                   clearHistory();
                   setRecentRuns([]);
@@ -643,7 +628,7 @@ export default function AdminRunPage() {
             )}
           </div>
         </div>
-        <div className="text-xs text-gray-500">
+        <div className="text-xs text-verisum-grey">
           If enabled, your recent survey admin sessions will remain on this device.
         </div>
 
@@ -653,23 +638,23 @@ export default function AdminRunPage() {
             {recentRuns.map((r) => {
               const isCurrentRun = r.runId === runId;
               return (
-                <div key={r.runId} className="border rounded p-4 space-y-2">
-                  <div className="font-semibold text-gray-900">{r.title}</div>
-                  <div className="text-xs text-gray-500">
+                <div key={r.runId} className="border border-verisum-grey rounded p-4 space-y-2">
+                  <div className="font-semibold text-verisum-black">{r.title}</div>
+                  <div className="text-xs text-verisum-grey">
                     {r.mode === "org" ? "Organisational" : "Explorer"} ·{" "}
                     {new Date(r.createdAtISO).toLocaleDateString()}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {isCurrentRun ? (
                       <button
-                        className="px-3 py-2 border rounded text-sm opacity-50 cursor-not-allowed bg-gray-100"
+                        className="px-3 py-2 border border-verisum-grey rounded text-sm opacity-50 cursor-not-allowed bg-[#f5f5f5]"
                         disabled
                         title="You are already viewing Survey Admin for this survey."
                       >
                         Open Survey Admin
                       </button>
                     ) : (
-                      <a className="px-3 py-2 border rounded hover:bg-gray-50 text-sm" href={`/admin/run/${r.runId}`}>
+                      <a className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm" href={`/admin/run/${r.runId}`}>
                         Open Survey Admin
                       </a>
                     )}
@@ -681,18 +666,18 @@ export default function AdminRunPage() {
         )}
       </div>
 
-      <div className="border rounded-lg p-6 space-y-3">
+      <div className="border border-verisum-grey rounded-lg p-6 space-y-3">
         <div className="font-semibold">Results</div>
         <a
-          className="text-blue-600 underline"
+          className="text-verisum-blue underline"
           href={dashboardHref}
           onClick={() => sessionStorage.setItem(`ti_admin_${runId}`, "1")}
         >
           Click here to see your survey results
         </a>
-        <div className="text-xs text-gray-500">(Internal link)</div>
+        <div className="text-xs text-verisum-grey">(Internal link)</div>
         {run?.mode === "explorer" && (
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-verisum-grey">
             Explorer mode is a single-person self-assessment. No invites to chase.
           </div>
         )}
@@ -700,19 +685,19 @@ export default function AdminRunPage() {
 
 
       {run?.mode === "org" && (
-        <div className="border rounded-lg p-6 space-y-3">
+        <div className="border border-verisum-grey rounded-lg p-6 space-y-3">
           <h2 className="text-xl font-semibold">Unlock full report</h2>
           <div className="space-y-2">
-            <label className="text-sm text-gray-600">Unlock code</label>
+            <label className="text-sm text-verisum-grey">Unlock code</label>
             <input
-              className="w-full border rounded px-3 py-2 text-sm"
+              className="w-full border border-verisum-grey rounded px-3 py-2 text-sm"
               value={unlockCode}
               onChange={(e) => setUnlockCode(e.target.value)}
               placeholder="Enter code"
             />
             <div className="flex flex-wrap items-center gap-3">
               <button
-                className="px-3 py-2 border rounded hover:bg-gray-50 text-sm"
+                className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm"
                 onClick={() => {
                   const expected = process.env.NEXT_PUBLIC_UNLOCK_CODE || "DEMO-UNLOCK";
                   if (unlockCode.trim() === expected) {
@@ -726,17 +711,17 @@ export default function AdminRunPage() {
                 Unlock
               </button>
             </div>
-            {unlockStatus && <div className="text-sm text-gray-600">{unlockStatus}</div>}
+            {unlockStatus && <div className="text-sm text-verisum-grey">{unlockStatus}</div>}
           </div>
         </div>
       )}
 
-      <div className="border rounded-lg p-6 space-y-4">
+      <div className="border border-verisum-grey rounded-lg p-6 space-y-4">
         <h2 className="text-xl font-semibold">
           {run?.mode === "explorer" ? "Download your responses (CSV)" : "Export data (CSV)"}
         </h2>
         <div className="space-y-3">
-          <label className="flex items-start gap-3 text-sm text-gray-700">
+          <label className="flex items-start gap-3 text-sm text-verisum-grey">
             <input
               type="checkbox"
               className="mt-1"
@@ -745,12 +730,12 @@ export default function AdminRunPage() {
             />
             <span>
               <span className="font-medium">Client-safe export (mask tokens)</span>
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-verisum-grey">
                 Masks invite tokens to protect respondent privacy. Use this when sharing externally.
               </div>
             </span>
           </label>
-          <label className="flex items-start gap-3 text-sm text-gray-700">
+          <label className="flex items-start gap-3 text-sm text-verisum-grey">
             <input
               type="checkbox"
               className="mt-1"
@@ -759,7 +744,7 @@ export default function AdminRunPage() {
             />
             <span>
               <span className="font-medium">Include segmentation (team / level / location)</span>
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-verisum-grey">
                 Only enable if you’re confident it won’t identify individuals in small teams.
               </div>
             </span>
@@ -767,37 +752,37 @@ export default function AdminRunPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <button
-            className="px-3 py-2 border rounded hover:bg-gray-50 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={downloadResponsesCsv}
             disabled={exporting}
           >
             {exporting ? "Preparing CSV…" : "Download responses CSV"}
           </button>
           <button
-            className="px-3 py-2 border rounded hover:bg-gray-50 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={downloadSummaryCsv}
             disabled={summaryExporting}
           >
             {summaryExporting ? "Preparing summary…" : "Download summary CSV"}
           </button>
         </div>
-        {exportStatus && <div className="text-sm text-gray-600">{exportStatus}</div>}
+        {exportStatus && <div className="text-sm text-verisum-grey">{exportStatus}</div>}
       </div>
 
       {run?.mode === "org" && (
-        <div className="border rounded-lg p-6 space-y-3">
+        <div className="border border-verisum-grey rounded-lg p-6 space-y-3">
           <h2 className="text-xl font-semibold">Segmentation summary</h2>
-          <div className="text-sm text-gray-700">Teams: {formatCounts(invites.map((i) => i.team))}</div>
-          <div className="text-sm text-gray-700">Levels: {formatCounts(invites.map((i) => i.level))}</div>
-          <div className="text-sm text-gray-700">Locations: {formatCounts(invites.map((i) => i.location))}</div>
+          <div className="text-sm text-verisum-grey">Teams: {formatCounts(invites.map((i) => i.team))}</div>
+          <div className="text-sm text-verisum-grey">Levels: {formatCounts(invites.map((i) => i.level))}</div>
+          <div className="text-sm text-verisum-grey">Locations: {formatCounts(invites.map((i) => i.location))}</div>
         </div>
       )}
 
 
-      <div className="border rounded-lg p-6 space-y-3">
+      <div className="border border-verisum-grey rounded-lg p-6 space-y-3">
         <div className="font-semibold">Survey links</div>
 
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-verisum-grey">
           Completed: {invites.filter((i) => i.used_at).length} · Pending:{" "}
           {invites.filter((i) => !i.used_at).length}
         </div>
@@ -805,41 +790,41 @@ export default function AdminRunPage() {
         <div className="space-y-2">
           {invites.map((i) => (
             <div key={i.token} className="flex items-center justify-between text-sm">
-              <div className="text-gray-700">
+              <div className="text-verisum-grey">
                 {i.token.slice(0, 6)}…{i.token.slice(-4)}
               </div>
-              <div className={i.used_at ? "text-green-700" : "text-amber-700"}>
+              <div className={i.used_at ? "text-verisum-green" : "text-verisum-yellow"}>
                 {i.used_at ? "Completed" : "Pending"}
               </div>
             </div>
           ))}
         </div>
 
-        <div className="text-xs text-gray-500">
+        <div className="text-xs text-verisum-grey">
           Tokens are masked for safety. Each token corresponds to one survey link.
         </div>
 
-        <div className="text-xs text-gray-500">
+        <div className="text-xs text-verisum-grey">
           {run?.mode === "org"
             ? "Organisational mode: send one link per person. Results appear once 5+ people respond."
             : "Explorer mode: complete the single link yourself. Results show immediately."}
         </div>
       </div>
 
-      <div className="border rounded-lg p-6 space-y-4">
+      <div className="border border-verisum-grey rounded-lg p-6 space-y-4">
         <h2 className="text-xl font-semibold">Share, save & chase</h2>
 
         {run?.mode === "org" && (
           <>
-            <div className="text-sm text-gray-700">
+            <div className="text-sm text-verisum-grey">
               Copy links and send one per person (recommended for organisational mode). Use "pending" for reminders.
             </div>
 
             <div className="flex flex-wrap items-end gap-3">
               <div>
-                <label className="text-xs text-gray-500">Filter pending by</label>
+                <label className="text-xs text-verisum-grey">Filter pending by</label>
                 <select
-                  className="mt-1 w-full border rounded px-3 py-2 text-sm"
+                  className="mt-1 w-full border border-verisum-grey rounded px-3 py-2 text-sm"
                   value={pendingFilterType}
                   onChange={(e) => {
                     setPendingFilterType(e.target.value as "all" | "team" | "level" | "location");
@@ -854,9 +839,9 @@ export default function AdminRunPage() {
               </div>
               {pendingFilterType !== "all" && (
                 <div>
-                  <label className="text-xs text-gray-500">Value</label>
+                  <label className="text-xs text-verisum-grey">Value</label>
                   <select
-                    className="mt-1 w-full border rounded px-3 py-2 text-sm"
+                    className="mt-1 w-full border border-verisum-grey rounded px-3 py-2 text-sm"
                     value={pendingFilterValue}
                     onChange={(e) => setPendingFilterValue(e.target.value)}
                   >
@@ -871,18 +856,18 @@ export default function AdminRunPage() {
                   </select>
                 </div>
               )}
-            </div>
+        </div>
 
             <div className="flex flex-wrap gap-2">
               <button
-                className="px-3 py-2 border rounded hover:bg-gray-50 text-sm"
+                className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm"
                 onClick={() => copyText("Pending links copied", pendingLinks)}
               >
                 Copy pending links
               </button>
 
               <a
-                className="px-3 py-2 border rounded hover:bg-gray-50 text-sm inline-block"
+                className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm inline-block"
                 href={
                   "mailto:?" +
                   "subject=" +
@@ -903,21 +888,21 @@ export default function AdminRunPage() {
 
         <div className="flex flex-wrap gap-2">
           <button
-            className="px-3 py-2 border rounded hover:bg-gray-50 text-sm"
+            className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm"
             onClick={() => copyText("All survey links copied", surveyLinks)}
           >
             Copy all survey links
           </button>
 
           <button
-            className="px-3 py-2 border rounded hover:bg-gray-50 text-sm"
+            className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm"
             onClick={downloadLinkPack}
           >
             Download link pack (.txt)
           </button>
 
           <a
-            className="px-3 py-2 border rounded hover:bg-gray-50 text-sm inline-block"
+            className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm inline-block"
             href={
               "mailto:?" +
               "subject=" +
@@ -933,12 +918,12 @@ export default function AdminRunPage() {
 
           {invites.length > 0 && (
             <>
-              <div className="text-xs text-gray-500 w-full">
+              <div className="text-xs text-verisum-grey w-full">
                 Do not forward. If you are taking the survey yourself, use this link.
               </div>
               <div className="flex flex-wrap gap-2 mt-2">
                 <a
-                  className="px-3 py-2 border rounded hover:bg-gray-50 text-sm inline-block"
+                  className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm inline-block"
                   href={`/survey/${invites[0].token}`}
                   target="_blank"
                   rel="noreferrer"
@@ -946,7 +931,7 @@ export default function AdminRunPage() {
                   Open Your Survey
                 </a>
                 <button
-                  className="px-3 py-2 border rounded hover:bg-gray-50 text-sm"
+                  className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm"
                   onClick={() => {
                     const firstLink = `${window.location.origin}/survey/${invites[0].token}`;
                     copyText("Your survey link copied", firstLink);
@@ -959,10 +944,10 @@ export default function AdminRunPage() {
           )}
         </div>
 
-        {copied && <div className="text-sm text-green-700">{copied}</div>}
+        {copied && <div className="text-sm text-verisum-green">{copied}</div>}
       </div>
 
-      <a className="text-blue-600 underline" href="/admin/new-run">
+      <a className="text-verisum-blue underline" href="/admin/new-run">
         Create another survey
       </a>
     </main>
