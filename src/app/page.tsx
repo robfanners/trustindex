@@ -8,7 +8,7 @@ export const revalidate = 0;
 export default function Home() {
   noStore();
   return (
-    <Suspense fallback={<main className="min-h-screen bg-white text-gray-900 p-12" />}>
+    <Suspense fallback={<main className="min-h-screen bg-verisum-white text-verisum-black p-12" />}>
       <HomeClient />
     </Suspense>
   );

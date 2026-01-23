@@ -30,12 +30,12 @@ export default function BootstrapPage() {
       <h1 className="text-3xl font-bold">TrustIndex Bootstrap</h1>
 
       {!runId || !token ? (
-        <div className="border rounded-lg p-6 space-y-3">
+        <div className="border border-verisum-grey rounded-lg p-6 space-y-3">
           <div className="font-semibold">Create a demo survey</div>
-          {state.error && <div className="text-red-600 text-sm">{state.error}</div>}
+          {state.error && <div className="text-verisum-red text-sm">{state.error}</div>}
           <form action={formAction}>
             <button
-              className="px-4 py-2 border rounded hover:bg-gray-50"
+              className="px-4 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5]"
               type="submit"
               disabled={isPending}
             >
@@ -45,7 +45,7 @@ export default function BootstrapPage() {
         </div>
       ) : (
         <>
-          <div className="border rounded-lg p-6 space-y-2">
+          <div className="border border-verisum-grey rounded-lg p-6 space-y-2">
             <div>
               <span className="font-semibold">Run ID:</span> {runId}
             </div>
@@ -54,55 +54,55 @@ export default function BootstrapPage() {
             </div>
           </div>
 
-          <div className="border rounded-lg p-6 space-y-3">
+          <div className="border border-verisum-grey rounded-lg p-6 space-y-3">
             <div className="font-semibold">Links</div>
 
             <div className="space-y-1">
-              <div className="text-sm text-gray-600">Survey link</div>
-              <a className="text-blue-600 underline" href={surveyLink}>
+              <div className="text-sm text-verisum-grey">Survey link</div>
+              <a className="text-verisum-blue underline" href={surveyLink}>
                 {surveyLink}
               </a>
             </div>
 
             <div className="space-y-1 pt-2">
-              <div className="text-sm text-gray-600">Results link</div>
-              <a className="text-blue-600 underline" href={dashboardLink}>
+              <div className="text-sm text-verisum-grey">Results link</div>
+              <a className="text-verisum-blue underline" href={dashboardLink}>
                 {dashboardLink}
               </a>
             </div>
 
             <div className="space-y-1 pt-2">
-              <div className="text-sm text-gray-600">Survey Admin</div>
-              <a className="text-blue-600 underline" href={adminRunLink}>
+              <div className="text-sm text-verisum-grey">Survey Admin</div>
+              <a className="text-verisum-blue underline" href={adminRunLink}>
                 {adminRunLink}
               </a>
             </div>
           </div>
 
-          <div className="border rounded-lg p-6 space-y-4">
+          <div className="border border-verisum-grey rounded-lg p-6 space-y-4">
             <h2 className="text-xl font-semibold">Share this survey</h2>
 
-            <div className="text-sm text-gray-700">
+            <div className="text-sm text-verisum-grey">
               Recommended: send each person their own link. Each invite token is single-use.
             </div>
 
             <div className="flex flex-wrap gap-2">
               <button
-                className="px-3 py-2 border rounded hover:bg-gray-50 text-sm"
+                className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm"
                 onClick={() => copyText("Survey link copied", surveyLink)}
               >
                 Copy survey link
               </button>
 
               <button
-                className="px-3 py-2 border rounded hover:bg-gray-50 text-sm"
+                className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm"
                 onClick={() => copyText("Results link copied", dashboardLink)}
               >
                 Copy results link
               </button>
 
               <button
-                className="px-3 py-2 border rounded hover:bg-gray-50 text-sm"
+                className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm"
                 onClick={() =>
                   copyText(
                     "Email draft copied",
@@ -123,7 +123,7 @@ Thank you.`
               </button>
             </div>
 
-            {copied && <div className="text-sm text-green-700">{copied}</div>}
+            {copied && <div className="text-sm text-verisum-green">{copied}</div>}
           </div>
         </>
       )}

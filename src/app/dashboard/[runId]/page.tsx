@@ -61,20 +61,20 @@ function bandFor(score0to100: number) {
   if (score0to100 < 40) {
     return {
       label: "Fragile",
-      color: "text-red-700",
+      color: "text-verisum-red",
       summary: "Low trust signals systemic friction and elevated execution risk.",
     };
   }
   if (score0to100 < 70) {
     return {
       label: "Mixed",
-      color: "text-amber-700",
+      color: "text-verisum-yellow",
       summary: "Trust is inconsistent; performance is likely uneven across teams or cohorts.",
     };
   }
   return {
     label: "Strong",
-    color: "text-green-700",
+    color: "text-verisum-green",
     summary: "Trust is an asset; protect it and scale what is working.",
   };
 }
@@ -298,7 +298,7 @@ setInvites((inviteData as InviteRow[]) || []);
   if (loading) {
     return (
       <main className="p-10">
-        <div className="text-gray-600">Loading dashboard…</div>
+        <div className="text-verisum-grey">Loading dashboard…</div>
       </main>
     );
   }
@@ -307,7 +307,7 @@ setInvites((inviteData as InviteRow[]) || []);
     return (
       <main className="p-10 space-y-4">
         <h1 className="text-2xl font-bold">TrustIndex Dashboard</h1>
-        <div className="text-red-600">{error}</div>
+        <div className="text-verisum-red">{error}</div>
       </main>
     );
   }
@@ -320,26 +320,26 @@ setInvites((inviteData as InviteRow[]) || []);
 
   if (gateActive) {
     return (
-      <main className="min-h-screen bg-white text-gray-900">
+      <main className="min-h-screen bg-verisum-white text-verisum-black">
         <div className="max-w-3xl mx-auto p-10 space-y-6">
           <h1 className="text-3xl font-bold">TrustIndex™ Results</h1>
-          <div className="text-gray-600">{run?.title}</div>
+          <div className="text-verisum-grey">{run?.title}</div>
 
-          <div className="border rounded-lg p-6 space-y-2">
+          <div className="border border-verisum-grey rounded-lg p-6 space-y-2">
             <div className="font-semibold">Not enough responses yet</div>
-            <div className="text-gray-700">
+            <div className="text-verisum-grey">
               This survey is in <span className="font-semibold">Organisational</span> mode and requires at least{" "}
               <span className="font-semibold">{minRespondents}</span> respondents before results are shown.
             </div>
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-verisum-grey">
               Current respondents: {respondents}
             </div>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-verisum-grey">
               This threshold protects anonymity and avoids over-interpreting very small samples.
             </div>
-<div className="border rounded-lg p-6 space-y-3">
+<div className="border border-verisum-grey rounded-lg p-6 space-y-3">
   <h2 className="text-lg font-semibold">Survey links</h2>
-  <div className="text-sm text-gray-600">
+  <div className="text-sm text-verisum-grey">
     Completed: {invites.filter((i) => i.used_at).length} · Pending: {invites.filter((i) => !i.used_at).length}
   </div>
 
@@ -347,10 +347,10 @@ setInvites((inviteData as InviteRow[]) || []);
     <div className="space-y-2">
       {invites.map((i) => (
         <div key={i.token} className="flex items-center justify-between text-sm">
-          <div className="text-gray-700">
+          <div className="text-verisum-grey">
             {i.token.slice(0, 6)}…{i.token.slice(-4)}
           </div>
-          <div className={i.used_at ? "text-green-700" : "text-amber-700"}>
+          <div className={i.used_at ? "text-verisum-green" : "text-verisum-yellow"}>
             {i.used_at ? "Completed" : "Pending"}
           </div>
         </div>
@@ -359,23 +359,23 @@ setInvites((inviteData as InviteRow[]) || []);
   )}
 
   {isExplorer ? (
-    <div className="text-xs text-gray-500">
+    <div className="text-xs text-verisum-grey">
       Explorer mode uses a single private link. In organisational surveys, each person receives a unique link.
     </div>
   ) : (
-    <div className="text-xs text-gray-500">
+    <div className="text-xs text-verisum-grey">
       Tokens are masked for safety. Each token corresponds to one survey link.
     </div>
   )}
 </div>
           </div>
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-verisum-grey">
             <span className="font-medium">Need to share or chase responses?</span>{" "}
-            <a className="text-blue-600 underline" href={adminHref}>
+            <a className="text-verisum-blue underline" href={adminHref}>
               Open Survey Admin
             </a>
           </div>
-          <a className="text-blue-600 underline" href={adminHref}>
+          <a className="text-verisum-blue underline" href={adminHref}>
             Back to Survey Admin
           </a>
         </div>
@@ -385,33 +385,33 @@ setInvites((inviteData as InviteRow[]) || []);
 
 if (!trust) {
   return (
-    <main className="min-h-screen bg-white text-gray-900">
+    <main className="min-h-screen bg-verisum-white text-verisum-black">
       <div className="max-w-3xl mx-auto p-10 space-y-6">
         <h1 className="text-3xl font-bold">TrustIndex™ Results</h1>
-        <div className="text-gray-600">{run?.title}</div>
-        <div className="border rounded-lg p-6 space-y-2">
-	<div className="text-gray-700 font-medium">No responses yet.</div>
-	<div className="text-gray-600 text-sm mt-1">
+        <div className="text-verisum-grey">{run?.title}</div>
+        <div className="border border-verisum-grey rounded-lg p-6 space-y-2">
+	<div className="text-verisum-grey font-medium">No responses yet.</div>
+	<div className="text-verisum-grey text-sm mt-1">
  	 Once someone completes the survey, results will appear here.
 	</div>
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-verisum-grey">
             Respondents so far: {counts?.respondents ?? 0}
           </div>
         </div>
 
-        <div className="border rounded-lg p-6 space-y-3">
+        <div className="border border-verisum-grey rounded-lg p-6 space-y-3">
           <h2 className="text-lg font-semibold">Survey links</h2>
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-verisum-grey">
             Completed: {invites.filter((i) => i.used_at).length} · Pending: {invites.filter((i) => !i.used_at).length}
           </div>
           {!isExplorer && (
             <div className="space-y-2">
               {invites.map((i) => (
                 <div key={i.token} className="flex items-center justify-between text-sm">
-                  <div className="text-gray-700">
+                  <div className="text-verisum-grey">
                     {i.token.slice(0, 6)}…{i.token.slice(-4)}
                   </div>
-                  <div className={i.used_at ? "text-green-700" : "text-amber-700"}>
+                  <div className={i.used_at ? "text-verisum-green" : "text-verisum-yellow"}>
                     {i.used_at ? "Completed" : "Pending"}
                   </div>
                 </div>
@@ -419,24 +419,24 @@ if (!trust) {
             </div>
           )}
           {isExplorer ? (
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-verisum-grey">
               Explorer mode uses a single private link. In organisational surveys, each person receives a unique link.
             </div>
           ) : (
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-verisum-grey">
               Tokens are masked for safety. Each token corresponds to one survey link.
             </div>
           )}
         </div>
 
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-verisum-grey">
           <span className="font-medium">Need to share or chase responses?</span>{" "}
-          <a className="text-blue-600 underline" href={adminHref}>
+          <a className="text-verisum-blue underline" href={adminHref}>
             Open Survey Admin
           </a>
         </div>
 
-	<a className="text-blue-600 underline" href={adminHref}>
+	<a className="text-verisum-blue underline" href={adminHref}>
           Back to Survey Admin
         </a>
       </div>
@@ -569,35 +569,35 @@ if (!trust) {
   };
 
   return (
-    <main className="min-h-screen bg-white text-gray-900">
+    <main className="min-h-screen bg-verisum-white text-verisum-black">
       <div className="max-w-4xl mx-auto p-10 space-y-8">
         <header className="space-y-2">
           <h1 className="text-3xl font-bold">TrustIndex™ Results</h1>
-          <div className="text-sm text-gray-500">Survey ID: {runId}</div>
-          <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-gray-500">
+          <div className="text-sm text-verisum-grey">Survey ID: {runId}</div>
+          <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-verisum-grey">
             <div>
               Mode: {run?.mode ?? "—"} · Respondents: {counts?.respondents ?? 0}
             </div>
-            <a className="text-blue-600 underline whitespace-nowrap" href={adminHref}>
+            <a className="text-verisum-blue underline whitespace-nowrap" href={adminHref}>
               Back to Survey Admin
             </a>
           </div>
         </header>
 
-        <div className="border rounded-lg p-6 flex items-end justify-between">
+        <div className="border border-verisum-grey rounded-lg p-6 flex items-end justify-between">
           <div>
-            <div className="text-sm text-gray-500">TrustIndex score</div>
+            <div className="text-sm text-verisum-grey">TrustIndex score</div>
             <div className="text-5xl font-bold">
               {Number(trust.trustindex_0_to_100).toFixed(1)}
             </div>
           </div>
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-verisum-grey">
             Derived from mean score: {Number(trust.overall_mean_1_to_5).toFixed(2)} / 5
           </div>
         </div>
 
-        <div className="border rounded-lg p-6 space-y-3">
-          <div className="text-sm text-gray-600">What this means</div>
+        <div className="border border-verisum-grey rounded-lg p-6 space-y-3">
+          <div className="text-sm text-verisum-grey">What this means</div>
 
           {(() => {
             const score = Math.round(Number(trust.trustindex_0_to_100));
@@ -607,9 +607,9 @@ if (!trust) {
                 <div className={`text-xl font-semibold ${band.color}`}>
                   {band.label} trust ({score}/100)
                 </div>
-                <div className="text-sm text-gray-700">{band.summary}</div>
+                <div className="text-sm text-verisum-grey">{band.summary}</div>
 
-                <div className="text-sm text-gray-700">
+                <div className="text-sm text-verisum-grey">
                   Recommended next step:{" "}
                   {run?.mode === "org"
                     ? "Review pending responses and then focus on the lowest-scoring dimension first."
@@ -621,27 +621,27 @@ if (!trust) {
         </div>
 
         {run?.mode === "explorer" && (
-          <div className="border rounded-lg p-6 space-y-3">
+          <div className="border border-verisum-grey rounded-lg p-6 space-y-3">
             <div className="text-lg font-semibold">Validate this with your organisation</div>
-            <div className="text-sm text-gray-700">
+            <div className="text-sm text-verisum-grey">
               Explorer is a single self-assessment. To validate, run an organisational survey with 5–15 respondents.
               Results unlock once 5 people respond.
             </div>
             <a
-              className="inline-flex items-center px-3 py-2 rounded bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700"
+              className="inline-flex items-center px-3 py-2 rounded bg-verisum-blue text-verisum-white text-sm font-semibold hover:bg-[#2a7bb8]"
               href="/admin/new-run"
             >
               Run an organisational survey
             </a>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-verisum-grey">
               Takes ~2 minutes to set up. Results unlock once 5 people respond.
             </div>
           </div>
         )}
 
-<div className="border rounded-lg p-6 space-y-3">
+<div className="border border-verisum-grey rounded-lg p-6 space-y-3">
   <h2 className="text-lg font-semibold">{isExplorer ? "Your completion" : "Survey completion"}</h2>
-  <div className="text-sm text-gray-600">
+  <div className="text-sm text-verisum-grey">
     Completed: {invites.filter((i) => i.used_at).length} · Pending: {invites.filter((i) => !i.used_at).length}
   </div>
 
@@ -649,10 +649,10 @@ if (!trust) {
     <div className="space-y-2">
       {invites.map((i) => (
         <div key={i.token} className="flex items-center justify-between text-sm">
-          <div className="text-gray-700">
+          <div className="text-verisum-grey">
             {i.token.slice(0, 6)}…{i.token.slice(-4)}
           </div>
-          <div className={i.used_at ? "text-green-700" : "text-amber-700"}>
+          <div className={i.used_at ? "text-verisum-green" : "text-verisum-yellow"}>
             {i.used_at ? "Completed" : "Pending"}
           </div>
         </div>
@@ -661,28 +661,28 @@ if (!trust) {
   )}
 
   {isExplorer ? (
-    <div className="text-xs text-gray-500">
+    <div className="text-xs text-verisum-grey">
       Explorer mode uses a single private link. In organisational surveys, each person receives a unique link.
     </div>
   ) : (
-    <div className="text-xs text-gray-500">
+    <div className="text-xs text-verisum-grey">
       Tokens are masked for safety. Each token corresponds to one survey link.
     </div>
   )}
 </div>
 
         {!isTeaser && canExport && (
-          <div className="border rounded-lg p-6 space-y-3">
+          <div className="border border-verisum-grey rounded-lg p-6 space-y-3">
             <h2 className="text-lg font-semibold">Export</h2>
             <button
-              className="px-3 py-2 border rounded hover:bg-gray-50 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={downloadResponsesCsv}
               disabled={exporting}
             >
               {exporting ? "Preparing CSV…" : "Download responses CSV"}
             </button>
-            {exportStatus && <div className="text-sm text-gray-600">{exportStatus}</div>}
-            <div className="text-xs text-gray-500">
+            {exportStatus && <div className="text-sm text-verisum-grey">{exportStatus}</div>}
+            <div className="text-xs text-verisum-grey">
               Admin view only (set when opened from Survey Admin).
             </div>
           </div>
@@ -690,26 +690,26 @@ if (!trust) {
 
         {isTeaser && (
           <>
-            <div className="border rounded-lg p-6 space-y-3">
+            <div className="border border-verisum-grey rounded-lg p-6 space-y-3">
               <h2 className="text-lg font-semibold">Top insight (sample)</h2>
               {lowestDim && lowestInfo && lowestScore != null ? (
                 <>
                   <div className="flex items-baseline justify-between gap-4">
                     <div className="font-semibold">{lowestInfo.short}</div>
-                    <div className="text-sm text-gray-700">{lowestScore}/100</div>
+                    <div className="text-sm text-verisum-grey">{lowestScore}/100</div>
                   </div>
-                  <div className="text-sm text-gray-700">
+                  <div className="text-sm text-verisum-grey">
                     {lowestScore >= 70 ? lowestInfo.highMeans : lowestInfo.lowMeans}
                   </div>
                 </>
               ) : (
-                <div className="text-sm text-gray-700">
+                <div className="text-sm text-verisum-grey">
                   We’ll show the top insight once dimension scores are available.
                 </div>
               )}
             </div>
 
-            <div className="border rounded-lg p-6">
+            <div className="border border-verisum-grey rounded-lg p-6">
               <h2 className="text-lg font-semibold mb-4">Radar</h2>
               <div style={{ width: "100%", height: 300 }}>
                 <ResponsiveContainer>
@@ -729,20 +729,20 @@ if (!trust) {
             </div>
 
             <div className="relative">
-              <div className="border rounded-lg bg-white p-6 space-y-4 mb-6">
+              <div className="border border-verisum-grey rounded-lg bg-verisum-white p-6 space-y-4 mb-6">
                 <h2 className="text-lg font-semibold">{overlayCopy.title}</h2>
-                <div className="text-sm text-gray-700">{overlayCopy.body}</div>
+                <div className="text-sm text-verisum-grey">{overlayCopy.body}</div>
                 {"bullets" in overlayCopy && (
-                  <ul className="list-disc pl-5 text-sm text-gray-700">
+                  <ul className="list-disc pl-5 text-sm text-verisum-grey">
                     {overlayCopy.bullets.map((item) => (
                       <li key={item}>{item}</li>
                     ))}
                   </ul>
                 )}
                 {"helper" in overlayCopy && (
-                  <div className="text-xs text-gray-500">{overlayCopy.helper}</div>
+                  <div className="text-xs text-verisum-grey">{overlayCopy.helper}</div>
                 )}
-                <div className="space-y-2 text-sm text-gray-700">
+                <div className="space-y-2 text-sm text-verisum-grey">
                   <div className="font-semibold">What I’d like (delete/leave as appropriate):</div>
                   <ol className="list-decimal pl-5">
                     <li>Unlock the full breakdown (paid)</li>
@@ -752,7 +752,7 @@ if (!trust) {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <a
-                    className="px-4 py-2 rounded bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700"
+                    className="px-4 py-2 rounded bg-verisum-blue text-verisum-white text-sm font-semibold hover:bg-[#2a7bb8]"
                     href={
                       "mailto:TrustIndexScores@verisum.org?" +
                       "subject=" +
@@ -776,7 +776,7 @@ if (!trust) {
                     Request unlock / pricing
                   </a>
                   <a
-                    className="px-4 py-2 rounded border text-sm hover:bg-gray-50"
+                    className="px-4 py-2 rounded border text-sm hover:bg-[#f5f5f5]"
                     href={
                       "mailto:TrustIndexScores@verisum.org?" +
                       "subject=" +
@@ -799,7 +799,7 @@ if (!trust) {
               </div>
               <div className="filter blur-sm pointer-events-none select-none opacity-70">
                 <div className="grid md:grid-cols-2 gap-6">
-                  <div className="border rounded-lg p-6">
+                  <div className="border border-verisum-grey rounded-lg p-6">
                     <h2 className="text-lg font-semibold mb-4">Dimensions and actions</h2>
 
                     <div className="space-y-4">
@@ -808,13 +808,13 @@ if (!trust) {
                         const info = interpretationForDimension(d.dimension);
 
                         return (
-                          <div key={d.dimension} className="border rounded p-4 space-y-2">
+                          <div key={d.dimension} className="border border-verisum-grey rounded p-4 space-y-2">
                             <div className="flex items-baseline justify-between gap-4">
                               <div className="font-semibold">{info.short}</div>
-                              <div className="text-sm text-gray-700">{score}/100</div>
+                              <div className="text-sm text-verisum-grey">{score}/100</div>
                             </div>
 
-                            <div className="text-sm text-gray-700">
+                            <div className="text-sm text-verisum-grey">
                               {score < 40
                                 ? info.lowMeans
                                 : score >= 70
@@ -823,8 +823,8 @@ if (!trust) {
                             </div>
 
                             <div className="text-sm">
-                              <div className="font-semibold text-gray-700">Actions</div>
-                              <ul className="list-disc pl-5 text-gray-700">
+                              <div className="font-semibold text-verisum-grey">Actions</div>
+                              <ul className="list-disc pl-5 text-verisum-grey">
                                 {info.actions.map((a) => (
                                   <li key={a}>{a}</li>
                                 ))}
@@ -832,8 +832,8 @@ if (!trust) {
                             </div>
 
                             <div className="text-sm">
-                              <div className="font-semibold text-gray-700">Probe questions</div>
-                              <ul className="list-disc pl-5 text-gray-700">
+                              <div className="font-semibold text-verisum-grey">Probe questions</div>
+                              <ul className="list-disc pl-5 text-verisum-grey">
                                 {info.probes.map((p) => (
                                   <li key={p}>{p}</li>
                                 ))}
@@ -845,7 +845,7 @@ if (!trust) {
                     </div>
                   </div>
 
-                  <div className="border rounded-lg p-6">
+                  <div className="border border-verisum-grey rounded-lg p-6">
                     <h2 className="text-lg font-semibold mb-4">Radar</h2>
                     <div style={{ width: "100%", height: 300 }}>
                       <ResponsiveContainer>
@@ -871,7 +871,7 @@ if (!trust) {
 
         {!isTeaser && (
           <div className="grid md:grid-cols-2 gap-6">
-            <div className="border rounded-lg p-6">
+            <div className="border border-verisum-grey rounded-lg p-6">
               <h2 className="text-lg font-semibold mb-4">Dimensions and actions</h2>
 
               <div className="space-y-4">
@@ -880,13 +880,13 @@ if (!trust) {
                   const info = interpretationForDimension(d.dimension);
 
                   return (
-                    <div key={d.dimension} className="border rounded p-4 space-y-2">
+                    <div key={d.dimension} className="border border-verisum-grey rounded p-4 space-y-2">
                       <div className="flex items-baseline justify-between gap-4">
                         <div className="font-semibold">{info.short}</div>
-                        <div className="text-sm text-gray-700">{score}/100</div>
+                        <div className="text-sm text-verisum-grey">{score}/100</div>
                       </div>
 
-                      <div className="text-sm text-gray-700">
+                      <div className="text-sm text-verisum-grey">
                         {score < 40
                           ? info.lowMeans
                           : score >= 70
@@ -895,8 +895,8 @@ if (!trust) {
                       </div>
 
                       <div className="text-sm">
-                        <div className="font-semibold text-gray-700">Actions</div>
-                        <ul className="list-disc pl-5 text-gray-700">
+                        <div className="font-semibold text-verisum-grey">Actions</div>
+                        <ul className="list-disc pl-5 text-verisum-grey">
                           {info.actions.map((a) => (
                             <li key={a}>{a}</li>
                           ))}
@@ -904,8 +904,8 @@ if (!trust) {
                       </div>
 
                       <div className="text-sm">
-                        <div className="font-semibold text-gray-700">Probe questions</div>
-                        <ul className="list-disc pl-5 text-gray-700">
+                        <div className="font-semibold text-verisum-grey">Probe questions</div>
+                        <ul className="list-disc pl-5 text-verisum-grey">
                           {info.probes.map((p) => (
                             <li key={p}>{p}</li>
                           ))}
@@ -917,7 +917,7 @@ if (!trust) {
               </div>
             </div>
 
-            <div className="border rounded-lg p-6">
+            <div className="border border-verisum-grey rounded-lg p-6">
     <h2 className="text-lg font-semibold mb-4">Radar</h2>
     <div style={{ width: "100%", height: 300 }}>
       <ResponsiveContainer>
@@ -938,9 +938,9 @@ if (!trust) {
           </div>
         )}
 
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-verisum-grey">
           <span className="font-medium">Need to share or chase responses?</span>{" "}
-          <a className="text-blue-600 underline" href={adminHref}>
+          <a className="text-verisum-blue underline" href={adminHref}>
             Open Survey Admin
           </a>
         </div>

@@ -147,7 +147,7 @@ export default function SurveyPage() {
   if (loading) {
     return (
       <main className="p-10">
-        <div className="text-gray-600">Loading survey…</div>
+        <div className="text-verisum-grey">Loading survey…</div>
       </main>
     );
   }
@@ -156,7 +156,7 @@ export default function SurveyPage() {
     return (
       <main className="p-10 space-y-4">
         <h1 className="text-2xl font-bold">TrustIndex Survey</h1>
-        <div className="text-red-600">{error}</div>
+        <div className="text-verisum-red">{error}</div>
       </main>
     );
   }
@@ -165,25 +165,25 @@ export default function SurveyPage() {
     return (
       <main className="p-10 space-y-4">
         <h1 className="text-3xl font-bold">Thank you</h1>
-        <p className="text-gray-700">
+        <p className="text-verisum-grey">
           Your responses have been recorded. You can now close this window.
         </p>
         {runId && (
           <div className="flex flex-wrap items-center gap-3">
             <a
-              className="px-5 py-3 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700"
+              className="px-5 py-3 rounded bg-verisum-blue text-verisum-white font-semibold hover:bg-[#2a7bb8]"
               href={`/dashboard/${runId}`}
             >
               View results
             </a>
             {runMode === "org" && (
-              <a className="text-blue-600 underline" href={`/admin/run/${runId}`}>
+              <a className="text-verisum-blue underline" href={`/admin/run/${runId}`}>
                 Open Survey Admin
               </a>
             )}
             {runMode === "explorer" && (
               <a
-                className="px-4 py-3 rounded border hover:bg-gray-50 text-sm"
+                className="px-4 py-3 rounded border hover:bg-[#f5f5f5] text-sm"
                 href={
                   "mailto:?" +
                   "subject=" +
@@ -206,23 +206,23 @@ export default function SurveyPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white text-gray-900">
+    <main className="min-h-screen bg-verisum-white text-verisum-black">
       <div className="max-w-3xl mx-auto p-10 space-y-8">
         <header className="space-y-2">
           <h1 className="text-3xl font-bold">TrustIndex™ Survey</h1>
-          <p className="text-gray-700">
+          <p className="text-verisum-grey">
             Please answer all questions. Scale: 1 (Strongly disagree) → 5 (Strongly agree).
           </p>
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-verisum-grey">
             Progress: {answeredCount}/{questions.length}
           </div>
           {unansweredCount > 0 && (
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-verisum-grey">
               You have {unansweredCount} unanswered question(s). Scroll to the highlighted items, or jump to the
               first one.{" "}
               <button
                 type="button"
-                className="text-blue-600 underline"
+                className="text-verisum-blue underline"
                 onClick={() => {
                   const missing = questions
                     .filter((q) => answers[q.id] == null)
@@ -244,7 +244,7 @@ export default function SurveyPage() {
         </header>
 
         {validationError && (
-          <div className="border border-red-200 bg-red-50 text-red-700 rounded-lg p-4 text-sm">
+          <div className="border border-verisum-red bg-[#ffe5e5] text-verisum-red rounded-lg p-4 text-sm">
             {validationError}
           </div>
         )}
@@ -257,15 +257,15 @@ export default function SurveyPage() {
               key={q.id}
               data-qid={q.id}
               className={[
-                "border rounded-lg p-6 space-y-3",
-                isMissing ? "border-red-300 bg-red-50" : "border-gray-200",
+                "border border-verisum-grey rounded-lg p-6 space-y-3",
+                isMissing ? "border-verisum-red bg-[#ffe5e5]" : "border-verisum-grey",
               ].join(" ")}
             >
               <div className="flex items-center justify-between gap-3">
-                <div className="text-xs uppercase tracking-wide text-gray-500">
+                <div className="text-xs uppercase tracking-wide text-verisum-grey">
                   {q.dimension}
                 </div>
-                {isMissing && <div className="text-xs font-semibold text-red-600">Required</div>}
+                {isMissing && <div className="text-xs font-semibold text-verisum-red">Required</div>}
               </div>
               <div className="font-medium">
                 {idx + 1}. {q.prompt}
@@ -280,8 +280,8 @@ export default function SurveyPage() {
                     className={[
                       "w-10 h-10 rounded border text-sm",
                       answers[q.id] === v
-                        ? "bg-gray-900 text-white border-gray-900"
-                        : "bg-white text-gray-900 border-gray-300 hover:border-gray-500",
+                        ? "bg-verisum-black text-verisum-white border-verisum-black"
+                        : "bg-verisum-white text-verisum-black border-verisum-grey hover:border-verisum-grey",
                     ].join(" ")}
                     aria-label={`Answer ${v}`}
                   >
@@ -290,11 +290,11 @@ export default function SurveyPage() {
                 ))}
               </div>
 
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-verisum-grey">
                 1 = Strongly disagree · 3 = Neutral · 5 = Strongly agree
               </div>
               {isMissing && (
-                <div className="text-xs font-medium text-red-600">
+                <div className="text-xs font-medium text-verisum-red">
                   Please answer this question.
                 </div>
               )}
@@ -303,7 +303,7 @@ export default function SurveyPage() {
           })}
         </div>
 
-        {error && <div className="text-red-600">{error}</div>}
+        {error && <div className="text-verisum-red">{error}</div>}
 
         <div className="pt-2">
           <div className="flex flex-wrap items-center gap-3">
@@ -311,14 +311,14 @@ export default function SurveyPage() {
               type="button"
               onClick={submit}
               disabled={submitting || answeredCount !== questions.length}
-              className="px-6 py-3 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-3 rounded bg-verisum-blue text-verisum-white font-semibold hover:bg-[#2a7bb8] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting ? "Submitting…" : unansweredCount > 0 ? `Answer ${unansweredCount} more to submit` : "Submit"}
             </button>
             {unansweredCount > 0 && (
               <button
                 type="button"
-                className="px-4 py-3 rounded border hover:bg-gray-50 text-sm"
+                className="px-4 py-3 rounded border hover:bg-[#f5f5f5] text-sm"
                 onClick={() => {
                   const missing = questions
                     .filter((q) => answers[q.id] == null)
