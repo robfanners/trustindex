@@ -39,8 +39,6 @@ export default function AdminRunPage() {
   const [includeSegmentation, setIncludeSegmentation] = useState(false);
   const [pendingFilterType, setPendingFilterType] = useState<"all" | "team" | "level" | "location">("all");
   const [pendingFilterValue, setPendingFilterValue] = useState("");
-  const [unlockCode, setUnlockCode] = useState("");
-  const [unlockStatus, setUnlockStatus] = useState<string | null>(null);
   const [authorising, setAuthorising] = useState(false);
   const [recentRuns, setRecentRuns] = useState<RecentRun[]>([]);
   const [rememberDevice, setRememberDevice] = useState(false);
@@ -688,40 +686,6 @@ export default function AdminRunPage() {
           </div>
         )}
       </div>
-
-
-
-      {run?.mode === "org" && (
-        <div className="border border-verisum-grey rounded-lg p-6 space-y-3">
-          <h2 className="text-xl font-semibold">Unlock full report</h2>
-          <div className="space-y-2">
-            <label className="text-sm text-verisum-grey">Unlock code</label>
-            <input
-              className="w-full border border-verisum-grey rounded px-3 py-2 text-sm"
-              value={unlockCode}
-              onChange={(e) => setUnlockCode(e.target.value)}
-              placeholder="Enter code"
-            />
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm"
-                onClick={() => {
-                  const expected = process.env.NEXT_PUBLIC_UNLOCK_CODE || "DEMO-UNLOCK";
-                  if (unlockCode.trim() === expected) {
-                    localStorage.setItem(`ti_unlocked_${runId}`, "1");
-                    setUnlockStatus("Unlocked on this device.");
-                  } else {
-                    setUnlockStatus("Invalid unlock code.");
-                  }
-                }}
-              >
-                Unlock
-              </button>
-            </div>
-            {unlockStatus && <div className="text-sm text-verisum-grey">{unlockStatus}</div>}
-          </div>
-        </div>
-      )}
 
       <div className="border border-verisum-grey rounded-lg p-6 space-y-4">
         <h2 className="text-xl font-semibold">
