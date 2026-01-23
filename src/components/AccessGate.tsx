@@ -62,23 +62,23 @@ export default function AccessGate() {
   }
 
   return (
-    <div className="max-w-md mx-auto border rounded-lg p-6 space-y-4 bg-white">
+    <div className="max-w-md mx-auto border border-verisum-grey rounded-lg p-6 space-y-4 bg-verisum-white">
       <div className="space-y-1">
         <h2 className="text-xl font-semibold">{title}</h2>
-        <p className="text-sm text-gray-600">{hint}</p>
+        <p className="text-sm text-verisum-grey">{hint}</p>
       </div>
 
       <div className="space-y-2">
         <input
-          className="w-full border rounded px-3 py-2"
+          className="w-full border border-verisum-grey rounded px-3 py-2"
           placeholder="Enter code"
           value={code}
           onChange={(e) => setCode(e.target.value)}
         />
-        {error && <div className="text-sm text-red-600">{error}</div>}
+        {error && <div className="text-sm text-verisum-red">{error}</div>}
         <button
           type="button"
-          className="w-full px-4 py-2 rounded bg-blue-600 text-white disabled:opacity-50"
+          className="w-full px-4 py-2 rounded bg-verisum-blue text-verisum-white disabled:opacity-50 hover:bg-[#2a7bb8]"
           disabled={loading || !code.trim()}
           onClick={submit}
         >
