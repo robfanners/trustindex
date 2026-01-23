@@ -35,13 +35,23 @@ export function middleware(request: NextRequest) {
   }
 
   // Everything else under /admin is Verisum-only
-  if (hasVerisumAdmin) return NextResponse.next();
+  if (hasVerisumAdmin) {
+    // If accessing /admin (root), redirect to /admin/new-run
+    if (pathname === "/admin") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/admin/new-run";
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next();
+  }
 
   const url = request.nextUrl.clone();
   url.pathname = "/";
   url.searchParams.set("auth", "required");
   url.searchParams.set("role", "verisum");
-  url.searchParams.set("next", `${pathname}${search || ""}`);
+  // Default next to /admin/new-run if accessing /admin root
+  const nextPath = pathname === "/admin" ? "/admin/new-run" : `${pathname}${search || ""}`;
+  url.searchParams.set("next", nextPath);
   return NextResponse.redirect(url);
 }
 

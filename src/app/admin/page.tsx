@@ -1,18 +1,20 @@
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+
 export default function AdminHomePage() {
+  const router = useRouter();
+  
+  useEffect(() => {
+    // Redirect immediately to the create survey page
+    router.replace("/admin/new-run");
+  }, [router]);
+
+  // Show minimal loading state during redirect
   return (
-    <main className="p-10 space-y-6">
-      <h1 className="text-3xl font-bold">Verisum Admin</h1>
-      <div className="space-y-2">
-        <a className="text-verisum-blue underline" href="/admin/bootstrap">
-          /admin/bootstrap
-        </a>
-        <a className="text-verisum-blue underline" href="/admin/new-run">
-          /admin/new-run
-        </a>
-        <a className="text-verisum-blue underline" href="/debug">
-          /debug
-        </a>
-      </div>
+    <main className="min-h-screen bg-verisum-white text-verisum-black p-12">
+      <p className="text-verisum-grey">Redirecting...</p>
     </main>
   );
 }

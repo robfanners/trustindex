@@ -3,12 +3,23 @@
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+// Helper to validate that next path is safe (internal, no open redirects)
+function isSafePath(path: string): boolean {
+  if (!path || !path.startsWith("/")) return false;
+  if (path.startsWith("http") || path.includes("://")) return false;
+  return true;
+}
+
 export default function AccessGate() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const role = (searchParams.get("role") || "verisum") as "verisum" | "owner";
-  const next = searchParams.get("next") || "/admin";
+  const nextParam = searchParams.get("next");
+  // For verisum role, default to /admin/new-run; for owner, use provided next or default
+  const next = role === "verisum" 
+    ? (nextParam && isSafePath(nextParam) ? nextParam : "/admin/new-run")
+    : (nextParam && isSafePath(nextParam) ? nextParam : "/admin/new-run");
   const runId = searchParams.get("runId") || "";
 
   const [code, setCode] = useState("");
@@ -49,11 +60,13 @@ export default function AccessGate() {
       const res = await fetch("/api/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({ code, role: "verisum", next }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok || !json?.ok) throw new Error(json?.error || "Access denied");
-      router.push(next);
+      // Use the next from response if provided, otherwise use our computed next
+      const redirectTo = (json?.next && isSafePath(json.next)) ? json.next : next;
+      router.push(redirectTo);
     } catch (e: any) {
       setError(e?.message || "Failed");
     } finally {

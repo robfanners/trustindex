@@ -60,7 +60,7 @@ export default function Home() {
             Create a survey
           </a>
         </div>
-        <a className="text-sm text-verisum-grey underline" href="/verisum?role=verisum&next=/admin">
+        <a className="text-sm text-verisum-grey underline" href="/verisum?role=verisum&next=/admin/new-run">
           Verisum admin →
         </a>
 
