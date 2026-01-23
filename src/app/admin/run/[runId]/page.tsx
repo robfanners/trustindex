@@ -666,22 +666,6 @@ export default function AdminRunPage() {
         )}
       </div>
 
-      <div className="border border-verisum-grey rounded-lg p-6 space-y-3">
-        <div className="font-semibold">Results</div>
-        <a
-          className="text-verisum-blue underline"
-          href={dashboardHref}
-          onClick={() => sessionStorage.setItem(`ti_admin_${runId}`, "1")}
-        >
-          Click here to see your survey results
-        </a>
-        <div className="text-xs text-verisum-grey">(Internal link)</div>
-        {run?.mode === "explorer" && (
-          <div className="text-xs text-verisum-grey">
-            Explorer mode is a single-person self-assessment. No invites to chase.
-          </div>
-        )}
-      </div>
 
 
       {run?.mode === "org" && (

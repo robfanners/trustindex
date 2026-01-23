@@ -451,11 +451,11 @@ if (!trust) {
   const canExport = isUnlocked && isAdminViewer;
   const teaserCopy = {
     title: "Unlock the full TrustIndex breakdown",
-    body: "You’ve got the headline score, radar, and one top insight. Unlocking reveals the full dimension-by-dimension diagnosis, recommended actions, and a downloadable dataset.",
+    body: "You've got the headline score, one top insight, radar and the basic CSV survey data download all available in your current SurveyAdmin session.\nClick on the link below to unlock your path to improved Trust and Performance, gaining:",
     bullets: [
-      "Dimension-by-dimension diagnosis",
-      "Actions and probe questions tailored to weak spots",
-      "Download responses (CSV) for deeper analysis",
+      "Full dimension-by-dimension diagnosis.",
+      "Corresponding actions and probe questions tailored to weak spots.",
+      "Further analysis, reports and implementation support.",
     ],
   };
   const aboveThresholdCopy = {
@@ -731,7 +731,7 @@ if (!trust) {
             <div className="relative">
               <div className="border border-verisum-grey rounded-lg bg-verisum-white p-6 space-y-4 mb-6">
                 <h2 className="text-lg font-semibold">{overlayCopy.title}</h2>
-                <div className="text-sm text-verisum-grey">{overlayCopy.body}</div>
+                <div className="text-sm text-verisum-grey whitespace-pre-line">{overlayCopy.body}</div>
                 {"bullets" in overlayCopy && (
                   <ul className="list-disc pl-5 text-sm text-verisum-grey">
                     {overlayCopy.bullets.map((item) => (
@@ -742,14 +742,6 @@ if (!trust) {
                 {"helper" in overlayCopy && (
                   <div className="text-xs text-verisum-grey">{overlayCopy.helper}</div>
                 )}
-                <div className="space-y-2 text-sm text-verisum-grey">
-                  <div className="font-semibold">What I’d like (delete/leave as appropriate):</div>
-                  <ol className="list-decimal pl-5">
-                    <li>Unlock the full breakdown (paid)</li>
-                    <li>Run a full org survey (11+ respondents)</li>
-                    <li>A short debrief / recommendations</li>
-                  </ol>
-                </div>
                 <div className="flex flex-wrap gap-2">
                   <a
                     className="px-4 py-2 rounded bg-verisum-blue text-verisum-white text-sm font-semibold hover:bg-[#2a7bb8]"
