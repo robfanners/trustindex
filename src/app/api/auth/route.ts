@@ -33,11 +33,13 @@ export async function POST(req: Request) {
 
   const res = NextResponse.json({ ok: true, next });
 
+  const requestUrl = new URL(req.url);
+  const isHttps = requestUrl.protocol === "https:";
   const cookieName = role === "verisum" ? "ti_verisum_admin" : "ti_sysadmin";
   res.cookies.set(cookieName, "1", {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: isHttps,
     path: "/",
     maxAge: 60 * 60 * 24 * 7,
   });

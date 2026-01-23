@@ -13,6 +13,12 @@ type InviteRow = {
   level?: string | null;
   location?: string | null;
 };
+type RecentRun = {
+  runId: string;
+  title: string;
+  mode: "explorer" | "org";
+  createdAtISO: string;
+};
 
 export default function AdminRunPage() {
   const params = useParams<{ runId: string }>();
@@ -36,6 +42,8 @@ export default function AdminRunPage() {
   const [unlockCode, setUnlockCode] = useState("");
   const [unlockStatus, setUnlockStatus] = useState<string | null>(null);
   const [authorising, setAuthorising] = useState(false);
+  const [recentRuns, setRecentRuns] = useState<RecentRun[]>([]);
+  const [rememberDevice, setRememberDevice] = useState(false);
 
   async function copyText(label: string, text: string) {
     await navigator.clipboard.writeText(text);
@@ -61,6 +69,99 @@ export default function AdminRunPage() {
     if (!t) return "";
     if (t.length <= 12) return t;
     return `${t.slice(0, 6)}…${t.slice(-4)}`;
+  }
+
+  // Storage abstraction for recent runs history
+  function getStorageBackend() {
+    return rememberDevice ? localStorage : sessionStorage;
+  }
+
+  function getHistory(): RecentRun[] {
+    try {
+      const storage = getStorageBackend();
+      const raw = storage.getItem("ti_recent_runs");
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function setHistory(history: RecentRun[]) {
+    try {
+      const storage = getStorageBackend();
+      storage.setItem("ti_recent_runs", JSON.stringify(history));
+    } catch {
+      // Ignore storage errors
+    }
+  }
+
+  function clearHistory() {
+    try {
+      // Clear both for safety
+      sessionStorage.removeItem("ti_recent_runs");
+      localStorage.removeItem("ti_recent_runs");
+    } catch {
+      // Ignore storage errors
+    }
+  }
+
+  function addOrUpdateHistoryEntry(entry: RecentRun) {
+    const existing = getHistory();
+    const filtered = existing.filter((r) => r.runId !== entry.runId);
+    // Keep most recent createdAtISO
+    const merged = [entry, ...filtered].sort((a, b) => 
+      new Date(b.createdAtISO).getTime() - new Date(a.createdAtISO).getTime()
+    ).slice(0, 10);
+    setHistory(merged);
+    return merged;
+  }
+
+  function migrateHistory(fromStorage: Storage, toStorage: Storage) {
+    try {
+      const raw = fromStorage.getItem("ti_recent_runs");
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return;
+      
+      const existing = (() => {
+        try {
+          const existingRaw = toStorage.getItem("ti_recent_runs");
+          if (!existingRaw) return [];
+          const existingParsed = JSON.parse(existingRaw);
+          return Array.isArray(existingParsed) ? existingParsed : [];
+        } catch {
+          return [];
+        }
+      })();
+
+      // Merge and dedupe by runId, keeping most recent createdAtISO
+      const merged = [...existing, ...parsed].reduce((acc, entry) => {
+        const existing = acc.find((e) => e.runId === entry.runId);
+        if (!existing) {
+          acc.push(entry);
+        } else {
+          // Keep the one with more recent createdAtISO
+          const existingDate = new Date(existing.createdAtISO).getTime();
+          const entryDate = new Date(entry.createdAtISO).getTime();
+          if (entryDate > existingDate) {
+            const index = acc.indexOf(existing);
+            acc[index] = entry;
+          }
+        }
+        return acc;
+      }, [] as RecentRun[]).sort((a, b) => 
+        new Date(b.createdAtISO).getTime() - new Date(a.createdAtISO).getTime()
+      ).slice(0, 10);
+
+      toStorage.setItem("ti_recent_runs", JSON.stringify(merged));
+      fromStorage.removeItem("ti_recent_runs");
+      return merged;
+    } catch {
+      // Ignore migration errors
+      return [];
+    }
   }
 
   useEffect(() => {
@@ -110,6 +211,35 @@ export default function AdminRunPage() {
 
     load();
   }, [runId]);
+
+  // Load remember device preference on mount
+  useEffect(() => {
+    try {
+      const pref = localStorage.getItem("ti_remember_device");
+      setRememberDevice(pref === "1");
+    } catch {
+      setRememberDevice(false);
+    }
+  }, []);
+
+  // Load recent surveys on mount and when preference changes
+  useEffect(() => {
+    const history = getHistory();
+    setRecentRuns(history);
+  }, [rememberDevice]);
+
+  // Save current run to recent surveys when successfully loaded
+  useEffect(() => {
+    if (!run || !runId || loading) return;
+    const entry: RecentRun = {
+      runId,
+      title: run.title || `Survey ${runId.slice(0, 8)}`,
+      mode: run.mode,
+      createdAtISO: new Date().toISOString(),
+    };
+    const updated = addOrUpdateHistoryEntry(entry);
+    setRecentRuns(updated);
+  }, [run, runId, loading, rememberDevice]);
 
   useEffect(() => {
     async function run() {
@@ -462,6 +592,78 @@ export default function AdminRunPage() {
         </div>
       </div>
 
+      <div className="border rounded-lg p-6 space-y-4">
+        <div className="flex items-center justify-between gap-4">
+          <h2 className="text-lg font-semibold">
+            Your recent survey admin sessions{rememberDevice ? "" : " (this browser session)"}
+          </h2>
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={rememberDevice}
+                onChange={(e) => {
+                  const newValue = e.target.checked;
+                  setRememberDevice(newValue);
+                  try {
+                    localStorage.setItem("ti_remember_device", newValue ? "1" : "0");
+                    
+                    // Migrate history when preference changes
+                    if (newValue) {
+                      // Migrate from sessionStorage to localStorage
+                      const migrated = migrateHistory(sessionStorage, localStorage);
+                      setRecentRuns(migrated);
+                    } else {
+                      // Migrate from localStorage to sessionStorage
+                      const migrated = migrateHistory(localStorage, sessionStorage);
+                      setRecentRuns(migrated);
+                    }
+                  } catch {
+                    // Ignore errors
+                  }
+                }}
+                className="rounded"
+              />
+              <span>Remember this device</span>
+            </label>
+            {recentRuns.length > 0 && (
+              <button
+                className="text-xs text-gray-500 underline"
+                onClick={() => {
+                  clearHistory();
+                  setRecentRuns([]);
+                }}
+              >
+                Clear history
+              </button>
+            )}
+          </div>
+        </div>
+        <div className="text-xs text-gray-500">
+          If enabled, your recent survey admin sessions will remain on this device.
+        </div>
+
+        {recentRuns.length > 0 && (
+
+          <div className="space-y-3">
+            {recentRuns.map((r) => (
+              <div key={r.runId} className="border rounded p-4 space-y-2">
+                <div className="font-semibold text-gray-900">{r.title}</div>
+                <div className="text-xs text-gray-500">
+                  {r.mode === "org" ? "Organisational" : "Explorer"} ·{" "}
+                  {new Date(r.createdAtISO).toLocaleDateString()}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <a className="px-3 py-2 border rounded hover:bg-gray-50 text-sm" href={`/admin/run/${r.runId}`}>
+                    Open Survey Admin
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       <div className="border rounded-lg p-6 space-y-3">
         <div className="font-semibold">Results</div>
         <a
@@ -662,26 +864,6 @@ export default function AdminRunPage() {
                 Copy pending links
               </button>
 
-              <button
-                className="px-3 py-2 border rounded hover:bg-gray-50 text-sm"
-                onClick={() =>
-                  copyText(
-                    "Pending email draft copied",
-                    `Subject: Reminder: ${run?.title || "TrustIndex survey"}
-
-Hi,
-
-Quick reminder to complete the TrustIndex survey using your personal link below:
-
-${pendingLinks}
-
-Thank you.`
-                  )
-                }
-              >
-                Copy email draft (pending only)
-              </button>
-
               <a
                 className="px-3 py-2 border rounded hover:bg-gray-50 text-sm inline-block"
                 href={
@@ -733,7 +915,15 @@ Thank you.`
           </a>
 
           {invites.length > 0 && (
-            <div className="flex flex-col gap-1">
+            <>
+              <a
+                className="px-3 py-2 border rounded hover:bg-gray-50 text-sm inline-block"
+                href={`/survey/${invites[0].token}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open Your Survey
+              </a>
               <button
                 className="px-3 py-2 border rounded hover:bg-gray-50 text-sm"
                 onClick={() => {
@@ -741,12 +931,12 @@ Thank you.`
                   copyText("Your survey link copied", firstLink);
                 }}
               >
-                Your survey
+                Copy Your Survey Link
               </button>
-              <div className="text-xs text-gray-500">
-                If you are taking the survey yourself, use this link. Do not send it to other users.
+              <div className="text-xs text-gray-500 w-full">
+                Do not forward. If you are taking the survey yourself, use this link.
               </div>
-            </div>
+            </>
           )}
         </div>
 

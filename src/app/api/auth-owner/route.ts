@@ -1,12 +1,26 @@
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { supabaseServer } from "@/lib/supabaseServer";
 
-function cookieSecure() {
-  return process.env.NODE_ENV === "production";
+function getBaseUrl(request: NextRequest): string {
+  const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? "localhost:3000";
+  const proto = request.headers.get("x-forwarded-proto") ?? (process.env.NODE_ENV === "production" ? "https" : "http");
+  return `${proto}://${host}`;
 }
 
-async function validateAndSetCookie(runId: string, token: string) {
+function safeNextPath(runId: string, next?: string | null): string {
+  if (!next || !next.startsWith("/")) {
+    return `/admin/run/${runId}`;
+  }
+  // Prevent open redirects
+  if (next.startsWith("http") || next.includes("://")) {
+    return `/admin/run/${runId}`;
+  }
+  return next;
+}
+
+async function validateAndSetCookie(runId: string, token: string, isHttps: boolean) {
   const { data, error } = await supabaseServer()
     .from("run_admin_tokens")
     .select("run_id,token")
@@ -28,35 +42,42 @@ async function validateAndSetCookie(runId: string, token: string) {
   cookieStore.set(cookieName, "1", {
     httpOnly: true,
     sameSite: "lax",
-    secure: cookieSecure(),
+    secure: isHttps,
     path: "/",
     maxAge: 60 * 60 * 24 * 30,
   });
 }
 
 // TODO: ensure run_admin_tokens table exists with run_id/token columns.
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
-    const url = new URL(req.url);
-    const runId = url.searchParams.get("runId");
-    const ownerToken = url.searchParams.get("ownerToken");
-    const next = url.searchParams.get("next") || `/admin/run/${runId}`;
+    const requestUrl = new URL(req.url);
+    const runId = requestUrl.searchParams.get("runId");
+    const ownerToken = requestUrl.searchParams.get("ownerToken");
+    const next = requestUrl.searchParams.get("next");
+    const nextPath = safeNextPath(runId || "", next);
+    const baseUrl = getBaseUrl(req);
+    const isHttps = baseUrl.startsWith("https://");
 
     if (!runId || !ownerToken) {
-      return NextResponse.redirect(new URL("/?auth=required&role=owner&runId=" + (runId || ""), req.url), 302);
+      const redirectUrl = new URL(`/?auth=required&role=owner&runId=${runId || ""}`, baseUrl);
+      return NextResponse.redirect(redirectUrl, 302);
     }
 
-    await validateAndSetCookie(runId, ownerToken);
+    await validateAndSetCookie(runId, ownerToken, isHttps);
 
-    return NextResponse.redirect(new URL(next, req.url), 302);
+    const redirectUrl = new URL(nextPath, baseUrl);
+    return NextResponse.redirect(redirectUrl, 302);
   } catch (e: any) {
-    const url = new URL(req.url);
-    const runId = url.searchParams.get("runId") || "";
-    return NextResponse.redirect(new URL(`/?auth=required&role=owner&runId=${runId}`, req.url), 302);
+    const requestUrl = new URL(req.url);
+    const runId = requestUrl.searchParams.get("runId") || "";
+    const baseUrl = getBaseUrl(req);
+    const redirectUrl = new URL(`/?auth=required&role=owner&runId=${runId}`, baseUrl);
+    return NextResponse.redirect(redirectUrl, 302);
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const runId = String(body?.runId || "");
@@ -66,7 +87,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: "Missing runId or token" }, { status: 400 });
     }
 
-    await validateAndSetCookie(runId, token);
+    const baseUrl = getBaseUrl(req);
+    const isHttps = baseUrl.startsWith("https://");
+    await validateAndSetCookie(runId, token, isHttps);
 
     return NextResponse.json({ ok: true });
   } catch (e: any) {

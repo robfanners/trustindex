@@ -11,13 +11,6 @@ type Result = {
   ownerToken: string;
 };
 
-type RecentRun = {
-  runId: string;
-  title: string;
-  mode: "explorer" | "org";
-  createdAtISO: string;
-};
-
 export default function NewRunPage() {
   const MIN_ORG_RESPONDENTS = 5;
   const [orgName, setOrgName] = useState("Verisum (Demo)");
@@ -32,7 +25,6 @@ export default function NewRunPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<Result | null>(null);
-  const [recentRuns, setRecentRuns] = useState<RecentRun[]>([]);
 
 const [copied, setCopied] = useState<string | null>(null);
 
@@ -41,36 +33,6 @@ async function copyText(label: string, text: string) {
   setCopied(label);
   setTimeout(() => setCopied(null), 1500);
 }
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem("trustindex_recent_runs");
-      const parsed = raw ? (JSON.parse(raw) as RecentRun[]) : [];
-      setRecentRuns(Array.isArray(parsed) ? parsed : []);
-    } catch {
-      setRecentRuns([]);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!result) return;
-    try {
-      const raw = localStorage.getItem("trustindex_recent_runs");
-      const parsed = raw ? (JSON.parse(raw) as RecentRun[]) : [];
-      const existing = Array.isArray(parsed) ? parsed : [];
-      const entry: RecentRun = {
-        runId: result.runId,
-        title: runTitle,
-        mode: result.mode,
-        createdAtISO: new Date().toISOString(),
-      };
-      const next = [entry, ...existing.filter((r) => r.runId !== result.runId)].slice(0, 10);
-      localStorage.setItem("trustindex_recent_runs", JSON.stringify(next));
-      setRecentRuns(next);
-    } catch {
-      // Ignore localStorage errors to avoid breaking the flow.
-    }
-  }, [result, runTitle]);
 
   const onModeChange = (m: "explorer" | "org") => {
     setMode(m);
@@ -127,43 +89,6 @@ async function copyText(label: string, text: string) {
 	Explorer mode is a private self-assessment (results show immediately). Organisational mode is a multi-respondent survey (results show once 5+ people respond).
         </p>
       </header>
-
-      {recentRuns.length > 0 && (
-        <div className="border rounded-lg p-6 space-y-4">
-          <div className="flex items-center justify-between gap-4">
-            <h2 className="text-lg font-semibold">Recent surveys</h2>
-            <button
-              className="text-xs text-gray-500 underline"
-              onClick={() => {
-                localStorage.removeItem("trustindex_recent_runs");
-                setRecentRuns([]);
-              }}
-            >
-              Clear history
-            </button>
-          </div>
-
-          <div className="space-y-3">
-            {recentRuns.map((r) => (
-              <div key={r.runId} className="border rounded p-4 space-y-2">
-                <div className="font-semibold text-gray-900">{r.title}</div>
-                <div className="text-xs text-gray-500">
-                  {r.mode === "org" ? "Organisational" : "Explorer"} ·{" "}
-                  {new Date(r.createdAtISO).toLocaleDateString()}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <a className="px-3 py-2 border rounded hover:bg-gray-50 text-sm" href={`/admin/run/${r.runId}`}>
-                    Open Survey Admin
-                  </a>
-                  <a className="px-3 py-2 border rounded hover:bg-gray-50 text-sm" href={`/dashboard/${r.runId}`}>
-                    Open Results
-                  </a>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       <div className="border rounded-lg p-6 space-y-4">
         <div className="space-y-1">
@@ -253,7 +178,7 @@ async function copyText(label: string, text: string) {
               </button>
               <a
                 className="px-3 py-2 border rounded hover:bg-gray-50 text-sm inline-block"
-                href={`/api/auth-owner?runId=${result.runId}&ownerToken=${encodeURIComponent(result.ownerToken)}&next=${encodeURIComponent(`/admin/run/${result.runId}`)}`}
+                href={`/api/auth-owner?runId=${encodeURIComponent(result.runId)}&ownerToken=${encodeURIComponent(result.ownerToken)}&next=${encodeURIComponent(`/admin/run/${result.runId}`)}`}
               >
                 Open Survey Admin
               </a>
