@@ -780,15 +780,38 @@ export default function AdminRunPage() {
         </div>
 
         {/* Live progress line */}
-        <div className="text-base font-medium">
-          {invites.filter((i) => i.used_at).length} responses received
-          {run?.mode === "org" && " • Results available at 5+ responses"}
-        </div>
-        {run?.mode === "explorer" && (
-          <div className="text-sm text-verisum-grey">
-            Explorer mode: results available immediately.
-          </div>
-        )}
+        {(() => {
+          const responseCount = invites.filter((i) => i.used_at).length;
+          const isEarlyState = responseCount < 5;
+          
+          if (run?.mode === "org") {
+            return (
+              <>
+                <div className="text-base font-medium">
+                  {isEarlyState
+                    ? `${responseCount} responses so far • Results unlock at 5+ responses`
+                    : `${responseCount} responses received • Results available at 5+ responses`}
+                </div>
+                {isEarlyState && (
+                  <div className="text-sm text-verisum-grey">
+                    Share your survey link below to start collecting responses.
+                  </div>
+                )}
+              </>
+            );
+          }
+          
+          return (
+            <>
+              <div className="text-base font-medium">
+                {responseCount} responses received
+              </div>
+              <div className="text-sm text-verisum-grey">
+                Explorer mode: results available immediately.
+              </div>
+            </>
+          );
+        })()}
 
         {/* Live feel status line */}
         {lastUpdated && (
@@ -958,7 +981,7 @@ export default function AdminRunPage() {
               <div className="text-xs text-verisum-grey w-full">
                 Do not forward. If you are taking the survey yourself, use this link.
               </div>
-              <div className="flex flex-wrap gap-2 mt-2">
+              <div className="flex flex-wrap items-center gap-2 mt-2">
                 <a
                   className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm inline-block"
                   href={`/survey/${invites[0].token}`}
@@ -976,6 +999,22 @@ export default function AdminRunPage() {
                 >
                   Copy Your Survey Link
                 </button>
+                {(() => {
+                  const responseCount = invites.filter((i) => i.used_at).length;
+                  let statusLabel = "";
+                  if (responseCount === 0) {
+                    statusLabel = "Not started";
+                  } else if (responseCount < 5) {
+                    statusLabel = "In progress";
+                  } else {
+                    statusLabel = "Results available";
+                  }
+                  return (
+                    <span className="text-xs text-verisum-grey">
+                      {statusLabel}
+                    </span>
+                  );
+                })()}
               </div>
             </>
           )}
