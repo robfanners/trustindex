@@ -72,7 +72,7 @@ export default function BootstrapPage() {
             </div>
 
             <div className="space-y-1 pt-2">
-              <div className="text-sm text-verisum-grey">Survey Admin</div>
+              <div className="text-sm text-verisum-grey">Survey Dashboard</div>
               <a className="text-verisum-blue underline" href={adminRunLink}>
                 {adminRunLink}
               </a>

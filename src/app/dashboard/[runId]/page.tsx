@@ -372,11 +372,11 @@ setInvites((inviteData as InviteRow[]) || []);
           <div className="text-sm text-verisum-grey">
             <span className="font-medium">Need to share or chase responses?</span>{" "}
             <a className="text-verisum-blue underline" href={adminHref}>
-              Open Survey Admin
+              Open Survey Dashboard
             </a>
           </div>
           <a className="text-verisum-blue underline" href={adminHref}>
-            Back to Survey Admin
+            Back to Survey Dashboard
           </a>
         </div>
       </main>
@@ -432,12 +432,12 @@ if (!trust) {
         <div className="text-sm text-verisum-grey">
           <span className="font-medium">Need to share or chase responses?</span>{" "}
           <a className="text-verisum-blue underline" href={adminHref}>
-            Open Survey Admin
+            Open Survey Dashboard
           </a>
         </div>
 
 	<a className="text-verisum-blue underline" href={adminHref}>
-          Back to Survey Admin
+          Back to Survey Dashboard
         </a>
       </div>
     </main>
@@ -451,7 +451,7 @@ if (!trust) {
   const canExport = isUnlocked && isAdminViewer;
   const teaserCopy = {
     title: "Unlock the full TrustIndex breakdown",
-    body: "You've got the headline score, one top insight, radar and the basic CSV survey data download all available in your Survey Admin.\nClick on the link below to unlock your path to improved Trust and Performance, gaining:",
+    body: "You've got the headline score, one top insight, radar and the basic CSV survey data download all available in your Survey Dashboard.\nClick on the link below to unlock your path to improved Trust and Performance, gaining:",
     bullets: [
       "Full dimension-by-dimension diagnosis.",
       "Corresponding actions and probe questions tailored to weak spots.",
@@ -579,7 +579,7 @@ if (!trust) {
               Mode: {run?.mode ?? "—"} · Respondents: {counts?.respondents ?? 0}
             </div>
             <a className="text-verisum-blue underline whitespace-nowrap" href={adminHref}>
-              Back to Survey Admin
+              Back to Survey Dashboard
             </a>
           </div>
         </header>
@@ -683,7 +683,7 @@ if (!trust) {
             </button>
             {exportStatus && <div className="text-sm text-verisum-grey">{exportStatus}</div>}
             <div className="text-xs text-verisum-grey">
-              Admin view only (set when opened from Survey Admin).
+              Admin view only (set when opened from Survey Dashboard).
             </div>
           </div>
         )}
@@ -933,7 +933,7 @@ if (!trust) {
         <div className="text-sm text-verisum-grey">
           <span className="font-medium">Need to share or chase responses?</span>{" "}
           <a className="text-verisum-blue underline" href={adminHref}>
-            Open Survey Admin
+            Open Survey Dashboard
           </a>
         </div>
       </div>

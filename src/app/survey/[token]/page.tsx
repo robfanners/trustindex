@@ -178,7 +178,7 @@ export default function SurveyPage() {
             </a>
             {runMode === "org" && (
               <a className="text-verisum-blue underline" href={`/admin/run/${runId}`}>
-                Open Survey Admin
+                Open Survey Dashboard
               </a>
             )}
             {runMode === "explorer" && (
@@ -192,7 +192,7 @@ export default function SurveyPage() {
                   encodeURIComponent(
                     `Here are my TrustIndex links:\n\n` +
                       `Results: ${window.location.origin}/dashboard/${runId}\n` +
-                      `Survey Admin: ${window.location.origin}/admin/run/${runId}\n`
+                      `Survey Dashboard: ${window.location.origin}/admin/run/${runId}\n`
                   )
                 }
               >

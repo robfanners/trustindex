@@ -308,7 +308,7 @@ export default function AdminRunPage() {
   if (error || !runId) {
     return (
       <main className="p-10 space-y-3">
-        <h1 className="text-2xl font-bold">Survey Admin</h1>
+        <h1 className="text-2xl font-bold">Survey Dashboard</h1>
         <div className="text-verisum-red">{error || "Missing runId"}</div>
       </main>
     );
@@ -333,7 +333,7 @@ export default function AdminRunPage() {
   .join("\n");
   const adminUrl = `${window.location.origin}/admin/run/${runId}`;
   const resultsUrl = `${window.location.origin}${dashboardHref}`;
-  const linkPack = `Survey Admin: ${adminUrl}\nResults: ${resultsUrl}\n\nSurvey links:\n${surveyLinks}`;
+  const linkPack = `Survey Dashboard: ${adminUrl}\nResults: ${resultsUrl}\n\nSurvey links:\n${surveyLinks}`;
 
   const formatCounts = (items: Array<string | null | undefined>) => {
     const counts = new Map<string, number>();
@@ -596,7 +596,7 @@ export default function AdminRunPage() {
 
   return (
     <main className="p-4 md:p-6 lg:p-10 space-y-6">
-      <h1 className="text-2xl md:text-3xl font-bold">Survey Admin</h1>
+      <h1 className="text-2xl md:text-3xl font-bold">Survey Dashboard</h1>
 
       <div className="border border-verisum-grey rounded-lg p-6 space-y-2">
         <div>
@@ -693,13 +693,13 @@ export default function AdminRunPage() {
                       <button
                         className="px-3 py-2 border border-verisum-grey rounded text-sm opacity-50 cursor-not-allowed bg-[#f5f5f5]"
                         disabled
-                        title="You are already viewing Survey Admin for this survey."
+                        title="You are already viewing Survey Dashboard for this survey."
                       >
-                        Open Survey Admin
+                        Open Survey Dashboard
                       </button>
                     ) : (
                       <a className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm" href={`/admin/run/${r.runId}`}>
-                        Open Survey Admin
+                        Open Survey Dashboard
                       </a>
                     )}
                   </div>

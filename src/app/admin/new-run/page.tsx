@@ -155,13 +155,16 @@ async function copyText(label: string, text: string) {
 
       {result && (
         <div className="border border-verisum-grey rounded-lg p-6 space-y-4">
-          <div className="font-semibold">Survey created</div>
+          <div className="font-semibold text-lg">Survey created</div>
           <div className="text-sm text-verisum-grey">
             Survey type: {result.mode === "org" ? "Organisational" : "Explorer (self-assessment)"}
           </div>
 
           <div className="border border-verisum-grey rounded-lg p-6 space-y-4">
-            <h2 className="text-lg font-semibold">Survey admin</h2>
+            <h2 className="text-lg font-semibold">Survey created — next steps</h2>
+            <div className="text-sm text-verisum-grey mb-4">
+              Your survey is live. Use the Survey Dashboard to track responses, view results, and manage links.
+            </div>
             <div className="space-y-2">
               <div className="text-sm font-semibold text-verisum-grey">Admin code</div>
               <div className="font-mono text-sm bg-verisum-white border border-verisum-grey rounded px-3 py-2 break-all">{result.ownerToken}</div>
@@ -177,10 +180,10 @@ async function copyText(label: string, text: string) {
                 Copy admin code
               </button>
               <a
-                className="px-3 py-2 border border-verisum-grey rounded hover:bg-verisum-white text-sm inline-block"
+                className="px-5 py-3 rounded bg-verisum-blue text-verisum-white font-semibold hover:bg-[#2a7bb8] inline-block"
                 href={`/api/auth-owner?runId=${encodeURIComponent(result.runId)}&ownerToken=${encodeURIComponent(result.ownerToken)}&next=${encodeURIComponent(`/admin/run/${result.runId}`)}`}
               >
-                Open Survey Admin
+                Open Survey Dashboard
               </a>
             </div>
             {copied && <div className="text-sm text-verisum-green">{copied}</div>}
@@ -209,7 +212,7 @@ async function copyText(label: string, text: string) {
                     onClick={() =>
                       copyText(
                         "Links copied",
-                        `Survey Admin: ${window.location.origin}/admin/run/${result.runId}\nResults: ${window.location.origin}${result.dashboardLink}\n\nSurvey link:\n${window.location.origin}${result.surveyLinks[0]}`
+                        `Survey Dashboard: ${window.location.origin}/admin/run/${result.runId}\nResults: ${window.location.origin}${result.dashboardLink}\n\nSurvey link:\n${window.location.origin}${result.surveyLinks[0]}`
                       )
                     }
                   >
@@ -223,7 +226,7 @@ async function copyText(label: string, text: string) {
                       encodeURIComponent(`TrustIndex links – ${runTitle}`) +
                       "&body=" +
                       encodeURIComponent(
-                        `Survey Admin: ${window.location.origin}/admin/run/${result.runId}\nResults: ` +
+                        `Survey Dashboard: ${window.location.origin}/admin/run/${result.runId}\nResults: ` +
                           `${window.location.origin}${result.dashboardLink}\n\nSurvey link:\n` +
                           `${window.location.origin}${result.surveyLinks[0]}`
                       )
