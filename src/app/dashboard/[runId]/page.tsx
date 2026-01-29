@@ -297,7 +297,7 @@ setInvites((inviteData as InviteRow[]) || []);
 
   if (loading) {
     return (
-      <main className="p-10">
+      <main className="p-4 md:p-6 lg:p-10">
         <div className="text-verisum-grey">Loading dashboard…</div>
       </main>
     );
@@ -305,7 +305,7 @@ setInvites((inviteData as InviteRow[]) || []);
 
   if (error) {
     return (
-      <main className="p-10 space-y-4">
+      <main className="p-4 md:p-6 lg:p-10 space-y-4">
         <h1 className="text-2xl font-bold">TrustIndex Dashboard</h1>
         <div className="text-verisum-red">{error}</div>
       </main>
@@ -321,7 +321,7 @@ setInvites((inviteData as InviteRow[]) || []);
   if (gateActive) {
     return (
       <main className="min-h-screen bg-verisum-white text-verisum-black">
-        <div className="max-w-3xl mx-auto p-10 space-y-6">
+        <div className="max-w-3xl mx-auto p-4 md:p-6 lg:p-10 space-y-6">
           <h1 className="text-3xl font-bold">TrustIndex™ Results</h1>
           <div className="text-verisum-grey">{run?.title}</div>
 
@@ -451,7 +451,7 @@ if (!trust) {
   const canExport = isUnlocked && isAdminViewer;
   const teaserCopy = {
     title: "Unlock the full TrustIndex breakdown",
-    body: "You've got the headline score, one top insight, radar and the basic CSV survey data download all available in your current SurveyAdmin session.\nClick on the link below to unlock your path to improved Trust and Performance, gaining:",
+    body: "You've got the headline score, one top insight, radar and the basic CSV survey data download all available in your Survey Admin.\nClick on the link below to unlock your path to improved Trust and Performance, gaining:",
     bullets: [
       "Full dimension-by-dimension diagnosis.",
       "Corresponding actions and probe questions tailored to weak spots.",
@@ -570,7 +570,7 @@ if (!trust) {
 
   return (
     <main className="min-h-screen bg-verisum-white text-verisum-black">
-      <div className="max-w-4xl mx-auto p-10 space-y-8">
+      <div className="max-w-4xl mx-auto p-4 md:p-6 lg:p-10 space-y-6 md:space-y-8">
         <header className="space-y-2">
           <h1 className="text-3xl font-bold">TrustIndex™ Results</h1>
           <div className="text-sm text-verisum-grey">Survey ID: {runId}</div>

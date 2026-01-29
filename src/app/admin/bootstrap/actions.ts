@@ -17,7 +17,7 @@ function randomToken(length = 24) {
 
 export async function createDemoRunAction(_: CreateState): Promise<CreateState> {
   try {
-    const orgName = "Verisum (Demo)";
+    const orgName = "Verisum";
     const title = `TrustIndex Pilot - ${new Date().toISOString().slice(0, 10)}`;
 
     const { data: existingOrgs, error: orgFindErr } = await supabaseServer()
@@ -75,6 +75,6 @@ export async function createDemoRunAction(_: CreateState): Promise<CreateState> 
 
     return { runId, token, error: null };
   } catch (e: any) {
-    return { runId: null, token: null, error: e?.message || "Failed to create demo run" };
+    return { runId: null, token: null, error: e?.message || "Failed to create survey" };
   }
 }

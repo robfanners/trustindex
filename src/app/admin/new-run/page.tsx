@@ -13,7 +13,7 @@ type Result = {
 
 export default function NewRunPage() {
   const MIN_ORG_RESPONDENTS = 5;
-  const [orgName, setOrgName] = useState("Verisum (Demo)");
+  const [orgName, setOrgName] = useState("Verisum");
   const [runTitle, setRunTitle] = useState(`TrustIndex Pilot - ${new Date().toISOString().slice(0, 10)}`);
   const [mode, setMode] = useState<"explorer" | "org">("explorer");
   const [inviteCount, setInviteCount] = useState<number>(1);
@@ -82,9 +82,9 @@ async function copyText(label: string, text: string) {
   };
 
   return (
-    <main className="max-w-3xl mx-auto p-10 space-y-8">
+    <main className="max-w-3xl mx-auto p-4 md:p-6 lg:p-10 space-y-6 md:space-y-8">
       <header className="space-y-2">
-        <h1 className="text-3xl font-bold">Create TrustIndex Survey</h1>
+        <h1 className="text-2xl md:text-3xl font-bold">Create TrustIndex Survey</h1>
         <p className="text-verisum-grey">
 	Explorer mode is a private self-assessment (results show immediately). Organisational mode is a multi-respondent survey (results show once 5+ people respond).
         </p>

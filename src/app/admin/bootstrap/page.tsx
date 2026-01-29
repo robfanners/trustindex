@@ -31,7 +31,7 @@ export default function BootstrapPage() {
 
       {!runId || !token ? (
         <div className="border border-verisum-grey rounded-lg p-6 space-y-3">
-          <div className="font-semibold">Create a demo survey</div>
+          <div className="font-semibold">Create a survey</div>
           {state.error && <div className="text-verisum-red text-sm">{state.error}</div>}
           <form action={formAction}>
             <button
@@ -39,7 +39,7 @@ export default function BootstrapPage() {
               type="submit"
               disabled={isPending}
             >
-              {isPending ? "Creating…" : "Create demo run"}
+              {isPending ? "Creating…" : "Create survey"}
             </button>
           </form>
         </div>

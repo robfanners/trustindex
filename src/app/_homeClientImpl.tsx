@@ -35,10 +35,10 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-verisum-white text-verisum-black p-12">
-      <h1 className="text-4xl font-bold mb-4">TrustIndex™</h1>
+    <main className="min-h-screen bg-verisum-white text-verisum-black p-4 md:p-6 lg:p-12">
+      <h1 className="text-3xl md:text-4xl font-bold mb-4">TrustIndex™</h1>
 
-      <p className="text-lg max-w-2xl mb-8">
+      <p className="text-base md:text-lg max-w-2xl mb-8">
         A quantitative trust signal for organisations operating in the AI era. Measuring transparency, inclusion,
         confidence, explainability, and risk.
       </p>
@@ -55,14 +55,14 @@ export default function Home() {
           </ul>
         </div>
 
-        <div className="flex gap-4 flex-wrap">
-          <a className="px-5 py-3 rounded bg-verisum-blue text-verisum-white font-semibold hover:bg-[#2a7bb8]" href="/admin/new-run">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <a className="px-5 py-3 rounded bg-verisum-blue text-verisum-white font-semibold hover:bg-[#2a7bb8] text-center" href="/admin/new-run">
             Create a survey
           </a>
+          <a className="text-sm text-verisum-grey underline self-center sm:self-start py-3 sm:py-0" href="/verisum?role=verisum&next=/admin/new-run">
+            Verisum admin →
+          </a>
         </div>
-        <a className="text-sm text-verisum-grey underline" href="/verisum?role=verisum&next=/admin/new-run">
-          Verisum admin →
-        </a>
 
         {(role === "owner" || !authRequired) && (
           <div className="border border-verisum-grey rounded-lg p-6 space-y-3 max-w-2xl">
@@ -70,16 +70,16 @@ export default function Home() {
             <div className="text-sm text-verisum-grey">
               If you already created a survey, enter your admin code to resume managing it.
             </div>
-            <div className="flex gap-3 flex-wrap items-center">
+            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
               <input
-                className="flex-1 min-w-[240px] border border-verisum-grey rounded px-3 py-2"
+                className="flex-1 min-w-0 border border-verisum-grey rounded px-3 py-2"
                 placeholder="Enter admin code"
                 value={resumeToken}
                 onChange={(e) => setResumeToken(e.target.value)}
               />
               <button
                 type="button"
-                className="px-4 py-2 rounded border border-verisum-grey bg-verisum-white text-verisum-black disabled:opacity-50"
+                className="px-4 py-2 rounded border border-verisum-grey bg-verisum-white text-verisum-black disabled:opacity-50 min-h-[44px]"
                 onClick={resumeAdmin}
                 disabled={resumeLoading || !resumeToken.trim()}
               >
@@ -97,7 +97,7 @@ export default function Home() {
         )}
 
         <div className="text-sm text-verisum-grey">
-          Status: Developed by Verisum in the UK • TrustIndex MVP
+          Status: Developed by Verisum in the UK
         </div>
       </div>
     </main>

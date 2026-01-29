@@ -43,6 +43,7 @@ export default function AdminRunPage() {
   const [recentRuns, setRecentRuns] = useState<RecentRun[]>([]);
   const [rememberDevice, setRememberDevice] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [adminCode, setAdminCode] = useState<string | null>(null);
 
   async function copyText(label: string, text: string) {
     await navigator.clipboard.writeText(text);
@@ -151,8 +152,8 @@ export default function AdminRunPage() {
   const loadData = async () => {
     if (!runId) return;
 
-    setLoading(true);
-    setError(null);
+      setLoading(true);
+      setError(null);
 
     try {
       const { data: runData, error: runErr } = await supabase
@@ -183,12 +184,24 @@ export default function AdminRunPage() {
           .order("created_at", { ascending: true });
         if (invitesBasic.error) {
           setError(`Could not load invites: ${invitesBasic.error.message}`);
-          setLoading(false);
-          return;
+        setLoading(false);
+        return;
         }
         setInvites((invitesBasic.data as InviteRow[]) || []);
       } else {
         setInvites((invitesWithSeg.data as InviteRow[]) || []);
+      }
+
+      // Fetch admin code from run_admin_tokens
+      const { data: adminTokenData, error: adminTokenErr } = await supabase
+        .from("run_admin_tokens")
+        .select("token")
+        .eq("run_id", runId)
+        .limit(1)
+        .single();
+
+      if (!adminTokenErr && adminTokenData) {
+        setAdminCode(adminTokenData.token as string);
       }
       
       // Update last updated timestamp on successful load
@@ -206,13 +219,13 @@ export default function AdminRunPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [runId]);
 
-  // Polling: refresh data every 15 seconds
+  // Polling: refresh data every 10 minutes
   useEffect(() => {
     if (!runId) return;
 
     const interval = setInterval(() => {
       loadData();
-    }, 15000); // 15 seconds
+    }, 600000); // 10 minutes
 
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -582,8 +595,8 @@ export default function AdminRunPage() {
   };
 
   return (
-    <main className="p-10 space-y-6">
-      <h1 className="text-3xl font-bold">Survey Admin</h1>
+    <main className="p-4 md:p-6 lg:p-10 space-y-6">
+      <h1 className="text-2xl md:text-3xl font-bold">Survey Admin</h1>
 
       <div className="border border-verisum-grey rounded-lg p-6 space-y-2">
         <div>
@@ -593,19 +606,29 @@ export default function AdminRunPage() {
           <span className="font-semibold">Mode:</span>{" "}
           {run?.mode === "org" ? "Organisational" : "Explorer (self-assessment)"}
         </div>
-        <div>
-          <span className="font-semibold">Survey ID:</span> {runId}
+        <div className="break-words">
+          <span className="font-semibold">Survey ID:</span> <span className="font-mono">{runId}</span>
         </div>
+        {adminCode && (
+          <div>
+            <div className="break-words">
+              <span className="font-semibold">Admin Code:</span> <span className="font-mono">{adminCode}</span>
+            </div>
+            <div className="text-xs text-verisum-grey mt-1">
+              Safely save this admin code. It cannot be recovered. Do not share it.
+            </div>
+          </div>
+        )}
         <div>
           <span className="font-semibold">Admin Instructions:</span>{" "}
-          You can switch between recent survey admin sessions, share and chase survey links, take your own survey safely using the "Your Survey" link, and return to create new surveys.
+          You can switch between your surveys, share and chase survey links, take your own survey safely using the "Your Survey" link, and return to create new surveys.
         </div>
       </div>
 
       <div className="border border-verisum-grey rounded-lg p-6 space-y-4">
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-lg font-semibold">
-            Your recent survey admin sessions{rememberDevice ? "" : " (this browser session)"}
+            Your surveys
           </h2>
           <div className="flex items-center gap-4">
             <label className="flex items-center gap-2 text-sm">
@@ -649,9 +672,9 @@ export default function AdminRunPage() {
             )}
           </div>
         </div>
-        <div className="text-xs text-verisum-grey">
-          If enabled, your recent survey admin sessions will remain on this device.
-        </div>
+          <div className="text-xs text-verisum-grey">
+            If enabled, your surveys will be available on this device after you close your browser.
+          </div>
 
         {recentRuns.length > 0 && (
 
@@ -758,13 +781,9 @@ export default function AdminRunPage() {
 
         {/* Live progress line */}
         <div className="text-base font-medium">
-          Responses received: {invites.filter((i) => i.used_at).length}
+          {invites.filter((i) => i.used_at).length} responses received
+          {run?.mode === "org" && " • Results available at 5+ responses"}
         </div>
-        {run?.mode === "org" && (
-          <div className="text-sm text-verisum-grey">
-            Results unlock automatically at 5+ responses.
-          </div>
-        )}
         {run?.mode === "explorer" && (
           <div className="text-sm text-verisum-grey">
             Explorer mode: results available immediately.
@@ -775,7 +794,7 @@ export default function AdminRunPage() {
         {lastUpdated && (
           <div className="text-xs text-verisum-grey flex items-center gap-2">
             <span>
-              Last updated: {lastUpdated.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+              Updates every 10 mins. Last updated: {lastUpdated.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}.
             </span>
             <button
               type="button"
@@ -783,7 +802,7 @@ export default function AdminRunPage() {
               onClick={() => loadData()}
               disabled={loading}
             >
-              Refresh
+              Refresh Now
             </button>
           </div>
         )}
@@ -798,7 +817,7 @@ export default function AdminRunPage() {
             View results
           </a>
           <div className="text-xs text-verisum-grey">
-            Results update automatically as responses arrive.
+            View live results, track participation, and manage survey access below.
           </div>
         </div>
 
@@ -806,26 +825,26 @@ export default function AdminRunPage() {
         <div className="space-y-3 pt-4 border-t border-verisum-grey">
           <div className="font-semibold text-sm">Survey links</div>
           <div className="text-sm text-verisum-grey">
-            Completed: {invites.filter((i) => i.used_at).length} · Pending:{" "}
-            {invites.filter((i) => !i.used_at).length}
-          </div>
+          Completed: {invites.filter((i) => i.used_at).length} · Pending:{" "}
+          {invites.filter((i) => !i.used_at).length}
+        </div>
 
-          <div className="space-y-2">
-            {invites.map((i) => (
-              <div key={i.token} className="flex items-center justify-between text-sm">
+        <div className="space-y-2">
+          {invites.map((i) => (
+            <div key={i.token} className="flex items-center justify-between text-sm">
                 <div className="text-verisum-grey">
-                  {i.token.slice(0, 6)}…{i.token.slice(-4)}
-                </div>
-                <div className={i.used_at ? "text-verisum-green" : "text-verisum-yellow"}>
-                  {i.used_at ? "Completed" : "Pending"}
-                </div>
+                {i.token.slice(0, 6)}…{i.token.slice(-4)}
               </div>
-            ))}
-          </div>
+                <div className={i.used_at ? "text-verisum-green" : "text-verisum-yellow"}>
+                {i.used_at ? "Completed" : "Pending"}
+              </div>
+            </div>
+          ))}
+        </div>
 
           <div className="text-xs text-verisum-grey">
-            Tokens are masked for safety. Each token corresponds to one survey link.
-          </div>
+          Tokens are masked for safety. Each token corresponds to one survey link.
+        </div>
         </div>
       </div>
 

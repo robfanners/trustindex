@@ -146,7 +146,7 @@ export default function SurveyPage() {
 
   if (loading) {
     return (
-      <main className="p-10">
+      <main className="p-4 md:p-6 lg:p-10">
         <div className="text-verisum-grey">Loading survey…</div>
       </main>
     );
@@ -154,7 +154,7 @@ export default function SurveyPage() {
 
   if (error) {
     return (
-      <main className="p-10 space-y-4">
+      <main className="p-4 md:p-6 lg:p-10 space-y-4">
         <h1 className="text-2xl font-bold">TrustIndex Survey</h1>
         <div className="text-verisum-red">{error}</div>
       </main>
@@ -163,7 +163,7 @@ export default function SurveyPage() {
 
   if (submitted) {
     return (
-      <main className="p-10 space-y-4">
+      <main className="p-4 md:p-6 lg:p-10 space-y-4">
         <h1 className="text-3xl font-bold">Thank you</h1>
         <p className="text-verisum-grey">
           Your responses have been recorded. You can now close this window.
@@ -207,7 +207,7 @@ export default function SurveyPage() {
 
   return (
     <main className="min-h-screen bg-verisum-white text-verisum-black">
-      <div className="max-w-3xl mx-auto p-10 space-y-8">
+      <div className="max-w-3xl mx-auto p-4 md:p-6 lg:p-10 space-y-6 md:space-y-8">
         <header className="space-y-2">
           <h1 className="text-3xl font-bold">TrustIndex™ Survey</h1>
           <p className="text-verisum-grey">
