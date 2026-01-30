@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import AppShell from "@/components/AppShell";
 
 type RunRow = { id: string; mode: "explorer" | "org"; title: string };
 type InviteRow = {
@@ -307,10 +308,12 @@ export default function AdminRunPage() {
 
   if (error || !runId) {
     return (
-      <main className="p-10 space-y-3">
-        <h1 className="text-2xl font-bold">Survey Dashboard</h1>
-        <div className="text-verisum-red">{error || "Missing runId"}</div>
-      </main>
+      <AppShell>
+        <div className="p-4 md:p-6 lg:p-10 space-y-3">
+          <h1 className="text-2xl font-bold">Survey Dashboard</h1>
+          <div className="text-verisum-red">{error || "Missing runId"}</div>
+        </div>
+      </AppShell>
     );
   }
 
@@ -595,8 +598,9 @@ export default function AdminRunPage() {
   };
 
   return (
-    <main className="p-4 md:p-6 lg:p-10 space-y-6">
-      <h1 className="text-2xl md:text-3xl font-bold">Survey Dashboard</h1>
+    <AppShell>
+      <div className="p-4 md:p-6 lg:p-10 space-y-6">
+        <h1 className="text-2xl md:text-3xl font-bold">Survey Dashboard</h1>
 
       <div className="border border-verisum-grey rounded-lg p-6 space-y-2">
         <div>
@@ -1023,9 +1027,10 @@ export default function AdminRunPage() {
         {copied && <div className="text-sm text-verisum-green">{copied}</div>}
       </div>
 
-      <a className="text-verisum-blue underline" href="/admin/new-run">
-        Create another survey
-      </a>
-    </main>
+        <a className="text-verisum-blue underline" href="/admin/new-run">
+          Create another survey
+        </a>
+      </div>
+    </AppShell>
   );
 }

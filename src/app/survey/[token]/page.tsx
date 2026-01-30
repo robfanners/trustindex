@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import AppShell from "@/components/AppShell";
 
 type Question = {
   id: string;
@@ -146,67 +147,73 @@ export default function SurveyPage() {
 
   if (loading) {
     return (
-      <main className="p-4 md:p-6 lg:p-10">
-        <div className="text-verisum-grey">Loading survey…</div>
-      </main>
+      <AppShell>
+        <div className="max-w-3xl mx-auto p-4 md:p-6 lg:p-10">
+          <div className="text-verisum-grey">Loading survey…</div>
+        </div>
+      </AppShell>
     );
   }
 
   if (error) {
     return (
-      <main className="p-4 md:p-6 lg:p-10 space-y-4">
-        <h1 className="text-2xl font-bold">TrustIndex Survey</h1>
-        <div className="text-verisum-red">{error}</div>
-      </main>
+      <AppShell>
+        <div className="max-w-3xl mx-auto p-4 md:p-6 lg:p-10 space-y-4">
+          <h1 className="text-2xl font-bold">TrustIndex Survey</h1>
+          <div className="text-verisum-red">{error}</div>
+        </div>
+      </AppShell>
     );
   }
 
   if (submitted) {
     return (
-      <main className="p-4 md:p-6 lg:p-10 space-y-4">
-        <h1 className="text-3xl font-bold">Thank you</h1>
-        <p className="text-verisum-grey">
-          Your responses have been recorded. You can now close this window.
-        </p>
-        {runId && (
-          <div className="flex flex-wrap items-center gap-3">
-            <a
-              className="px-5 py-3 rounded bg-verisum-blue text-verisum-white font-semibold hover:bg-[#2a7bb8]"
-              href={`/dashboard/${runId}`}
-            >
-              View results
-            </a>
-            {runMode === "org" && (
-              <a className="text-verisum-blue underline" href={`/admin/run/${runId}`}>
-                Open Survey Dashboard
-              </a>
-            )}
-            {runMode === "explorer" && (
+      <AppShell>
+        <div className="max-w-3xl mx-auto p-4 md:p-6 lg:p-10 space-y-4">
+          <h1 className="text-3xl font-bold">Thank you</h1>
+          <p className="text-verisum-grey">
+            Your responses have been recorded. You can now close this window.
+          </p>
+          {runId && (
+            <div className="flex flex-wrap items-center gap-3">
               <a
-                className="px-4 py-3 rounded border hover:bg-[#f5f5f5] text-sm"
-                href={
-                  "mailto:?" +
-                  "subject=" +
-                  encodeURIComponent("My TrustIndex results link") +
-                  "&body=" +
-                  encodeURIComponent(
-                    `Here are my TrustIndex links:\n\n` +
-                      `Results: ${window.location.origin}/dashboard/${runId}\n` +
-                      `Survey Dashboard: ${window.location.origin}/admin/run/${runId}\n`
-                  )
-                }
+                className="px-5 py-3 rounded bg-verisum-blue text-verisum-white font-semibold hover:bg-[#2a7bb8]"
+                href={`/dashboard/${runId}`}
               >
-                Email me my links
+                View results
               </a>
-            )}
-          </div>
-        )}
-      </main>
+              {runMode === "org" && (
+                <a className="text-verisum-blue underline" href={`/admin/run/${runId}`}>
+                  Open Survey Dashboard
+                </a>
+              )}
+              {runMode === "explorer" && (
+                <a
+                  className="px-4 py-3 rounded border hover:bg-[#f5f5f5] text-sm"
+                  href={
+                    "mailto:?" +
+                    "subject=" +
+                    encodeURIComponent("My TrustIndex results link") +
+                    "&body=" +
+                    encodeURIComponent(
+                      `Here are my TrustIndex links:\n\n` +
+                        `Results: ${window.location.origin}/dashboard/${runId}\n` +
+                        `Survey Dashboard: ${window.location.origin}/admin/run/${runId}\n`
+                    )
+                  }
+                >
+                  Email me my links
+                </a>
+              )}
+            </div>
+          )}
+        </div>
+      </AppShell>
     );
   }
 
   return (
-    <main className="min-h-screen bg-verisum-white text-verisum-black">
+    <AppShell>
       <div className="max-w-3xl mx-auto p-4 md:p-6 lg:p-10 space-y-6 md:space-y-8">
         <header className="space-y-2">
           <h1 className="text-3xl font-bold">TrustIndex™ Survey</h1>
@@ -339,6 +346,6 @@ export default function SurveyPage() {
           </div>
         </div>
       </div>
-    </main>
+    </AppShell>
   );
 }

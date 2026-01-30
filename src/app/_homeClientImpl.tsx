@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import AccessGate from "@/components/AccessGate";
+import AppShell from "@/components/AppShell";
 
 export default function Home() {
   const router = useRouter();
@@ -35,8 +36,9 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-verisum-white text-verisum-black p-4 md:p-6 lg:p-12">
-      <h1 className="text-3xl md:text-4xl font-bold mb-4">TrustIndex™</h1>
+    <AppShell>
+      <div className="max-w-5xl mx-auto p-4 md:p-6 lg:p-12">
+        <h1 className="text-3xl md:text-4xl font-bold mb-4">TrustIndex™</h1>
 
       <p className="text-base md:text-lg max-w-2xl mb-8">
         A quantitative trust signal for organisations operating in the AI era. Measuring transparency, inclusion,
@@ -95,11 +97,8 @@ export default function Home() {
             <AccessGate />
           </div>
         )}
-
-        <div className="text-sm text-verisum-grey">
-          Status: Developed by Verisum in the UK
-        </div>
       </div>
-    </main>
+      </div>
+    </AppShell>
   );
 }

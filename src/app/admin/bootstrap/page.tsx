@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { createDemoRunAction, type CreateState } from "./actions";
+import AppShell from "@/components/AppShell";
 
 export const dynamic = "force-dynamic";
 
@@ -26,8 +27,9 @@ export default function BootstrapPage() {
   const adminRunLink = runId ? `/admin/run/${runId}` : "";
 
   return (
-    <main className="p-10 space-y-6">
-      <h1 className="text-3xl font-bold">TrustIndex Bootstrap</h1>
+    <AppShell>
+      <div className="max-w-3xl mx-auto p-4 md:p-6 lg:p-10 space-y-6">
+        <h1 className="text-3xl font-bold">TrustIndex Bootstrap</h1>
 
       {!runId || !token ? (
         <div className="border border-verisum-grey rounded-lg p-6 space-y-3">
@@ -127,6 +129,7 @@ Thank you.`
           </div>
         </>
       )}
-    </main>
+      </div>
+    </AppShell>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import AppShell from "@/components/AppShell";
 
 type Result = {
   runId: string;
@@ -82,9 +83,10 @@ async function copyText(label: string, text: string) {
   };
 
   return (
-    <main className="max-w-3xl mx-auto p-4 md:p-6 lg:p-10 space-y-6 md:space-y-8">
-      <header className="space-y-2">
-        <h1 className="text-2xl md:text-3xl font-bold">Create TrustIndex Survey</h1>
+    <AppShell>
+      <div className="max-w-3xl mx-auto p-4 md:p-6 lg:p-10 space-y-6 md:space-y-8">
+        <header className="space-y-2">
+          <h1 className="text-2xl md:text-3xl font-bold">Create TrustIndex Survey</h1>
         <p className="text-verisum-grey">
 	Explorer mode is a private self-assessment (results show immediately). Organisational mode is a multi-respondent survey (results show once 5+ people respond).
         </p>
@@ -299,6 +301,7 @@ async function copyText(label: string, text: string) {
           </div>
         </div>
       )}
-    </main>
+      </div>
+    </AppShell>
   );
 }

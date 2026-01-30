@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import AppShell from "@/components/AppShell";
 import {
   Radar,
   RadarChart,
@@ -297,18 +298,22 @@ setInvites((inviteData as InviteRow[]) || []);
 
   if (loading) {
     return (
-      <main className="p-4 md:p-6 lg:p-10">
-        <div className="text-verisum-grey">Loading dashboard…</div>
-      </main>
+      <AppShell>
+        <div className="max-w-4xl mx-auto p-4 md:p-6 lg:p-10">
+          <div className="text-verisum-grey">Loading dashboard…</div>
+        </div>
+      </AppShell>
     );
   }
 
   if (error) {
     return (
-      <main className="p-4 md:p-6 lg:p-10 space-y-4">
-        <h1 className="text-2xl font-bold">TrustIndex Dashboard</h1>
-        <div className="text-verisum-red">{error}</div>
-      </main>
+      <AppShell>
+        <div className="max-w-4xl mx-auto p-4 md:p-6 lg:p-10 space-y-4">
+          <h1 className="text-2xl font-bold">TrustIndex Dashboard</h1>
+          <div className="text-verisum-red">{error}</div>
+        </div>
+      </AppShell>
     );
   }
 
@@ -320,7 +325,7 @@ setInvites((inviteData as InviteRow[]) || []);
 
   if (gateActive) {
     return (
-      <main className="min-h-screen bg-verisum-white text-verisum-black">
+      <AppShell>
         <div className="max-w-3xl mx-auto p-4 md:p-6 lg:p-10 space-y-6">
           <h1 className="text-3xl font-bold">TrustIndex™ Results</h1>
           <div className="text-verisum-grey">{run?.title}</div>
@@ -379,14 +384,14 @@ setInvites((inviteData as InviteRow[]) || []);
             Back to Survey Dashboard
           </a>
         </div>
-      </main>
+      </AppShell>
     );
   }
 
 if (!trust) {
   return (
-    <main className="min-h-screen bg-verisum-white text-verisum-black">
-      <div className="max-w-3xl mx-auto p-10 space-y-6">
+    <AppShell>
+      <div className="max-w-3xl mx-auto p-4 md:p-6 lg:p-10 space-y-6">
         <h1 className="text-3xl font-bold">TrustIndex™ Results</h1>
         <div className="text-verisum-grey">{run?.title}</div>
         <div className="border border-verisum-grey rounded-lg p-6 space-y-2">
@@ -440,7 +445,7 @@ if (!trust) {
           Back to Survey Dashboard
         </a>
       </div>
-    </main>
+    </AppShell>
   );
 }
 
@@ -569,7 +574,7 @@ if (!trust) {
   };
 
   return (
-    <main className="min-h-screen bg-verisum-white text-verisum-black">
+    <AppShell>
       <div className="max-w-4xl mx-auto p-4 md:p-6 lg:p-10 space-y-6 md:space-y-8">
         <header className="space-y-2">
           <h1 className="text-3xl font-bold">TrustIndex™ Results</h1>
@@ -937,6 +942,6 @@ if (!trust) {
           </a>
         </div>
       </div>
-    </main>
+    </AppShell>
   );
 }
