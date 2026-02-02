@@ -86,7 +86,7 @@ async function copyText(label: string, text: string) {
     <AppShell>
       <div className="max-w-3xl mx-auto p-4 md:p-6 lg:p-10 space-y-6 md:space-y-8">
         <header className="space-y-2">
-          <h1 className="text-2xl md:text-3xl font-bold">Create TrustIndex Survey</h1>
+          <h1 className="text-2xl md:text-3xl font-bold">Create a TrustIndex survey</h1>
         <p className="text-verisum-grey">
 	Explorer mode is a private self-assessment (results show immediately). Organisational mode is a multi-respondent survey (results show once 5+ people respond).
         </p>
@@ -165,13 +165,17 @@ async function copyText(label: string, text: string) {
           <div className="border border-verisum-grey rounded-lg p-6 space-y-4">
             <h2 className="text-lg font-semibold">Survey created — next steps</h2>
             <div className="text-sm text-verisum-grey mb-4">
-              Your survey is live. Use the Survey Dashboard to track responses, view results, and manage links.
+              Your survey is live.
+              Use the Survey Dashboard to share links, track responses in real time, and view results as they emerge.
             </div>
             <div className="space-y-2">
               <div className="text-sm font-semibold text-verisum-grey">Admin code</div>
               <div className="font-mono text-sm bg-verisum-white border border-verisum-grey rounded px-3 py-2 break-all">{result.ownerToken}</div>
               <div className="text-xs text-verisum-grey">
                 Safely save this admin code. It cannot be recovered. Do not share it.
+              </div>
+              <div className="text-xs text-verisum-grey">
+                This code gives you private, persistent access to this survey without creating an account.
               </div>
             </div>
             <div className="flex flex-wrap gap-2">

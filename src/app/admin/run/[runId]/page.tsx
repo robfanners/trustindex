@@ -625,7 +625,13 @@ export default function AdminRunPage() {
         )}
         <div>
           <span className="font-semibold">Admin Instructions:</span>{" "}
-          You can switch between your surveys, share and chase survey links, take your own survey safely using the "Your Survey" link, and return to create new surveys.
+          From this dashboard you can:
+          <ul className="list-disc pl-5 mt-1 space-y-0.5 text-sm">
+            <li>Share survey links and track participation</li>
+            <li>View live results as responses arrive</li>
+            <li>Return at any time using your admin code</li>
+            <li>Create additional surveys when needed</li>
+          </ul>
         </div>
       </div>
 
@@ -697,7 +703,7 @@ export default function AdminRunPage() {
                       <button
                         className="px-3 py-2 border border-verisum-grey rounded text-sm opacity-50 cursor-not-allowed bg-[#f5f5f5]"
                         disabled
-                        title="You are already viewing Survey Dashboard for this survey."
+                        title="You're already viewing the Survey Dashboard for this survey"
                       >
                         Open Survey Dashboard
                       </button>
@@ -779,7 +785,7 @@ export default function AdminRunPage() {
 
       <div className="border border-verisum-grey rounded-lg p-6 space-y-4">
         <div>
-          <h2 className="text-xl font-semibold">Results & survey links</h2>
+          <h2 className="text-xl font-semibold">Results & progress</h2>
           <div className="text-sm text-verisum-grey">Track progress and manage distribution in one place.</div>
         </div>
 
@@ -794,7 +800,7 @@ export default function AdminRunPage() {
                 <div className="text-base font-medium">
                   {isEarlyState
                     ? `${responseCount} responses so far • Results unlock at 5+ responses`
-                    : `${responseCount} responses received • Results available at 5+ responses`}
+                    : `${responseCount} responses received • Results available`}
                 </div>
                 {isEarlyState && (
                   <div className="text-sm text-verisum-grey">
@@ -808,10 +814,7 @@ export default function AdminRunPage() {
           return (
             <>
               <div className="text-base font-medium">
-                {responseCount} responses received
-              </div>
-              <div className="text-sm text-verisum-grey">
-                Explorer mode: results available immediately.
+                Explorer mode • Results available immediately
               </div>
             </>
           );
@@ -843,9 +846,15 @@ export default function AdminRunPage() {
           >
             View results
           </a>
-          <div className="text-xs text-verisum-grey">
-            View live results, track participation, and manage survey access below.
-          </div>
+          {(invites.filter((i) => i.used_at).length < 5 && run?.mode === "org") ? (
+            <div className="text-xs text-verisum-grey">
+              Share your survey link below to start collecting responses.
+            </div>
+          ) : (
+            <div className="text-xs text-verisum-grey">
+              View live results and manage survey access below.
+            </div>
+          )}
         </div>
 
         {/* Survey links list */}

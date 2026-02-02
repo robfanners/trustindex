@@ -218,6 +218,9 @@ export default function SurveyPage() {
         <header className="space-y-2">
           <h1 className="text-3xl font-bold">TrustIndex™ Survey</h1>
           <p className="text-verisum-grey">
+            This survey helps your organisation understand how trust, transparency, and decision-making are experienced in practice.
+          </p>
+          <p className="text-sm text-verisum-grey">
             Please answer all questions. Scale: 1 (Strongly disagree) → 5 (Strongly agree).
           </p>
           <div className="text-sm text-verisum-grey">

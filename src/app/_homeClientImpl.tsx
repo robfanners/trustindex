@@ -41,13 +41,14 @@ export default function Home() {
         <h1 className="text-3xl md:text-4xl font-bold mb-4">TrustIndex™</h1>
 
       <p className="text-base md:text-lg max-w-2xl mb-8">
-        A quantitative trust signal for organisations operating in the AI era. Measuring transparency, inclusion,
-        confidence, explainability, and risk.
+        Trust is now a measurable performance and risk signal.
+        TrustIndex™ helps organisations quantify how trust, transparency, explainability, and confidence are experienced in practice — before trust becomes a problem.
       </p>
 
       <div className="space-y-6">
         <div className="border border-verisum-grey rounded-lg p-6">
           <h2 className="text-xl font-semibold mb-2">What this measures</h2>
+          <p className="text-sm text-verisum-grey mb-3">TrustIndex measures five dimensions that directly affect organisational performance:</p>
           <ul className="list-disc pl-6 text-verisum-grey space-y-1">
             <li>Transparency in decision-making</li>
             <li>Inclusion and psychological safety</li>
@@ -70,7 +71,7 @@ export default function Home() {
           <div className="border border-verisum-grey rounded-lg p-6 space-y-3 max-w-2xl">
             <h2 className="text-lg font-semibold">Resume admin access</h2>
             <div className="text-sm text-verisum-grey">
-              If you already created a survey, enter your admin code to resume managing it.
+              If you've already created a survey, enter your admin code to return to your Survey Dashboard.
             </div>
             <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
               <input
