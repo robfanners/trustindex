@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { supabaseServer } from "@/lib/supabaseServer";
+import { getRunAdminTokensColumnNames } from "@/lib/runAdminTokensSchema";
 
 function getBaseUrl(request: NextRequest): string {
   const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? "localhost:3000";
@@ -20,25 +21,27 @@ function safeNextPath(runId: string, next?: string | null): string {
   return next;
 }
 
-async function validateAndSetCookie(runId: string, token: string, isHttps: boolean) {
-  const { data, error } = await supabaseServer()
+async function validateAndSetCookie(runId: string, ownerToken: string, isHttps: boolean): Promise<void> {
+  const { runIdCol, tokenCol } = await getRunAdminTokensColumnNames();
+  const supabase = supabaseServer();
+
+  const { data, error } = await supabase
     .from("run_admin_tokens")
-    .select("run_id,token")
-    .eq("run_id", runId)
-    .eq("token", token)
-    .limit(1);
+    .select("*")
+    .eq(runIdCol, runId)
+    .eq(tokenCol, ownerToken)
+    .maybeSingle();
 
   if (error) {
     throw new Error(error.message);
   }
 
-  if (!data || data.length === 0) {
-    throw new Error("Invalid owner token");
+  if (!data) {
+    throw new Error("Invalid admin code for this survey");
   }
 
   const cookieName = `ti_owner_${runId}`;
   const cookieStore = await cookies();
-
   cookieStore.set(cookieName, "1", {
     httpOnly: true,
     sameSite: "lax",
@@ -48,31 +51,29 @@ async function validateAndSetCookie(runId: string, token: string, isHttps: boole
   });
 }
 
-// TODO: ensure run_admin_tokens table exists with run_id/token columns.
 export async function GET(req: NextRequest) {
+  const requestUrl = new URL(req.url);
+  const runId = requestUrl.searchParams.get("runId");
+  const ownerToken = requestUrl.searchParams.get("ownerToken");
+  const next = requestUrl.searchParams.get("next");
+  const nextPath = safeNextPath(runId || "", next);
+  const baseUrl = getBaseUrl(req);
+
+  if (!runId || !ownerToken) {
+    const redirectUrl = new URL(`/?auth=required&role=owner&runId=${runId || ""}`, baseUrl);
+    return NextResponse.redirect(redirectUrl, 302);
+  }
+
   try {
-    const requestUrl = new URL(req.url);
-    const runId = requestUrl.searchParams.get("runId");
-    const ownerToken = requestUrl.searchParams.get("ownerToken");
-    const next = requestUrl.searchParams.get("next");
-    const nextPath = safeNextPath(runId || "", next);
-    const baseUrl = getBaseUrl(req);
     const isHttps = baseUrl.startsWith("https://");
-
-    if (!runId || !ownerToken) {
-      const redirectUrl = new URL(`/?auth=required&role=owner&runId=${runId || ""}`, baseUrl);
-      return NextResponse.redirect(redirectUrl, 302);
-    }
-
     await validateAndSetCookie(runId, ownerToken, isHttps);
-
     const redirectUrl = new URL(nextPath, baseUrl);
     return NextResponse.redirect(redirectUrl, 302);
-  } catch (e: any) {
-    const requestUrl = new URL(req.url);
-    const runId = requestUrl.searchParams.get("runId") || "";
-    const baseUrl = getBaseUrl(req);
-    const redirectUrl = new URL(`/?auth=required&role=owner&runId=${runId}`, baseUrl);
+  } catch {
+    const redirectUrl = new URL(
+      `/?auth=required&role=owner&runId=${encodeURIComponent(runId)}&next=${encodeURIComponent(nextPath)}`,
+      baseUrl
+    );
     return NextResponse.redirect(redirectUrl, 302);
   }
 }
@@ -90,9 +91,13 @@ export async function POST(req: NextRequest) {
     const baseUrl = getBaseUrl(req);
     const isHttps = baseUrl.startsWith("https://");
     await validateAndSetCookie(runId, token, isHttps);
-
     return NextResponse.json({ ok: true });
   } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e?.message || "Unknown error" }, { status: 500 });
+    const message = e?.message || "Unknown error";
+    const isInvalidCode = message.toLowerCase().includes("invalid");
+    return NextResponse.json(
+      { ok: false, error: isInvalidCode ? "Invalid admin code for this survey" : message },
+      { status: isInvalidCode ? 401 : 500 }
+    );
   }
 }

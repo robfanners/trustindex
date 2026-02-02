@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
+import { getRunAdminTokensColumns, pickRunIdColumn, pickTokenColumn } from "@/lib/runAdminTokensSchema";
 
 function randomToken(length = 28) {
   const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -97,10 +98,11 @@ export async function POST(req: Request) {
     }
 
     const ownerToken = randomToken(32);
-    // TODO: ensure run_admin_tokens table exists with run_id/token columns.
-    const { error: ownerErr } = await supabase
-      .from("run_admin_tokens")
-      .insert({ run_id: runId, token: ownerToken });
+    const columns = await getRunAdminTokensColumns();
+    const runIdCol = pickRunIdColumn(columns);
+    const tokenCol = pickTokenColumn(columns);
+    const insertRow: Record<string, string> = { [runIdCol]: runId, [tokenCol]: ownerToken };
+    const { error: ownerErr } = await supabase.from("run_admin_tokens").insert(insertRow);
 
     if (ownerErr) {
       return NextResponse.json({ error: ownerErr.message }, { status: 500 });
