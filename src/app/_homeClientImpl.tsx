@@ -11,6 +11,7 @@ export default function Home() {
 
   const authRequired = searchParams.get("auth") === "required";
   const role = searchParams.get("role") || "verisum";
+  const resumeParam = searchParams.get("resume") === "admin";
   const [resumeToken, setResumeToken] = useState("");
   const [resumeError, setResumeError] = useState<string | null>(null);
   const [resumeLoading, setResumeLoading] = useState(false);
@@ -70,6 +71,11 @@ export default function Home() {
         {(role === "owner" || !authRequired) && (
           <div className="border border-verisum-grey rounded-lg p-6 space-y-3 max-w-2xl">
             <h2 className="text-lg font-semibold">Resume admin access</h2>
+            {resumeParam && (
+              <div className="text-sm text-verisum-grey">
+                Enter your admin code to open your Survey Dashboard or view Results.
+              </div>
+            )}
             <div className="text-sm text-verisum-grey">
               If you've already created a survey, enter your admin code to return to your Survey Dashboard.
             </div>

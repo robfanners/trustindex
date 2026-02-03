@@ -45,6 +45,7 @@ export default function AdminRunPage() {
   const [rememberDevice, setRememberDevice] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [adminCode, setAdminCode] = useState<string | null>(null);
+  const [runCounts, setRunCounts] = useState<Record<string, { total: number; completed: number }>>({});
 
   async function copyText(label: string, text: string) {
     await navigator.clipboard.writeText(text);
@@ -247,6 +248,30 @@ export default function AdminRunPage() {
     const history = getHistory();
     setRecentRuns(history);
   }, [rememberDevice]);
+
+  // Fetch invite counts for all runs in Your surveys list (for status and X/Y display)
+  useEffect(() => {
+    if (recentRuns.length === 0) return;
+    const runIds = recentRuns.map((r) => r.runId);
+    supabase
+      .from("invites")
+      .select("run_id, used_at")
+      .in("run_id", runIds)
+      .then(({ data, error }) => {
+        if (error) return;
+        const counts: Record<string, { total: number; completed: number }> = {};
+        for (const id of runIds) {
+          counts[id] = { total: 0, completed: 0 };
+        }
+        for (const row of data || []) {
+          const id = row.run_id;
+          if (!counts[id]) counts[id] = { total: 0, completed: 0 };
+          counts[id].total += 1;
+          if (row.used_at) counts[id].completed += 1;
+        }
+        setRunCounts(counts);
+      });
+  }, [recentRuns]);
 
   // Save current run to recent surveys when successfully loaded
   useEffect(() => {
@@ -691,12 +716,22 @@ export default function AdminRunPage() {
           <div className="space-y-3">
             {recentRuns.map((r) => {
               const isCurrentRun = r.runId === runId;
+              const counts = runCounts[r.runId];
+              const total = counts?.total ?? 0;
+              const completed = counts?.completed ?? 0;
+              const status = total > 0 && completed === total ? "Completed" : "In progress";
               return (
                 <div key={r.runId} className="border border-verisum-grey rounded p-4 space-y-2">
                   <div className="font-semibold text-verisum-black">{r.title}</div>
                   <div className="text-xs text-verisum-grey">
                     {r.mode === "org" ? "Organisational" : "Explorer"} ·{" "}
-                    {new Date(r.createdAtISO).toLocaleDateString()}
+                    {new Date(r.createdAtISO).toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                    {counts != null && (
+                      <>
+                        {" "}
+                        · {status} · {completed} / {total} responses
+                      </>
+                    )}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {isCurrentRun ? (

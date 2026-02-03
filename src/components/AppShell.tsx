@@ -13,19 +13,31 @@ export default function AppShell({ children }: AppShellProps) {
 
   const currentYear = new Date().getFullYear();
 
-  // Extract runId from pathname if on /admin/run/[runId]
-  const runIdMatch = pathname.match(/^\/admin\/run\/([^/]+)/);
-  const runId = runIdMatch ? runIdMatch[1] : null;
+  // Extract runId from pathname if on /admin/run/[runId] or /dashboard/[runId]
+  const adminRunMatch = pathname.match(/^\/admin\/run\/([^/]+)/);
+  const dashboardRunMatch = pathname.match(/^\/dashboard\/([^/]+)/);
+  const runId = adminRunMatch?.[1] ?? dashboardRunMatch?.[1] ?? null;
+
+  const isAdminOrDashboard = pathname.startsWith("/admin") || pathname.startsWith("/dashboard");
 
   const navItems = useMemo(() => {
     const items: Array<{ label: string; href: string; isActive?: boolean; isExternal?: boolean }> = [
       { label: "Create survey", href: "/admin/new-run" },
     ];
 
-    if (runId) {
+    // Survey Dashboard and Results: show on admin and dashboard pages. Link to run when we have runId, else to resume flow.
+    if (isAdminOrDashboard) {
       items.push(
-        { label: "Survey Dashboard", href: `/admin/run/${runId}`, isActive: pathname === `/admin/run/${runId}` },
-        { label: "Results", href: `/dashboard/${runId}` }
+        {
+          label: "Survey Dashboard",
+          href: runId ? `/admin/run/${runId}` : "/?resume=admin",
+          isActive: runId ? pathname === `/admin/run/${runId}` : false,
+        },
+        {
+          label: "Results",
+          href: runId ? `/dashboard/${runId}` : "/?resume=admin",
+          isActive: runId ? pathname === `/dashboard/${runId}` : false,
+        }
       );
     }
 
@@ -34,7 +46,7 @@ export default function AppShell({ children }: AppShellProps) {
     }
 
     return items;
-  }, [pathname, runId]);
+  }, [pathname, runId, isAdminOrDashboard]);
 
   return (
     <div className="min-h-screen bg-verisum-white text-verisum-black flex flex-col">
