@@ -11,6 +11,16 @@ function randomToken(length = 28) {
 
 export async function POST(req: Request) {
   try {
+    let supabase: ReturnType<typeof supabaseServer>;
+    try {
+      supabase = supabaseServer();
+    } catch (configErr: any) {
+      return NextResponse.json(
+        { error: "Server configuration error. Please try again later or contact support." },
+        { status: 503 }
+      );
+    }
+
     const body = await req.json();
 
     const orgName = String(body.orgName || "").trim();
@@ -36,8 +46,6 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-
-    const supabase = supabaseServer();
 
     const { data: existingOrgs, error: orgFindErr } = await supabase
       .from("organisations")

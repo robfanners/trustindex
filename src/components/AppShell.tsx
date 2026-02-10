@@ -77,7 +77,7 @@ export default function AppShell({ children }: AppShellProps) {
             <nav className="hidden md:flex items-center gap-4">
               {navItems.map((item) => (
                 <a
-                  key={item.href}
+                  key={`${item.href}-${item.label}`}
                   href={item.href}
                   target={item.isExternal ? "_blank" : undefined}
                   rel={item.isExternal ? "noopener noreferrer" : undefined}
@@ -121,7 +121,7 @@ export default function AppShell({ children }: AppShellProps) {
               <div className="flex flex-col gap-2">
                 {navItems.map((item) => (
                   <a
-                    key={item.href}
+                    key={`${item.href}-${item.label}`}
                     href={item.href}
                     target={item.isExternal ? "_blank" : undefined}
                     rel={item.isExternal ? "noopener noreferrer" : undefined}
@@ -158,10 +158,20 @@ export default function AppShell({ children }: AppShellProps) {
               <span className="text-xs">Built in the UK</span>
             </div>
             <div className="flex items-center gap-4">
-              <a href="#" className="hover:text-verisum-black transition-colors opacity-50 cursor-not-allowed">
+              <a
+                href="https://www.verisum.org/privacy-policy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-verisum-black transition-colors"
+              >
                 Privacy
               </a>
-              <a href="#" className="hover:text-verisum-black transition-colors opacity-50 cursor-not-allowed">
+              <a
+                href="https://www.verisum.org/terms-and-conditions"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-verisum-black transition-colors"
+              >
                 Terms
               </a>
             </div>

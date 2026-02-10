@@ -77,7 +77,15 @@ async function copyText(label: string, text: string) {
       setResult(json as Result);
       setLoading(false);
     } catch (e: any) {
-      setError(e?.message || "Unknown error");
+      const msg = e?.message ?? "";
+      const isNetworkError =
+        msg === "fetch failed" ||
+        (e?.name === "TypeError" && typeof msg === "string" && msg.toLowerCase().includes("fetch"));
+      setError(
+        isNetworkError
+          ? "Unable to reach the server. Check your connection and try again. If the problem persists, the server may be temporarily unavailable."
+          : msg || "Unknown error"
+      );
       setLoading(false);
     }
   };
