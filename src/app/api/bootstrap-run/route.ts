@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
+import { getUserPlan, getUserSurveyCount, canCreateSurvey, getPlanLimits } from "@/lib/entitlements";
 
 function randomToken(length = 28) {
   const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -62,16 +64,48 @@ if (mode === "org" && inviteCount < MIN_ORG_RESPONDENTS) {
       organisationId = orgInsert.id;
     }
 
+    // Read authenticated user (if any) for ownership
+    let ownerUserId: string | null = null;
+    try {
+      const authClient = await createSupabaseServerClient();
+      const { data: { user } } = await authClient.auth.getUser();
+      ownerUserId = user?.id ?? null;
+    } catch {
+      // No auth session — ownerUserId stays null
+    }
+
+    // Enforce plan caps for authenticated users
+    if (ownerUserId) {
+      const [plan, surveyCount] = await Promise.all([
+        getUserPlan(ownerUserId),
+        getUserSurveyCount(ownerUserId),
+      ]);
+
+      if (!canCreateSurvey(plan, surveyCount)) {
+        const limits = getPlanLimits(plan);
+        return NextResponse.json(
+          {
+            error: `You've reached your plan limit of ${limits.maxSurveys} survey${limits.maxSurveys !== 1 ? "s" : ""}. Upgrade to continue.`,
+            code: "PLAN_CAP_REACHED",
+          },
+          { status: 403 }
+        );
+      }
+    }
+
     // 2) Create run
+    const runRow: Record<string, unknown> = {
+      organisation_id: organisationId,
+      title: runTitle,
+      status: "live",
+      opens_at: new Date().toISOString(),
+      mode,
+    };
+    if (ownerUserId) runRow.owner_user_id = ownerUserId;
+
     const { data: runInsert, error: runErr } = await supabase
       .from("survey_runs")
-      .insert({
-        organisation_id: organisationId,
-        title: runTitle,
-        status: "live",
-        opens_at: new Date().toISOString(),
-        mode,
-      })
+      .insert(runRow)
       .select("id")
       .single();
 

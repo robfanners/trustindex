@@ -1,6 +1,8 @@
 "use server";
 
 import { supabaseServer } from "@/lib/supabaseServer";
+import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
+import { getUserPlan, getUserSurveyCount, canCreateSurvey, getPlanLimits } from "@/lib/entitlements";
 
 export type CreateState = {
   runId: string | null;
@@ -46,15 +48,45 @@ export async function createDemoRunAction(_: CreateState): Promise<CreateState> 
       organisationId = orgInsert.id;
     }
 
+    // Read authenticated user (if any) for ownership
+    let ownerUserId: string | null = null;
+    try {
+      const authClient = await createSupabaseServerClient();
+      const { data: { user } } = await authClient.auth.getUser();
+      ownerUserId = user?.id ?? null;
+    } catch {
+      // No auth session — ownerUserId stays null
+    }
+
+    // Enforce plan caps for authenticated users
+    if (ownerUserId) {
+      const [plan, surveyCount] = await Promise.all([
+        getUserPlan(ownerUserId),
+        getUserSurveyCount(ownerUserId),
+      ]);
+
+      if (!canCreateSurvey(plan, surveyCount)) {
+        const limits = getPlanLimits(plan);
+        return {
+          runId: null,
+          token: null,
+          error: `You've reached your plan limit of ${limits.maxSurveys} survey${limits.maxSurveys !== 1 ? "s" : ""}. Upgrade to continue.`,
+        };
+      }
+    }
+
+    const runRow: Record<string, unknown> = {
+      organisation_id: organisationId,
+      title,
+      status: "live",
+      opens_at: new Date().toISOString(),
+      mode: "explorer",
+    };
+    if (ownerUserId) runRow.owner_user_id = ownerUserId;
+
     const { data: runInsert, error: runErr } = await supabaseServer()
       .from("survey_runs")
-      .insert({
-        organisation_id: organisationId,
-        title,
-        status: "live",
-        opens_at: new Date().toISOString(),
-        mode: "explorer",
-      })
+      .insert(runRow)
       .select("id")
       .single();
 

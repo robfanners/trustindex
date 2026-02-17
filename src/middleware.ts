@@ -1,60 +1,74 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { createSupabaseMiddlewareClient } from "@/lib/supabase-auth-middleware";
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
-  // Only handle /admin routes
-  if (!pathname.startsWith("/admin")) return NextResponse.next();
+  // Create a response we can mutate (for cookie refresh)
+  const response = NextResponse.next({ request });
 
-  // Allow open access to new-run (anyone can start)
-  if (pathname === "/admin/new-run" || pathname.startsWith("/admin/new-run/")) {
-    return NextResponse.next();
-  }
+  // Refresh Supabase auth session on every request (keeps cookies fresh)
+  const supabase = createSupabaseMiddlewareClient(request, response);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  const hasVerisumAdmin = request.cookies.get("ti_verisum_admin")?.value === "1";
+  // --- /admin route protection ---
+  if (pathname.startsWith("/admin")) {
+    // Allow open access to new-run (anyone can start)
+    if (pathname === "/admin/new-run" || pathname.startsWith("/admin/new-run/")) {
+      return response;
+    }
 
-  // Gate /admin/run/[runId] via Verisum OR per-run owner cookie
-  if (pathname.startsWith("/admin/run/")) {
-    const parts = pathname.split("/").filter(Boolean); // ["admin","run",":runId",...]
-    const runId = parts[2];
+    const hasVerisumAdmin = request.cookies.get("ti_verisum_admin")?.value === "1";
 
-    const ownerCookieName = runId ? `ti_owner_${runId}` : null;
-    const hasOwner = ownerCookieName ? request.cookies.get(ownerCookieName)?.value === "1" : false;
+    // Gate /admin/run/[runId] via Supabase Auth OR Verisum admin OR per-run owner cookie
+    if (pathname.startsWith("/admin/run/")) {
+      const parts = pathname.split("/").filter(Boolean);
+      const runId = parts[2];
 
-    if (hasVerisumAdmin || hasOwner) return NextResponse.next();
+      const ownerCookieName = runId ? `ti_owner_${runId}` : null;
+      const hasOwner = ownerCookieName ? request.cookies.get(ownerCookieName)?.value === "1" : false;
+
+      if (user || hasVerisumAdmin || hasOwner) return response;
+
+      const url = request.nextUrl.clone();
+      url.pathname = "/auth/login";
+      url.searchParams.set("next", `${pathname}${search || ""}`);
+      return NextResponse.redirect(url);
+    }
+
+    // Everything else under /admin requires Supabase Auth or Verisum admin
+    if (user || hasVerisumAdmin) {
+      if (pathname === "/admin") {
+        const url = request.nextUrl.clone();
+        url.pathname = "/admin/new-run";
+        return NextResponse.redirect(url);
+      }
+      return response;
+    }
 
     const url = request.nextUrl.clone();
-    url.pathname = "/";
-    url.searchParams.set("auth", "required");
-    url.searchParams.set("role", "owner");
-    if (runId) url.searchParams.set("runId", runId);
-    // Preserve original destination (path + query)
-    url.searchParams.set("next", `${pathname}${search || ""}`);
+    url.pathname = "/auth/login";
+    const nextPath = pathname === "/admin" ? "/admin/new-run" : `${pathname}${search || ""}`;
+    url.searchParams.set("next", nextPath);
     return NextResponse.redirect(url);
   }
 
-  // Everything else under /admin is Verisum-only
-  if (hasVerisumAdmin) {
-    // If accessing /admin (root), redirect to /admin/new-run
-    if (pathname === "/admin") {
+  // --- /dashboard (exact) protection — requires auth ---
+  if (pathname === "/dashboard") {
+    if (!user) {
       const url = request.nextUrl.clone();
-      url.pathname = "/admin/new-run";
+      url.pathname = "/auth/login";
+      url.searchParams.set("next", "/dashboard");
       return NextResponse.redirect(url);
     }
-    return NextResponse.next();
   }
 
-  const url = request.nextUrl.clone();
-  url.pathname = "/";
-  url.searchParams.set("auth", "required");
-  url.searchParams.set("role", "verisum");
-  // Default next to /admin/new-run if accessing /admin root
-  const nextPath = pathname === "/admin" ? "/admin/new-run" : `${pathname}${search || ""}`;
-  url.searchParams.set("next", nextPath);
-  return NextResponse.redirect(url);
+  return response;
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin/:path*", "/dashboard/:path*"],
 };

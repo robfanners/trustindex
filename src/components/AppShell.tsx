@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -10,6 +11,7 @@ type AppShellProps = {
 export default function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, loading: authLoading, signOut } = useAuth();
 
   const currentYear = new Date().getFullYear();
 
@@ -90,6 +92,31 @@ export default function AppShell({ children }: AppShellProps) {
                   {item.label}
                 </a>
               ))}
+              {!authLoading && (
+                user ? (
+                  <div className="flex items-center gap-3 ml-2 pl-2 border-l border-verisum-grey">
+                    <a
+                      href="/dashboard"
+                      className="text-sm text-verisum-grey hover:text-verisum-black transition-colors"
+                    >
+                      {user.email}
+                    </a>
+                    <button
+                      onClick={signOut}
+                      className="text-sm text-verisum-grey hover:text-verisum-black transition-colors"
+                    >
+                      Log out
+                    </button>
+                  </div>
+                ) : (
+                  <a
+                    href="/auth/login"
+                    className="text-sm px-3 py-2 rounded transition-colors text-verisum-blue hover:text-verisum-black font-medium ml-2"
+                  >
+                    Log in
+                  </a>
+                )
+              )}
             </nav>
 
             {/* Mobile menu button */}
@@ -135,6 +162,35 @@ export default function AppShell({ children }: AppShellProps) {
                     {item.label}
                   </a>
                 ))}
+                {!authLoading && (
+                  user ? (
+                    <>
+                      <div className="border-t border-verisum-grey mt-2 pt-2">
+                        <a
+                          href="/dashboard"
+                          className="text-sm px-3 py-2 rounded text-verisum-grey hover:text-verisum-black block"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          {user.email}
+                        </a>
+                        <button
+                          onClick={() => { signOut(); setMobileMenuOpen(false); }}
+                          className="text-sm px-3 py-2 rounded text-verisum-grey hover:text-verisum-black w-full text-left"
+                        >
+                          Log out
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <a
+                      href="/auth/login"
+                      className="text-sm px-3 py-2 rounded text-verisum-blue font-medium"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Log in
+                    </a>
+                  )
+                )}
               </div>
             </div>
           )}
