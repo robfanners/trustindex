@@ -76,3 +76,15 @@ export async function getUserSurveyCount(userId: string): Promise<number> {
 
   return count ?? 0;
 }
+
+/** Count how many non-archived systems this user owns. */
+export async function getUserSystemCount(userId: string): Promise<number> {
+  const db = supabaseServer();
+  const { count } = await db
+    .from("systems")
+    .select("id", { count: "exact", head: true })
+    .eq("owner_id", userId)
+    .eq("archived", false);
+
+  return count ?? 0;
+}
