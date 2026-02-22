@@ -379,7 +379,7 @@ export default function AdminRunPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `trustindex-links-${runId}.txt`;
+    a.download = `trustgraph-links-${runId}.txt`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -511,7 +511,7 @@ export default function AdminRunPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      const baseName = `trustindex_${runId}_responses`;
+      const baseName = `trustgraph_${runId}_responses`;
       const safeSuffix = clientSafeExport ? "_client_safe" : "";
       const segSuffix = includeSegmentation ? "" : "_no_seg";
       a.download = `${baseName}${safeSuffix}${segSuffix}.csv`;
@@ -608,7 +608,7 @@ export default function AdminRunPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      const baseName = `trustindex_${runId}_summary`;
+      const baseName = `trustgraph_${runId}_summary`;
       const safeSuffix = clientSafeExport ? "_client_safe" : "";
       const segSuffix = includeSegmentation ? "" : "_no_seg";
       a.download = `${baseName}${safeSuffix}${segSuffix}.csv`;
@@ -979,10 +979,10 @@ export default function AdminRunPage() {
                 href={
                   "mailto:?" +
                   "subject=" +
-                  encodeURIComponent(`Reminder: ${run?.title || "TrustIndex survey"}`) +
+                  encodeURIComponent(`Reminder: ${run?.title || "TrustOrg survey"}`) +
                   "&body=" +
                   encodeURIComponent(
-                    `Hi,\n\nQuick reminder to complete the TrustIndex survey using your personal link below:\n\n` +
+                    `Hi,\n\nQuick reminder to complete the TrustOrg survey using your personal link below:\n\n` +
                       pendingLinks +
                       `\n\nThank you.`
                   )
@@ -1014,7 +1014,7 @@ export default function AdminRunPage() {
             href={
               "mailto:?" +
               "subject=" +
-              encodeURIComponent(`TrustIndex links – ${run?.title || "Survey"}`) +
+              encodeURIComponent(`TrustGraph links – ${run?.title || "Survey"}`) +
               "&body=" +
               encodeURIComponent(
                 `${linkPack}\n\nAdmin code: [Your admin code - save this from when you created the survey]`

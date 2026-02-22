@@ -59,19 +59,10 @@ export default function AppShell({ children }: AppShellProps) {
             {/* Left: Branding */}
             <div className="flex items-center gap-3">
               <a
-                href="https://www.verisum.org"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-base md:text-lg font-semibold text-verisum-black hover:text-verisum-blue transition-colors"
-              >
-                Verisum
-              </a>
-              <span className="text-verisum-grey">|</span>
-              <a
                 href="/"
                 className="text-base md:text-lg font-semibold text-verisum-black hover:text-verisum-blue transition-colors"
               >
-                TrustIndex™
+                TrustGraph™
               </a>
             </div>
 
@@ -209,7 +200,7 @@ export default function AppShell({ children }: AppShellProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-verisum-grey">
             <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
-              <span>© {currentYear} Verisum • TrustIndex™</span>
+              <span>© {currentYear} Verisum • TrustGraph™</span>
               <span className="hidden sm:inline">•</span>
               <span className="text-xs">Built in the UK</span>
             </div>

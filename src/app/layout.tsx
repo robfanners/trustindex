@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TrustIndex™ by Verisum",
-  description: "Measure and build organisational trust",
+  title: "TrustGraph™ by Verisum",
+  description: "Measure, map and strengthen organisational trust",
 };
 
 export default function RootLayout({

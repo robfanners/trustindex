@@ -1,7 +1,7 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 
 type AuthenticatedShellProps = {
@@ -12,8 +12,10 @@ const SIDEBAR_KEY = "ti_sidebar_collapsed";
 
 const navLinks = [
   { label: "Dashboard", href: "/dashboard", icon: "home" },
-  { label: "Create Survey", href: "/admin/new-run", icon: "plus" },
+  { label: "Create Survey", href: "/dashboard/surveys/new", icon: "plus" },
   { label: "My Surveys", href: "/dashboard#surveys", icon: "list" },
+  { label: "Systems", href: "/dashboard?tab=systems", icon: "cpu" },
+  { label: "Settings", href: "/dashboard/settings", icon: "settings" },
 ];
 
 function NavIcon({ icon }: { icon: string }) {
@@ -36,13 +38,27 @@ function NavIcon({ icon }: { icon: string }) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
         </svg>
       );
+    case "cpu":
+      return (
+        <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 3v2m6-2v2M9 19v2m6-2v2M3 9h2m-2 6h2m14-6h2m-2 6h2M7 7h10v10H7V7z" />
+        </svg>
+      );
+    case "settings":
+      return (
+        <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      );
     default:
       return null;
   }
 }
 
-export default function AuthenticatedShell({ children }: AuthenticatedShellProps) {
+function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { user, profile, signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -72,10 +88,15 @@ export default function AuthenticatedShell({ children }: AuthenticatedShellProps
   const currentYear = new Date().getFullYear();
 
   const activeNav = useMemo(() => {
-    if (pathname === "/dashboard") return "/dashboard";
-    if (pathname.startsWith("/admin/new-run")) return "/admin/new-run";
+    if (pathname.startsWith("/dashboard/settings")) return "/dashboard/settings";
+    if (pathname === "/dashboard") {
+      const tab = searchParams.get("tab");
+      if (tab === "systems") return "/dashboard?tab=systems";
+      return "/dashboard";
+    }
+    if (pathname.startsWith("/dashboard/surveys/new")) return "/dashboard/surveys/new";
     return pathname;
-  }, [pathname]);
+  }, [pathname, searchParams]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -100,19 +121,10 @@ export default function AuthenticatedShell({ children }: AuthenticatedShellProps
         {/* Branding */}
         <div className="flex items-center gap-3">
           <a
-            href="https://www.verisum.org"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-base font-semibold text-verisum-black hover:text-verisum-blue transition-colors"
-          >
-            Verisum
-          </a>
-          <span className="text-verisum-grey">|</span>
-          <a
             href="/dashboard"
             className="text-base font-semibold text-verisum-black hover:text-verisum-blue transition-colors"
           >
-            TrustIndex™
+            TrustGraph™
           </a>
         </div>
 
@@ -206,7 +218,7 @@ export default function AuthenticatedShell({ children }: AuthenticatedShellProps
           {/* Sidebar footer */}
           <div className={`border-t border-verisum-grey px-4 py-3 ${sidebarCollapsed ? "lg:hidden" : ""}`}>
             <div className="text-xs text-verisum-grey">
-              &copy; {currentYear} Verisum
+              &copy; {currentYear} Verisum &middot; TrustGraph&trade;
             </div>
           </div>
         </aside>
@@ -219,5 +231,13 @@ export default function AuthenticatedShell({ children }: AuthenticatedShellProps
         </main>
       </div>
     </div>
+  );
+}
+
+export default function AuthenticatedShell({ children }: AuthenticatedShellProps) {
+  return (
+    <Suspense>
+      <AuthenticatedShellInner>{children}</AuthenticatedShellInner>
+    </Suspense>
   );
 }

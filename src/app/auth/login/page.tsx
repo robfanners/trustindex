@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-auth-browser";
+import { useAuth } from "@/context/AuthContext";
 import AppShell from "@/components/AppShell";
 
 export default function LoginPage() {
+  const { user, loading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -12,8 +14,22 @@ export default function LoginPage() {
 
   const supabase = createSupabaseBrowserClient();
 
+  // Read `next` param once — used for both auto-redirect and magic link callback
+  const next =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("next") ?? "/dashboard"
+      : "/dashboard";
+
+  // If the user is already authenticated, redirect them away from login
+  useEffect(() => {
+    if (!authLoading && user) {
+      window.location.href = next;
+    }
+  }, [authLoading, user, next]);
+
   const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    (typeof window !== "undefined" ? window.location.origin : "");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -23,14 +39,22 @@ export default function LoginPage() {
     const { error: authError } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${siteUrl}/auth/callback`,
+        emailRedirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(next)}`,
       },
     });
 
     setLoading(false);
 
     if (authError) {
-      setError(authError.message);
+      // Map opaque Supabase errors to user-friendly messages
+      const msg = authError.message.toLowerCase();
+      if (msg.includes("email") || msg.includes("rate") || msg.includes("limit")) {
+        setError(
+          "Unable to send email. Please check your email address and try again, or try a different email."
+        );
+      } else {
+        setError(authError.message);
+      }
     } else {
       setSent(true);
     }
@@ -41,10 +65,11 @@ export default function LoginPage() {
       <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
         <div className="w-full max-w-sm mx-auto px-4">
           <h1 className="text-2xl font-semibold text-verisum-black text-center mb-2">
-            Sign in to TrustIndex
+            Sign in or create an account
           </h1>
           <p className="text-sm text-verisum-grey text-center mb-8">
-            Enter your email to receive a magic link
+            Enter your email and we&apos;ll send you a magic link. No password
+            needed — works for new and existing accounts.
           </p>
 
           {sent ? (
@@ -93,6 +118,16 @@ export default function LoginPage() {
               </button>
             </form>
           )}
+
+          <p className="text-xs text-verisum-grey text-center mt-6">
+            New to TrustGraph?{" "}
+            <a
+              href="/try"
+              className="text-verisum-blue hover:text-verisum-blue/80 font-medium"
+            >
+              Try Explorer for free
+            </a>
+          </p>
         </div>
       </div>
     </AppShell>

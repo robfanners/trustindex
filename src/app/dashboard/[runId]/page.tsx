@@ -310,7 +310,7 @@ setInvites((inviteData as InviteRow[]) || []);
     return (
       <AppShell>
         <div className="max-w-4xl mx-auto p-4 md:p-6 lg:p-10 space-y-4">
-          <h1 className="text-2xl font-bold">TrustIndex results</h1>
+          <h1 className="text-2xl font-bold">TrustGraph Results</h1>
           <div className="text-verisum-red">{error}</div>
         </div>
       </AppShell>
@@ -327,7 +327,7 @@ setInvites((inviteData as InviteRow[]) || []);
     return (
       <AppShell>
         <div className="max-w-3xl mx-auto p-4 md:p-6 lg:p-10 space-y-6">
-          <h1 className="text-3xl font-bold">TrustIndex results</h1>
+          <h1 className="text-3xl font-bold">TrustGraph Results</h1>
           <div className="text-verisum-grey">{run?.title}</div>
 
           <div className="border border-verisum-grey rounded-lg p-6 space-y-2">
@@ -392,7 +392,7 @@ if (!trust) {
   return (
     <AppShell>
       <div className="max-w-3xl mx-auto p-4 md:p-6 lg:p-10 space-y-6">
-        <h1 className="text-3xl font-bold">TrustIndex results</h1>
+        <h1 className="text-3xl font-bold">TrustGraph Results</h1>
         <div className="text-verisum-grey">{run?.title}</div>
         <div className="border border-verisum-grey rounded-lg p-6 space-y-2">
 	<div className="text-verisum-grey font-medium">No responses yet.</div>
@@ -456,7 +456,7 @@ if (!trust) {
   const canExport = isUnlocked && isAdminViewer;
   const teaserCopy = {
     title: "Unlock deeper insight",
-    body: "You're seeing the headline TrustIndex score, one key insight, and the radar view.\nUnlocking provides:",
+    body: "You're seeing the headline TrustGraph Score™, one key insight, and the radar view.\nUnlocking provides:",
     bullets: [
       "Full dimension-by-dimension diagnosis",
       "Actions and probe questions tailored to weak spots",
@@ -562,7 +562,7 @@ if (!trust) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `trustindex_${runId}_responses.csv`;
+      a.download = `trustgraph_${runId}_responses.csv`;
       a.click();
       URL.revokeObjectURL(url);
       setExportStatus("CSV downloaded.");
@@ -577,9 +577,9 @@ if (!trust) {
     <AppShell>
       <div className="max-w-4xl mx-auto p-4 md:p-6 lg:p-10 space-y-6 md:space-y-8">
         <header className="space-y-2">
-          <h1 className="text-3xl font-bold">TrustIndex results</h1>
+          <h1 className="text-3xl font-bold">TrustGraph Results</h1>
           <p className="text-sm text-verisum-grey">
-            This view shows a live TrustIndex snapshot based on current responses.
+            This view shows a live TrustGraph snapshot based on current responses.
           </p>
           <div className="text-sm text-verisum-grey">Survey ID: {runId}</div>
           <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-verisum-grey">
@@ -594,7 +594,7 @@ if (!trust) {
 
         <div className="border border-verisum-grey rounded-lg p-6 flex items-end justify-between">
           <div>
-            <div className="text-sm text-verisum-grey">TrustIndex score</div>
+            <div className="text-sm text-verisum-grey">TrustGraph Score™</div>
             <div className="text-5xl font-bold">
               {Number(trust.trustindex_0_to_100).toFixed(1)}
             </div>
@@ -756,10 +756,10 @@ if (!trust) {
                     href={
                       "mailto:TrustIndexScores@verisum.org?" +
                       "subject=" +
-                      encodeURIComponent(`TrustIndex unlock request – ${run?.title || runId}`) +
+                      encodeURIComponent(`TrustGraph unlock request – ${run?.title || runId}`) +
                       "&body=" +
                       encodeURIComponent(
-                        `Hi Rob,\n\nI’d like to unlock the full TrustIndex report for:\n` +
+                        `Hi Rob,\n\nI'd like to unlock the full TrustGraph report for:\n` +
                           `\t•\tSurvey: ${run?.title || "—"}\n` +
                           `\t•\tSurvey ID: ${runId}\n` +
                           `\t•\tMode: ${run?.mode || "—"}\n` +
@@ -780,10 +780,10 @@ if (!trust) {
                     href={
                       "mailto:TrustIndexScores@verisum.org?" +
                       "subject=" +
-                      encodeURIComponent(`TrustIndex debrief – ${run?.title || runId}`) +
+                      encodeURIComponent(`TrustGraph debrief – ${run?.title || runId}`) +
                       "&body=" +
                       encodeURIComponent(
-                        `Hi Rob,\n\nCan we book a quick 20-minute debrief on this TrustIndex result?\n` +
+                        `Hi Rob,\n\nCan we book a quick 20-minute debrief on this TrustGraph result?\n` +
                           `\t•\tSurvey: ${run?.title || "—"}\n` +
                           `\t•\tSurvey ID: ${runId}\n` +
                           `\t•\tMode: ${run?.mode || "—"}\n` +
