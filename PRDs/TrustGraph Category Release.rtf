@@ -1,0 +1,921 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2867
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fnil\fcharset0 .SFNS-Semibold;\f2\fnil\fcharset0 .SFNS-Regular;
+\f3\froman\fcharset0 TimesNewRomanPSMT;\f4\fnil\fcharset0 HelveticaNeue-Bold;\f5\fnil\fcharset0 .AppleSystemUIFontMonospaced-Regular;
+\f6\fmodern\fcharset0 Courier;}
+{\colortbl;\red255\green255\blue255;\red14\green14\blue14;\red151\green0\blue126;\red0\green0\blue0;
+\red181\green0\blue19;\red111\green90\blue30;\red13\green100\blue1;\red20\green0\blue196;}
+{\*\expandedcolortbl;;\cssrgb\c6700\c6700\c6700;\cssrgb\c66667\c5098\c56863;\csgray\c0;
+\cssrgb\c76863\c10196\c8627;\cssrgb\c51373\c42353\c15686;\cssrgb\c0\c45490\c0;\cssrgb\c10980\c0\c81176;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0  
+\f1\b\fs44 \cf2 PRODUCT REQUIREMENTS DOCUMENT
+\f2\b0\fs28 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 PART 1 - TrustGraph Category Release
+\f2\b0\fs28 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 Objective
+\f2\b0\fs28 \
+\
+Transition product from TrustIndex to TrustGraph platform identity and implement category-defining depth.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 CORE CHANGES
+\f2\b0\fs28 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 1\uc0\u65039 \u8419  Rename Everywhere
+\f2\b0\fs28 \
+\
+Replace:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	TrustIndex\
+	\'95	Survey Dashboard\
+	\'95	TrustIndex Results\
+\
+With:\
+	\'95	TrustGraph\
+	\'95	TrustOrg\
+	\'95	TrustSys\
+	\'95	TrustGraph Score\'99\
+\
+Remove TrustIndex from UI entirely.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 2\uc0\u65039 \u8419  Unified Dashboard
+\f2\b0\fs28 \
+\
+Top section:\
+\
+TrustGraph\'99\
+Score: 67\
+Tier: Stable\
+\
+Below:\
+\
+Modules:\
+\
+[ TrustOrg ]\
+[ TrustSys ] (greyed if not enabled)\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 3\uc0\u65039 \u8419  Tier Framework
+\f2\b0\fs28 \
+\
+Implement tier classification:\
+\
+Trusted: 80\'96100\
+Stable: 65\'9679\
+Elevated Risk: 50\'9664\
+Critical: <50\
+\
+Display badge next to score.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 4\uc0\u65039 \u8419  Methodology Overlay
+\f2\b0\fs28 \
+\
+Info icon opens modal:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Weighting\
+	\'95	Dimensions\
+	\'95	Evidence scoring\
+	\'95	Version\
+	\'95	Last updated\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 5\uc0\u65039 \u8419  Score Snapshot Versioning
+\f2\b0\fs28 \
+\
+When threshold reached:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Save score snapshot\
+	\'95	Save methodology version\
+	\'95	Display \'93Snapshot v1.0\'94\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 6\uc0\u65039 \u8419  Interpretation Engine
+\f2\b0\fs28 \
+\
+Add:\
+\
+Executive Summary block:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Organisational health\
+	\'95	Governance posture\
+	\'95	Action orientation\
+\
+Auto-generated from score + dimension gaps.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 7\uc0\u65039 \u8419  Systems Maturity Labels
+\f2\b0\fs28 \
+\
+Add:\
+\
+Ad-hoc\
+Defined\
+Managed\
+Optimised\
+\
+Displayed per dimension.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 8\uc0\u65039 \u8419  Visual Elevation
+\f2\b0\fs28 \
+\
+Implement:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	New brand tokens\
+	\'95	Increased whitespace\
+	\'95	Reduced border density\
+	\'95	Larger headings\
+	\'95	Softer cards\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs44 \cf2 MVP-14 Deliverables
+\f2\b0\fs28 \
+\pard\tqr\tx260\tx420\li420\fi-420\sl324\slmult1\sb240\partightenfactor0
+
+\f3 \cf2 	1.	Brand token system installed\
+	2.	UI renamed and unified\
+	3.	Tier system implemented\
+	4.	Methodology overlay live\
+	5.	Executive summary block live\
+	6.	Settings module live\
+	7.	Greyed Systems tab for Explorer\
+	8.	Score snapshot logic\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs44 \cf2 STRATEGIC RESULT
+\f2\b0\fs28 \
+\
+After MVP-14:\
+\
+You no longer have:\
+\
+A trust survey tool.\
+\
+You have:\
+\
+A measurable TrustGraph platform\
+with governance depth\
+and SaaS infrastructure maturity.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+PART 2\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+\cf2 Below is an 
+\f4\b \cf2 exact, implementation-ready Executive Summary Logic Engine
+\f2\b0 \cf2  for 
+\f4\b \cf2 TrustGraph
+\f2\b0 \cf2  (covering 
+\f4\b \cf2 TrustOrg
+\f2\b0 \cf2  now, and extensible to 
+\f4\b \cf2 TrustSys
+\f2\b0 \cf2 ). This is written as a Cursor-ready spec + pseudo-code + concrete mapping tables + output contract.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 Cursor Prompt: Implement Executive Summary Logic Engine (TrustGraph)
+\f2\b0\fs28 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b \cf2 Goal:
+\f2\b0 \cf2  Generate a consistent \'93Executive Summary\'94 block for results pages using score + dimension scores + response count + (optional) trends. Output must be deterministic and explainable (no LLM calls).\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs30 \cf2 Where it appears
+\f2\b0\fs28 \cf2 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f5 \cf2 TrustOrg results page
+\f2 \cf2  (current 
+\f5 \cf2 /dashboard/[runId]
+\f2 \cf2 )\
+	\'95	Later reused in unified TrustGraph dashboard (Org + Sys tabs)\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs30 \cf2 Inputs (TypeScript types)
+\f0\b0\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f6\fs28 \cf3 export\cf4  \cf3 type\cf4  DimensionKey =\
+  | \cf5 "transparency"\cf4 \
+  | \cf5 "inclusion"\cf4 \
+  | \cf5 "confidence"\cf4 \
+  | \cf5 "explainability"\cf4 \
+  | \cf5 "risk"\cf4 ;\
+\
+\cf3 export\cf4  \cf3 type\cf4  TrustGraphInputs = \{\
+  \cf6 module\cf4 : \cf5 "org"\cf4  | \cf5 "sys"\cf4 ;\
+  \cf6 score\cf4 : number; \cf7 // 0-100\cf4 \
+  \cf6 responseCount\cf4 : number; \cf7 // integer\cf4 \
+  \cf6 minResponseThreshold\cf4 : number; \cf7 // default 5 for org, 1 for sys\cf4 \
+  \cf6 dimensions\cf4 : Record<DimensionKey, number>; \cf7 // 0-100 per dimension\cf4 \
+  \cf7 // Optional (if available now or later)\cf4 \
+  \cf6 previousScore\cf4 ?: number; \cf7 // 0-100\cf4 \
+  \cf6 previousDimensions\cf4 ?: Partial<Record<DimensionKey, number>>;\
+  \cf6 lastUpdatedISO\cf4 ?: string; \cf7 // for copy only\cf4 \
+\};
+\f0\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs30 \cf2 Outputs (Render contract)
+\f0\b0\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f6\fs28 \cf3 export\cf4  \cf3 type\cf4  ExecSummaryOutput = \{\
+  \cf6 status\cf4 : \cf5 "insufficient_data"\cf4  | \cf5 "provisional"\cf4  | \cf5 "stable"\cf4 ;\
+  \cf6 tier\cf4 : \cf5 "trusted"\cf4  | \cf5 "stable"\cf4  | \cf5 "elevated_risk"\cf4  | \cf5 "critical"\cf4 ;\
+  \cf6 headline\cf4 : string;         \cf7 // one sentence\cf4 \
+  \cf6 posture\cf4 : string;          \cf7 // governance / risk posture sentence\cf4 \
+  \cf6 primaryDrivers\cf4 : Array<\{\
+    \cf6 key\cf4 : DimensionKey;\
+    \cf6 label\cf4 : string;\
+    \cf6 score\cf4 : number;\
+    \cf6 severity\cf4 : \cf5 "strength"\cf4  | \cf5 "watch"\cf4  | \cf5 "weak"\cf4 ;\
+    \cf6 why\cf4 : string;            \cf7 // short explanation\cf4 \
+  \}>;\
+  \cf6 priorities\cf4 : Array<\{\
+    \cf6 title\cf4 : string;          \cf7 // action-oriented\cf4 \
+    \cf6 rationale\cf4 : string;      \cf7 // links to dimension weakness\cf4 \
+    \cf6 probes\cf4 : string[];       \cf7 // 2-4 probe questions\cf4 \
+  \}>;\
+  \cf6 confidenceNote\cf4 : string;   \cf7 // response-count + stability note\cf4 \
+  \cf6 trendNote\cf4 ?: string;       \cf7 // if previousScore exists\cf4 \
+\};
+\f0\fs24 \cf0 \
+\
+\
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs44 \cf2 Logic Rules (Deterministic)
+\f2\b0\fs28 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 A) Data sufficiency / status
+\f2\b0\fs28 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	If 
+\f5 \cf2 responseCount < minResponseThreshold
+\f2 \cf2 :\
+\pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f5 status = "insufficient_data"
+\f2 \
+	\'95	Summary becomes guidance-first. Still compute tier from current score but mark as provisional.\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Else if 
+\f5 \cf2 responseCount < minResponseThreshold * 2
+\f2 \cf2  (e.g., 5\'969 for org if threshold=5):\
+\pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f5 status = "provisional"
+\f2 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Else:\
+\pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f5 status = "stable"
+\f2 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b \cf2 Copy guidance:
+\f2\b0 \cf2 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	insufficient: \'93Early signal \'97 results firm up as responses increase.\'94\
+	\'95	provisional: \'93Provisional read \'97 directionally useful.\'94\
+	\'95	stable: \'93Stable read \'97 representative enough for action.\'94\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 B) Tier bands (score \uc0\u8594  tier)
+\f2\b0\fs28 \
+\
+Use the locked tiering:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f5 \cf2 trusted
+\f2 \cf2 : 80\'96100\
+	\'95	
+\f5 \cf2 stable
+\f2 \cf2 : 65\'9679\
+	\'95	
+\f5 \cf2 elevated_risk
+\f2 \cf2 : 50\'9664\
+	\'95	
+\f5 \cf2 critical
+\f2 \cf2 : 0\'9649\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 C) Severity per dimension (score \uc0\u8594  severity)
+\f2\b0\fs28 \
+\
+For each dimension score:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f5 \cf2 strength
+\f2 \cf2 : >= 75\
+	\'95	
+\f5 \cf2 watch
+\f2 \cf2 : 60\'9674\
+	\'95	
+\f5 \cf2 weak
+\f2 \cf2 : < 60\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 D) Primary drivers selection (top 3)
+\f2\b0\fs28 \
+\
+Select 
+\f4\b \cf2 3 drivers
+\f2\b0 \cf2  with this rule:\
+\pard\tqr\tx260\tx420\li420\fi-420\sl324\slmult1\sb240\partightenfactor0
+
+\f3 \cf2 	1.	Include up to 
+\f4\b \cf2 2 weakest
+\f2\b0  dimensions (lowest scores) where severity is 
+\f5 weak
+\f2  or 
+\f5 watch
+\f2 .\
+
+\f3 \cf2 	2.	Include 
+\f4\b \cf2 1 strongest
+\f2\b0  dimension (highest score) if score >= 75.\
+
+\f3 \cf2 	3.	If no dimension >= 75, include the least-bad \'93watch\'94 dimension as \'93relative strength\'94.\
+\
+Driver output order: weakest first.\
+\
+Each driver must include a short \'93why\'94 sentence derived from templates below.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 E) Executive Summary headline template
+\f2\b0\fs28 \
+\
+Headline should follow tier + driver pattern:\
+\
+
+\f1\b\fs30 \cf2 If tier is trusted:
+\f2\b0\fs28 \cf2 \
+\
+\pard\tx860\tx1420\tx1980\tx2540\tx3100\tx3660\tx4220\tx4780\tx5340\tx5900\tx6460\tx7020\li300\sl324\slmult1\partightenfactor0
+\cf2 \'93TrustGraph is strong and resilient \'97 your main advantage is \{top_strength_label\}, with attention needed on \{top_watch_or_weak_label\}.\'94\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs30 \cf2 If tier is stable:
+\f2\b0\fs28 \cf2 \
+\
+\pard\tx860\tx1420\tx1980\tx2540\tx3100\tx3660\tx4220\tx4780\tx5340\tx5900\tx6460\tx7020\li300\sl324\slmult1\partightenfactor0
+\cf2 \'93TrustGraph is broadly stable \'97 performance is supported by \{top_strength_or_best_watch_label\}, but \{top_weak_label\} is the main constraint.\'94\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs30 \cf2 If elevated_risk:
+\f2\b0\fs28 \cf2 \
+\
+\pard\tx860\tx1420\tx1980\tx2540\tx3100\tx3660\tx4220\tx4780\tx5340\tx5900\tx6460\tx7020\li300\sl324\slmult1\partightenfactor0
+\cf2 \'93TrustGraph is under strain \'97 \{top_weak_label\} is pulling overall trust down and will limit performance unless addressed.\'94\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs30 \cf2 If critical:
+\f2\b0\fs28 \cf2 \
+\
+\pard\tx860\tx1420\tx1980\tx2540\tx3100\tx3660\tx4220\tx4780\tx5340\tx5900\tx6460\tx7020\li300\sl324\slmult1\partightenfactor0
+\cf2 \'93TrustGraph is fragile \'97 multiple trust drivers are failing, with \{top_weak_label\} the most urgent exposure.\'94\
+\
+If 
+\f5 status === insufficient_data
+\f2 , prefix:\
+\
+\'93Early signal: \'94\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 F) Governance posture sentence
+\f2\b0\fs28 \
+\
+This ties directly to 
+\f4\b \cf2 Risk
+\f2\b0 \cf2  + 
+\f4\b \cf2 Explainability
+\f2\b0 \cf2  (and module).\
+\
+For org module:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	If 
+\f5 \cf2 risk < 60
+\f2 \cf2  OR 
+\f5 \cf2 explainability < 60
+\f2 \cf2 :\
+\pard\tx860\tx1420\tx1980\tx2540\tx3100\tx3660\tx4220\tx4780\tx5340\tx5900\tx6460\tx7020\li300\sl324\slmult1\partightenfactor0
+\cf2 \'93Governance posture is reactive \'97 controls and explainability aren\'92t strong enough to reliably prevent avoidable risk.\'94\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Else if 
+\f5 \cf2 risk >= 75
+\f2 \cf2  AND 
+\f5 \cf2 explainability >= 75
+\f2 \cf2 :\
+\pard\tx860\tx1420\tx1980\tx2540\tx3100\tx3660\tx4220\tx4780\tx5340\tx5900\tx6460\tx7020\li300\sl324\slmult1\partightenfactor0
+\cf2 \'93Governance posture is proactive \'97 oversight and explainability are strong enough to support safe autonomy.\'94\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Else:\
+\pard\tx860\tx1420\tx1980\tx2540\tx3100\tx3660\tx4220\tx4780\tx5340\tx5900\tx6460\tx7020\li300\sl324\slmult1\partightenfactor0
+\cf2 \'93Governance posture is developing \'97 foundations are present, but consistency and enforcement need strengthening.\'94\
+\
+For sys module (later):\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Replace \'93governance posture\'94 with \'93system assurance posture\'94\
+	\'95	Mention evaluation, monitoring, auditability\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 G) Priorities (2 items) + probes (2\'964 questions each)
+\f2\b0\fs28 \
+\
+Choose priorities based on the 
+\f4\b \cf2 two weakest dimensions
+\f2\b0 \cf2  (or weakest + next weakest if ties). Each dimension has a predefined \'93priority pack\'94.\
+\
+
+\f1\b\fs30 \cf2 Priority packs (TrustOrg)
+\f2\b0\fs28 \cf2 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b \cf2 Transparency
+\f2\b0 \cf2 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Title: \'93Increase decision transparency where it matters\'94\
+	\'95	Rationale: \'93Low transparency creates rumours, slows decisions, and reduces adoption.\'94\
+	\'95	Probes:\
+\pard\tqr\tx660\tx820\li820\fi-820\sl324\slmult1\sb240\partightenfactor0
+
+\f3 \cf2 	1.	\'93Where do people feel decisions are made without clear reasons?\'94\
+	2.	\'93What information is consistently missing at the point of execution?\'94\
+	3.	\'93Which decisions need a published \'91why / trade-offs / owner\'92 note?\'94\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b \cf2 Inclusion
+\f2\b0 \cf2 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Title: \'93Raise psychological safety and inclusion signals\'94\
+	\'95	Rationale: \'93Low inclusion suppresses challenge and hides risk until late.\'94\
+	\'95	Probes:\
+\pard\tqr\tx660\tx820\li820\fi-820\sl324\slmult1\sb240\partightenfactor0
+
+\f3 \cf2 	1.	\'93Where do people avoid speaking up, and why?\'94\
+	2.	\'93Which groups feel least heard in planning and review?\'94\
+	3.	\'93Are dissenting views recorded and addressed or ignored?\'94\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b \cf2 Confidence
+\f2\b0 \cf2 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Title: \'93Rebuild confidence in leadership follow-through\'94\
+	\'95	Rationale: \'93Low confidence reduces pace and increases silent disengagement.\'94\
+	\'95	Probes:\
+\pard\tqr\tx660\tx820\li820\fi-820\sl324\slmult1\sb240\partightenfactor0
+
+\f3 \cf2 	1.	\'93Which promises or priorities feel repeatedly broken?\'94\
+	2.	\'93Where is execution drifting from stated strategy?\'94\
+	3.	\'93Do teams believe feedback leads to change?\'94\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b \cf2 Explainability
+\f2\b0 \cf2 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Title: \'93Improve explainability and human understanding\'94\
+	\'95	Rationale: \'93Low explainability makes AI-driven decisions brittle and hard to trust.\'94\
+	\'95	Probes:\
+\pard\tqr\tx660\tx820\li820\fi-820\sl324\slmult1\sb240\partightenfactor0
+
+\f3 \cf2 	1.	\'93Which outputs feel like black boxes to teams?\'94\
+	2.	\'93Where is the \'91reason / evidence / confidence\'92 missing?\'94\
+	3.	\'93Who is accountable when AI output is wrong?\'94\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b \cf2 Risk
+\f2\b0 \cf2 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Title: \'93Strengthen governance controls and escalation\'94\
+	\'95	Rationale: \'93Low risk control increases operational and regulatory exposure.\'94\
+	\'95	Probes:\
+\pard\tqr\tx660\tx820\li820\fi-820\sl324\slmult1\sb240\partightenfactor0
+
+\f3 \cf2 	1.	\'93Where can risky decisions ship without review?\'94\
+	2.	\'93Are escalation paths clear when confidence is low?\'94\
+	3.	\'93Is monitoring continuous or periodic and manual?\'94\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 H) Confidence note (response counts)
+\f2\b0\fs28 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	If insufficient_data:\
+\pard\tx860\tx1420\tx1980\tx2540\tx3100\tx3660\tx4220\tx4780\tx5340\tx5900\tx6460\tx7020\li300\sl324\slmult1\partightenfactor0
+\cf2 \'93This is an early signal based on \{responseCount\} responses. Results become more reliable at \{minResponseThreshold\}+ responses.\'94\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	If provisional:\
+\pard\tx860\tx1420\tx1980\tx2540\tx3100\tx3660\tx4220\tx4780\tx5340\tx5900\tx6460\tx7020\li300\sl324\slmult1\partightenfactor0
+\cf2 \'93Based on \{responseCount\} responses. Directionally useful \'97 expect some movement as more responses arrive.\'94\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	If stable:\
+\pard\tx860\tx1420\tx1980\tx2540\tx3100\tx3660\tx4220\tx4780\tx5340\tx5900\tx6460\tx7020\li300\sl324\slmult1\partightenfactor0
+\cf2 \'93Based on \{responseCount\} responses. Stable enough to act on \'97 track changes over time to confirm impact.\'94\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 I) Trend note (optional)
+\f2\b0\fs28 \
+\
+If 
+\f5 \cf2 previousScore
+\f2 \cf2  provided:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	delta = score - previousScore\
+	\'95	If abs(delta) < 3: \'93Stable vs last snapshot.\'94\
+	\'95	If delta >= 3: \'93Improving (+\{delta\}) vs last snapshot.\'94\
+	\'95	If delta <= -3: \'93Declining (\{delta\}) vs last snapshot.\'94\
+\
+Also mention which dimension moved most if previousDimensions exist:\
+	\'95	Find max abs change among available previousDimensions keys.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs44 \cf2 Implementation Details
+\f2\b0\fs28 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 File placement
+\f2\b0\fs28 \
+\
+Create:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f5 \cf2 src/lib/executiveSummary.ts
+\f2 \cf2  (pure functions, no React)\
+	\'95	Unit tests optional but recommended:\
+\pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f5 src/lib/executiveSummary.test.ts
+\f2 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 Function signature
+\f0\b0\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f6\fs28 \cf3 export\cf4  \cf3 function\cf4  buildExecutiveSummary(\cf6 input\cf4 : TrustGraphInputs): ExecSummaryOutput
+\f0\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 Deterministic helpers
+\f2\b0\fs28 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f5 \cf2 getTier(score)
+\f2 \cf2 \
+	\'95	
+\f5 \cf2 getStatus(responseCount, minThreshold)
+\f2 \cf2 \
+	\'95	
+\f5 \cf2 getSeverity(dimScore)
+\f2 \cf2 \
+	\'95	
+\f5 \cf2 pickDrivers(dimensions)
+\f2 \cf2 \
+	\'95	
+\f5 \cf2 priorityPackFor(dimensionKey)
+\f2 \cf2 \
+	\'95	
+\f5 \cf2 makeHeadline(tier, status, drivers)
+\f2 \cf2 \
+	\'95	
+\f5 \cf2 makePosture(module, dims)
+\f2 \cf2 \
+	\'95	
+\f5 \cf2 makeTrendNote(input)
+\f2 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs44 \cf2 Pseudocode (exact flow)
+\f0\b0\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f6\fs28 \cf3 export\cf4  \cf3 function\cf4  buildExecutiveSummary(\cf6 input\cf4 : TrustGraphInputs): ExecSummaryOutput \{\
+  \cf3 const\cf4  status = getStatus(input.responseCount, input.minResponseThreshold);\
+  \cf3 const\cf4  tier = getTier(input.score);\
+\
+  \cf3 const\cf4  dimEntries = Object.entries(input.dimensions).map(([key, score]) => (\{\
+    \cf6 key\cf4 : key \cf3 as\cf4  DimensionKey,\
+    score,\
+    \cf6 severity\cf4 : getSeverity(score),\
+    \cf6 label\cf4 : labelFor(key \cf3 as\cf4  DimensionKey),\
+  \}));\
+\
+  \cf3 const\cf4  drivers = pickDrivers(dimEntries); \cf7 // returns 3 driver objects with why\cf4 \
+  \cf3 const\cf4  weakestTwo = [...dimEntries].sort((a,b)=>a.score-b.score).slice(\cf8 0\cf4 ,\cf8 2\cf4 );\
+\
+  \cf3 const\cf4  priorities = weakestTwo.map(d => \{\
+    \cf3 const\cf4  pack = priorityPackFor(d.key);\
+    \cf3 return\cf4  \{\
+      \cf6 title\cf4 : pack.title,\
+      \cf6 rationale\cf4 : pack.rationale,\
+      \cf6 probes\cf4 : pack.probes,\
+    \};\
+  \});\
+\
+  \cf3 const\cf4  headline = makeHeadline(\{ tier, status, drivers \});\
+  \cf3 const\cf4  posture = makePosture(input.module, input.dimensions);\
+  \cf3 const\cf4  confidenceNote = makeConfidenceNote(status, input.responseCount, input.minResponseThreshold);\
+  \cf3 const\cf4  trendNote = makeTrendNote(input);\
+\
+  \cf3 return\cf4  \{\
+    status,\
+    tier,\
+    headline,\
+    posture,\
+    \cf6 primaryDrivers\cf4 : drivers,\
+    priorities,\
+    confidenceNote,\
+    ...(trendNote ? \{ trendNote \} : \{\}),\
+  \};\
+\}
+\f0\fs24 \cf0 \
+\
+\
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs44 \cf2 Dimension \'93why\'94 templates (drivers)
+\f2\b0\fs28 \
+\
+Use these consistent \'93why\'94 snippets:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Transparency:\
+\pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	strength: \'93Decision context is visible enough for people to execute with confidence.\'94\
+	\'95	watch: \'93Decision context is uneven \'97 some teams act with clarity, others fill gaps with assumptions.\'94\
+	\'95	weak: \'93Low visibility into decisions is likely creating friction, rumours, and slower execution.\'94\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Inclusion:\
+\pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	strength: \'93People feel able to contribute and challenge, reducing hidden risk.\'94\
+	\'95	watch: \'93Participation is uneven \'97 some voices dominate and dissent may be filtered.\'94\
+	\'95	weak: \'93Low psychological safety likely suppresses challenge and delays surfacing problems.\'94\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Confidence:\
+\pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	strength: \'93Leadership intent and follow-through are credible, supporting pace.\'94\
+	\'95	watch: \'93Follow-through is inconsistent, creating pockets of scepticism.\'94\
+	\'95	weak: \'93Low confidence in leadership follow-through is likely reducing pace and engagement.\'94\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Explainability:\
+\pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	strength: \'93Understanding of how decisions are made is strong enough to sustain trust.\'94\
+	\'95	watch: \'93Some decisions feel opaque, especially where AI or complexity is involved.\'94\
+	\'95	weak: \'93Opaque decisions (especially AI-supported) are likely undermining trust and adoption.\'94\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Risk:\
+\pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	strength: \'93Controls and escalation are strong enough to prevent avoidable exposure.\'94\
+	\'95	watch: \'93Controls exist but enforcement is inconsistent across teams or workflows.\'94\
+	\'95	weak: \'93Risk controls are too weak \'97 exposure may be rising without visibility or escalation.\'94\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs44 \cf2 Rendering guidance (UI)
+\f2\b0\fs28 \
+\
+In results page, render:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Badge: tier label\
+	\'95	Headline as H2\
+	\'95	Posture as short paragraph\
+	\'95	Drivers as 3 compact rows (label + score + severity chip + why)\
+	\'95	Priorities as 2 cards with probes\
+	\'95	Confidence note at bottom (muted)\
+	\'95	Trend note (if exists) beneath confidence\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 Quick sanity: what this fixes
+\f2\b0\fs28 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Consistent voice\
+	\'95	No vague \'93insights\'94\
+	\'95	Always maps to actions\
+	\'95	Stable enough for sales narrative\
+	\'95	Doesn\'92t require Stage-2 auth\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 
+\f2\fs28 \cf2 \
+}

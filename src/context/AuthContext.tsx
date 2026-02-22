@@ -15,6 +15,10 @@ type Profile = {
   id: string;
   email: string;
   plan: "explorer" | "pro" | "enterprise";
+  full_name: string | null;
+  company_name: string | null;
+  company_size: string | null;
+  role: string | null;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
   created_at: string;
@@ -25,6 +29,7 @@ type AuthContextValue = {
   profile: Profile | null;
   loading: boolean;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue>({
@@ -32,6 +37,7 @@ const AuthContext = createContext<AuthContextValue>({
   profile: null,
   loading: true,
   signOut: async () => {},
+  refreshProfile: async () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -87,8 +93,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(null);
   }, [supabase]);
 
+  const refreshProfile = useCallback(async () => {
+    if (user) {
+      await fetchProfile(user.id);
+    }
+  }, [user, fetchProfile]);
+
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signOut }}>
+    <AuthContext.Provider value={{ user, profile, loading, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

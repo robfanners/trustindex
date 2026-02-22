@@ -1,0 +1,232 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2867
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fnil\fcharset0 .SFNS-Semibold;\f2\fnil\fcharset0 .SFNS-Regular;
+\f3\fmodern\fcharset0 Courier;}
+{\colortbl;\red255\green255\blue255;\red14\green14\blue14;\red0\green0\blue0;}
+{\*\expandedcolortbl;;\cssrgb\c6700\c6700\c6700;\csgray\c0;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf0 \
+
+\f1\b\fs44 \cf2 SETTINGS / ACCOUNT MODULE PRD
+\f2\b0\fs28 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+\cf2 \
+This is essential for real SaaS credibility.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs44 \cf2 PRODUCT REQUIREMENTS DOCUMENT
+\f2\b0\fs28 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 Module: TrustGraph Account & Settings
+\f2\b0\fs28 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 Objective
+\f2\b0\fs28 \
+\
+Provide full account management functionality including:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Plan management\
+	\'95	System limits\
+	\'95	Connectors (future-ready)\
+	\'95	Admin management\
+	\'95	Billing visibility\
+	\'95	Data export controls\
+	\'95	Security settings\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 Route Structure
+\f0\b0\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs28 \cf3 /app/settings\
+/app/settings/account\
+/app/settings/billing\
+/app/settings/team\
+/app/settings/security\
+/app/settings/integrations\
+/app/settings/data
+\f0\fs24 \cf0 \
+\
+\
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 1\uc0\u65039 \u8419  Account Overview
+\f2\b0\fs28 \
+\
+Display:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Organisation name\
+	\'95	Owner email\
+	\'95	Plan\
+	\'95	Survey usage\
+	\'95	Systems usage\
+	\'95	Current limits\
+	\'95	Next billing date\
+\
+Buttons:\
+	\'95	Upgrade\
+	\'95	Downgrade\
+	\'95	Cancel\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 2\uc0\u65039 \u8419  Billing
+\f2\b0\fs28 \
+\
+Fields:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Current plan\
+	\'95	Monthly / Annual\
+	\'95	Renewal date\
+	\'95	Invoice history (placeholder if Stripe not integrated yet)\
+	\'95	Apply discount code (future)\
+	\'95	Cancel subscription\
+\
+Actions:\
+	\'95	Upgrade to Pro\
+	\'95	Downgrade to Explorer\
+	\'95	Move to annual\
+\
+Must show:\
+\'93Changes take effect immediately\'94\
+\'937-day cooling off\'94\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 3\uc0\u65039 \u8419  Team Management
+\f2\b0\fs28 \
+\
+Add ability to:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Add admin user\
+	\'95	Remove admin user\
+	\'95	Transfer ownership\
+	\'95	See role badges\
+\
+Roles:\
+	\'95	Owner\
+	\'95	Admin\
+	\'95	Viewer (future Enterprise)\
+\
+Audit all changes.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 4\uc0\u65039 \u8419  Security
+\f2\b0\fs28 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Enable 2FA (future placeholder)\
+	\'95	View active sessions\
+	\'95	Force logout sessions\
+	\'95	Reset survey admin codes\
+	\'95	Reset system access tokens\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 5\uc0\u65039 \u8419  Integrations (Placeholder for MVP)
+\f2\b0\fs28 \
+\
+Greyed section:\
+\
+\'93Connectors (Coming Soon)\'94\
+\
+Display:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Slack\
+	\'95	Teams\
+	\'95	Jira\
+	\'95	GRC export\
+\
+Visually signals expansion.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs34 \cf2 6\uc0\u65039 \u8419  Data & Export
+\f2\b0\fs28 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Export TrustOrg data (CSV)\
+	\'95	Export TrustSys data (CSV)\
+	\'95	Delete organisation (with double confirmation)\
+	\'95	Data retention policy info\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b\fs44 \cf2 Non-Functional
+\f2\b0\fs28 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	All plan changes logged\
+	\'95	All team changes logged\
+	\'95	Soft delete only\
+	\'95	No irreversible delete without SUPER_ADMIN confirmation\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\uc0\u11835 }

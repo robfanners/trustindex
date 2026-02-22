@@ -28,7 +28,7 @@ export async function GET() {
     // Fetch non-archived systems owned by this user
     const { data: systems, error: sysErr } = await db
       .from("systems")
-      .select("id, name, version_label, created_at")
+      .select("id, name, version_label, type, environment, created_at")
       .eq("owner_id", user.id)
       .eq("archived", false)
       .order("created_at", { ascending: false });
@@ -41,24 +41,28 @@ export async function GET() {
       return NextResponse.json({ systems: [] });
     }
 
-    // For each system, fetch latest assessment score + assessment count
+    // For each system, fetch runs (submitted + draft) for score/count/draft info
     const systemIds = systems.map((s) => s.id);
 
-    const { data: assessments } = await db
-      .from("system_assessments")
-      .select("system_id, overall_score, created_at")
+    const { data: runs } = await db
+      .from("system_runs")
+      .select("system_id, status, overall_score, created_at")
       .in("system_id", systemIds)
       .order("created_at", { ascending: false });
 
-    // Build maps: latest score per system + count per system
+    // Build maps: latest submitted score per system, run count, has draft
     const latestScoreMap = new Map<string, number | null>();
-    const countMap = new Map<string, number>();
+    const runCountMap = new Map<string, number>();
+    const hasDraftMap = new Map<string, boolean>();
 
-    for (const a of assessments || []) {
-      const sid = a.system_id as string;
-      countMap.set(sid, (countMap.get(sid) ?? 0) + 1);
-      if (!latestScoreMap.has(sid)) {
-        latestScoreMap.set(sid, a.overall_score as number | null);
+    for (const r of runs || []) {
+      const sid = r.system_id as string;
+      runCountMap.set(sid, (runCountMap.get(sid) ?? 0) + 1);
+      if (r.status === "draft") {
+        hasDraftMap.set(sid, true);
+      }
+      if (r.status === "submitted" && !latestScoreMap.has(sid)) {
+        latestScoreMap.set(sid, r.overall_score as number | null);
       }
     }
 
@@ -66,9 +70,12 @@ export async function GET() {
       id: s.id,
       name: s.name,
       version_label: s.version_label,
+      type: s.type ?? null,
+      environment: s.environment ?? null,
       created_at: s.created_at,
       latest_score: latestScoreMap.get(s.id as string) ?? null,
-      assessment_count: countMap.get(s.id as string) ?? 0,
+      run_count: runCountMap.get(s.id as string) ?? 0,
+      has_draft: hasDraftMap.get(s.id as string) ?? false,
     }));
 
     return NextResponse.json({ systems: result });
@@ -96,6 +103,14 @@ export async function POST(req: Request) {
     const body = await req.json();
     const name = String(body.name || "").trim();
     const versionLabel = String(body.version_label || "").trim();
+    const systemType =
+      typeof body.type === "string" && body.type.trim()
+        ? body.type.trim()
+        : null;
+    const environment =
+      typeof body.environment === "string" && body.environment.trim()
+        ? body.environment.trim()
+        : null;
 
     if (!name) {
       return NextResponse.json({ error: "name is required" }, { status: 400 });
@@ -129,8 +144,10 @@ export async function POST(req: Request) {
         owner_id: user.id,
         name,
         version_label: versionLabel,
+        type: systemType,
+        environment,
       })
-      .select("id, name, version_label, created_at")
+      .select("id, name, version_label, type, environment, created_at")
       .single();
 
     if (insertErr || !system) {

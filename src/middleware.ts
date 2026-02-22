@@ -14,54 +14,58 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // --- /admin route protection ---
-  if (pathname.startsWith("/admin")) {
-    // Allow open access to new-run (anyone can start)
-    if (pathname === "/admin/new-run" || pathname.startsWith("/admin/new-run/")) {
-      return response;
-    }
+  // --- Redirect old /admin routes to new dashboard equivalents ---
 
-    const hasVerisumAdmin = request.cookies.get("ti_verisum_admin")?.value === "1";
-
-    // Gate /admin/run/[runId] via Supabase Auth OR Verisum admin OR per-run owner cookie
-    if (pathname.startsWith("/admin/run/")) {
-      const parts = pathname.split("/").filter(Boolean);
-      const runId = parts[2];
-
-      const ownerCookieName = runId ? `ti_owner_${runId}` : null;
-      const hasOwner = ownerCookieName ? request.cookies.get(ownerCookieName)?.value === "1" : false;
-
-      if (user || hasVerisumAdmin || hasOwner) return response;
-
-      const url = request.nextUrl.clone();
-      url.pathname = "/auth/login";
-      url.searchParams.set("next", `${pathname}${search || ""}`);
-      return NextResponse.redirect(url);
-    }
-
-    // Everything else under /admin requires Supabase Auth or Verisum admin
-    if (user || hasVerisumAdmin) {
-      if (pathname === "/admin") {
-        const url = request.nextUrl.clone();
-        url.pathname = "/admin/new-run";
-        return NextResponse.redirect(url);
-      }
-      return response;
-    }
-
+  // /admin/new-run → /dashboard/surveys/new
+  if (
+    pathname === "/admin/new-run" ||
+    pathname.startsWith("/admin/new-run/")
+  ) {
     const url = request.nextUrl.clone();
-    url.pathname = "/auth/login";
-    const nextPath = pathname === "/admin" ? "/admin/new-run" : `${pathname}${search || ""}`;
-    url.searchParams.set("next", nextPath);
+    url.pathname = "/dashboard/surveys/new";
     return NextResponse.redirect(url);
   }
 
-  // --- /dashboard (exact) protection — requires auth ---
-  if (pathname === "/dashboard") {
+  // /admin/run/[runId] → /dashboard/surveys/[runId]
+  if (pathname.startsWith("/admin/run/")) {
+    const parts = pathname.split("/").filter(Boolean);
+    const runId = parts[2];
+    if (runId) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/dashboard/surveys/${runId}`;
+      return NextResponse.redirect(url);
+    }
+  }
+
+  // /admin → /dashboard
+  if (pathname === "/admin" || pathname === "/admin/") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard";
+    return NextResponse.redirect(url);
+  }
+
+  // --- Redirect old /dashboard/[runId] → /dashboard/surveys/[runId]/results ---
+  // Match /dashboard/UUID but not /dashboard/surveys/* or /dashboard?tab=*
+  const oldResultsMatch = pathname.match(
+    /^\/dashboard\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i
+  );
+  if (oldResultsMatch) {
+    const runId = oldResultsMatch[1];
+    const url = request.nextUrl.clone();
+    url.pathname = `/dashboard/surveys/${runId}/results`;
+    return NextResponse.redirect(url);
+  }
+
+  // --- /dashboard/*, /systems/*, /verisum-admin/* protection — requires auth ---
+  if (
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/systems") ||
+    pathname.startsWith("/verisum-admin")
+  ) {
     if (!user) {
       const url = request.nextUrl.clone();
       url.pathname = "/auth/login";
-      url.searchParams.set("next", "/dashboard");
+      url.searchParams.set("next", `${pathname}${search || ""}`);
       return NextResponse.redirect(url);
     }
   }
@@ -70,5 +74,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/dashboard/:path*"],
+  matcher: ["/admin/:path*", "/dashboard/:path*", "/systems/:path*", "/verisum-admin/:path*"],
 };

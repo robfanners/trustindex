@@ -1,0 +1,894 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2867
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 .SFNS-Regular;\f1\fnil\fcharset0 HelveticaNeue-Bold;\f2\fswiss\fcharset0 Helvetica;
+\f3\fnil\fcharset0 .SFNS-Semibold;\f4\fnil\fcharset0 .SFNS-RegularItalic;\f5\fnil\fcharset0 .AppleSystemUIFontMonospaced-Regular;
+\f6\fmodern\fcharset0 Courier;\f7\froman\fcharset0 TimesNewRomanPSMT;}
+{\colortbl;\red255\green255\blue255;\red14\green14\blue14;\red0\green0\blue0;\red20\green0\blue196;
+}
+{\*\expandedcolortbl;;\cssrgb\c6700\c6700\c6700;\csgray\c0;\cssrgb\c10980\c0\c81176;
+}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 Below is a 
+\f1\b Cursor-ready build instruction
+\f0\b0  for the 
+\f1\b TrustIndex Systems module
+\f0\b0  (TrustSysGraph). It\'92s designed as a 
+\f1\b non-human scoring system
+\f0\b0 : the user answers structured questions about a system and its controls; the app computes scores deterministically, stores evidence, and produces outputs + exports. You can paste this into Cursor as one \'93spec + implementation plan\'94.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f2\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs34 \cf2 TRUSTINDEX SYSTEMS (TrustSysGraph) \'97 Model + Method + App Build Instructions
+\f0\b0\fs28 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs30 \cf2 Purpose
+\f0\b0\fs28 \
+\
+TrustSysGraph measures the 
+\f1\b trustworthiness and operational safety
+\f0\b0  of an AI-enabled system (agent, model-in-the-loop workflow, RAG app, automation) using 
+\f1\b control-based evidence
+\f0\b0  and 
+\f1\b deterministic scoring
+\f0\b0 . It is not \'93sentiment\'94, not a people survey. It is a 
+\f1\b system assurance score
+\f0\b0 : 
+\f4\i what controls exist, how strong they are, and whether they\'92re evidenced
+\f0\i0 .\
+\
+
+\f3\b\fs30 What it outputs
+\f0\b0\fs28 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f1\b Overall TrustSys score (0\'96100)
+\f0\b0 \
+	\'95	
+\f1\b 5 dimension scores (0\'96100)
+\f0\b0 : Transparency, Explainability, Human Oversight, Risk Controls, Accountability\
+	\'95	
+\f1\b Radar chart
+\f0\b0 \
+	\'95	
+\f1\b Top risks
+\f0\b0  (lowest-scoring controls)\
+	\'95	
+\f1\b Recommended actions
+\f0\b0  (mapped to weak controls)\
+	\'95	
+\f1\b Evidence gap list
+\f0\b0  (controls marked \'93No evidence\'94)\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f2\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs44 \cf2 1) Data model (Supabase)
+\f0\b0\fs28 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs30 \cf2 1.1 Tables
+\f0\b0\fs28 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs26 \cf2 systems
+\f0\b0\fs28 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f5 id
+\f0  uuid PK\
+	\'95	
+\f5 owner_id
+\f0  uuid (FK users.id)\
+	\'95	
+\f5 name
+\f0  text\
+	\'95	
+\f5 type
+\f0  text (e.g., \'93RAG app\'94, \'93Agent\'94, \'93Classifier\'94, \'93Workflow\'94)\
+	\'95	
+\f5 environment
+\f0  text (\'93prod\'94, \'93staging\'94, \'93pilot\'94)\
+	\'95	
+\f5 created_at
+\f0  timestamptz default now()\
+	\'95	
+\f5 archived
+\f0  boolean default false\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs26 \cf2 system_runs  (a \'93TrustSysGraph assessment run\'94)
+\f0\b0\fs28 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f5 id
+\f0  uuid PK\
+	\'95	
+\f5 system_id
+\f0  uuid FK\
+	\'95	
+\f5 version_label
+\f0  text (e.g. \'93v0.8\'94, \'93Jan 2026 prod\'94)\
+	\'95	
+\f5 status
+\f0  text enum: 
+\f5 draft | submitted
+\f0 \
+	\'95	
+\f5 created_at
+\f0  timestamptz default now()\
+	\'95	
+\f5 submitted_at
+\f0  timestamptz null\
+	\'95	
+\f5 overall_score
+\f0  int null\
+	\'95	
+\f5 dimension_scores
+\f0  jsonb null  // \{ transparency: 72, explainability: 61, oversight: 45, risk: 80, accountability: 55 \}\
+	\'95	
+\f5 risk_flags
+\f0  jsonb null // array of triggered flags (see scoring)\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs26 \cf2 system_responses
+\f0\b0\fs28 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f5 id
+\f0  uuid PK\
+	\'95	
+\f5 run_id
+\f0  uuid FK\
+	\'95	
+\f5 question_id
+\f0  text  // stable id e.g. \'93TXS_EXPL_03\'94\
+	\'95	
+\f5 answer
+\f0  jsonb      // answer payload (boolean/enum/number + optional notes)\
+	\'95	
+\f5 evidence
+\f0  jsonb    // structured evidence references\
+	\'95	
+\f5 created_at
+\f0  timestamptz default now()\
+	\'95	Unique constraint 
+\f5 (run_id, question_id)
+\f0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs26 \cf2 system_recommendations
+\f0\b0\fs28 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f5 id
+\f0  uuid PK\
+	\'95	
+\f5 run_id
+\f0  uuid FK\
+	\'95	
+\f5 dimension
+\f0  text\
+	\'95	
+\f5 control
+\f0  text\
+	\'95	
+\f5 priority
+\f0  text enum: 
+\f5 high | med | low
+\f0 \
+	\'95	
+\f5 recommendation
+\f0  text\
+	\'95	
+\f5 created_at
+\f0  timestamptz default now()\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs30 \cf2 1.2 RLS (important)
+\f0\b0\fs28 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Only authenticated owner can read/write their 
+\f5 systems
+\f0 , 
+\f5 system_runs
+\f0 , 
+\f5 system_responses
+\f0 , 
+\f5 system_recommendations
+\f0 .\
+	\'95	Explorer users cannot access systems.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f2\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs44 \cf2 2) Questionnaire structure (non-human)
+\f0\b0\fs28 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs30 \cf2 2.1 Dimensions and scoring approach
+\f0\b0\fs28 \
+\
+Each dimension has 
+\f1\b controls
+\f0\b0 . Each control is measured by 
+\f1\b questions
+\f0\b0 . Each question yields a numeric score 0\'961. Weighted sum \uc0\u8594  dimension score.\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b \cf2 Dimension weights (default):
+\f0\b0 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Transparency 20%\
+	\'95	Explainability 20%\
+	\'95	Human Oversight 20%\
+	\'95	Risk Controls 20%\
+	\'95	Accountability 20%\
+\
+(Enterprise can later customize weights; keep fixed for now.)\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs30 \cf2 2.2 Answer types
+\f0\b0\fs28 \
+\
+Questions are one of:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Boolean: yes/no (+ evidence strength)\
+	\'95	Enum maturity: 
+\f5 none | ad-hoc | defined | enforced | automated
+\f0 \
+	\'95	Numeric (0\'96100 or bounded)\
+	\'95	Multi-select (rare; convert to score)\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs30 \cf2 2.3 Evidence strength (the key to \'93non-human\'94)
+\f0\b0\fs28 \
+\
+Every control requires evidence. Evidence is not \'93uploaded\'94 yet (MVP), but the app captures:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Evidence type: 
+\f5 link | document_ref | ticket_ref | policy_ref | runbook_ref | log_ref
+\f0 \
+	\'95	Evidence pointer string (URL, Jira key, doc id)\
+	\'95	Optional note\
+\
+Evidence strength influences score:\
+	\'95	No evidence \uc0\u8594  cap score at 0.4 (even if user claims \'93yes\'94)\
+	\'95	Weak evidence (note only) \uc0\u8594  cap 0.6\
+	\'95	Strong evidence (link/ticket/log ref) \uc0\u8594  allow full score\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f2\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs44 \cf2 3) Question bank (MVP: 25 questions)
+\f0\b0\fs28 \
+\
+Implement these 25 with stable IDs and weights.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b \cf2 Each question belongs to one control and one dimension.
+\f0\b0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs34 \cf2 Transparency (5)
+\f0\b0\fs28 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b \cf2 TXS_TRAN_01 \'97 System purpose documented?
+\f0\b0 \
+Answer: enum maturity (none\uc0\u8594 automated)\
+Evidence required.\
+Weight: 0.20\
+\
+
+\f1\b TXS_TRAN_02 \'97 Data sources documented (inputs, datasets, RAG corpora)?
+\f0\b0 \
+Enum maturity\
+Weight: 0.20\
+\
+
+\f1\b TXS_TRAN_03 \'97 Known limitations documented (failure modes, edge cases)?
+\f0\b0 \
+Enum maturity\
+Weight: 0.20\
+\
+
+\f1\b TXS_TRAN_04 \'97 User disclosures exist (what it is, what it isn\'92t, when to trust it)?
+\f0\b0 \
+Enum maturity\
+Weight: 0.20\
+\
+
+\f1\b TXS_TRAN_05 \'97 Change log exists for model/prompt/data updates?
+\f0\b0 \
+Enum maturity\
+Weight: 0.20\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs34 \cf2 Explainability (5)
+\f0\b0\fs28 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b \cf2 TXS_EXPL_01 \'97 Produces traceable reasoning artifacts (citations, sources, rationale) where applicable?
+\f0\b0 \
+Enum maturity\
+Weight: 0.20\
+\
+
+\f1\b TXS_EXPL_02 \'97 RAG grounding implemented (citations required, fallback when missing)?
+\f0\b0 \
+Boolean + evidence cap\
+Weight: 0.20\
+\
+
+\f1\b TXS_EXPL_03 \'97 Output confidence/uncertainty signal present (e.g., confidence, \'93insufficient info\'94)?
+\f0\b0 \
+Enum maturity\
+Weight: 0.20\
+\
+
+\f1\b TXS_EXPL_04 \'97 Evaluation suite exists (golden set / regression tests) for accuracy/grounding?
+\f0\b0 \
+Enum maturity\
+Weight: 0.20\
+\
+
+\f1\b TXS_EXPL_05 \'97 Explainability accessible to target users (not just engineers)?
+\f0\b0 \
+Enum maturity\
+Weight: 0.20\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs34 \cf2 Human Oversight (5)
+\f0\b0\fs28 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b \cf2 TXS_HO_01 \'97 Human-in-the-loop required for high-risk actions?
+\f0\b0 \
+Enum maturity\
+Weight: 0.25\
+\
+
+\f1\b TXS_HO_02 \'97 Clear escalation path exists (when uncertain / policy violation / risk)?
+\f0\b0 \
+Enum maturity\
+Weight: 0.20\
+\
+
+\f1\b TXS_HO_03 \'97 Ability to pause/kill-switch system quickly?
+\f0\b0 \
+Boolean + evidence\
+Weight: 0.20\
+\
+
+\f1\b TXS_HO_04 \'97 Access control exists (who can run/admin/change prompts/tools)?
+\f0\b0 \
+Enum maturity\
+Weight: 0.20\
+\
+
+\f1\b TXS_HO_05 \'97 Monitoring supports operator intervention (alerts, dashboards)?
+\f0\b0 \
+Enum maturity\
+Weight: 0.15\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs34 \cf2 Risk Controls (5)
+\f0\b0\fs28 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b \cf2 TXS_RISK_01 \'97 Threat model or risk assessment exists (documented)?
+\f0\b0 \
+Enum maturity\
+Weight: 0.20\
+\
+
+\f1\b TXS_RISK_02 \'97 Data protection controls (PII filtering, retention, encryption) implemented?
+\f0\b0 \
+Enum maturity\
+Weight: 0.20\
+\
+
+\f1\b TXS_RISK_03 \'97 Tool/action sandboxing (least privilege, scoped credentials) implemented?
+\f0\b0 \
+Enum maturity\
+Weight: 0.20\
+\
+
+\f1\b TXS_RISK_04 \'97 Abuse prevention (prompt injection defense, jailbreak checks, policy filters)?
+\f0\b0 \
+Enum maturity\
+Weight: 0.20\
+\
+
+\f1\b TXS_RISK_05 \'97 Incident response playbook for model/system failures?
+\f0\b0 \
+Enum maturity\
+Weight: 0.20\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs34 \cf2 Accountability (5)
+\f0\b0\fs28 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b \cf2 TXS_ACC_01 \'97 System owner named (role/person/team) + responsibilities documented?
+\f0\b0 \
+Enum maturity\
+Weight: 0.20\
+\
+
+\f1\b TXS_ACC_02 \'97 Audit logging enabled for inputs/outputs/actions (where permissible)?
+\f0\b0 \
+Enum maturity\
+Weight: 0.25\
+\
+
+\f1\b TXS_ACC_03 \'97 Versioning of prompts/models/tools with rollback path?
+\f0\b0 \
+Enum maturity\
+Weight: 0.20\
+\
+
+\f1\b TXS_ACC_04 \'97 Third-party dependency inventory (models, APIs, plugins) maintained?
+\f0\b0 \
+Enum maturity\
+Weight: 0.15\
+\
+
+\f1\b TXS_ACC_05 \'97 Compliance mapping done (AI Act / ISO / SOC2 / sector rules) where relevant?
+\f0\b0 \
+Enum maturity\
+Weight: 0.20\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f2\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs44 \cf2 4) Scoring algorithm (deterministic)
+\f0\b0\fs28 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs30 \cf2 4.1 Map maturity enum \uc0\u8594  base score
+\f2\b0\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f6\fs28 \cf3 none = \cf4 0.0\cf3 \
+ad-hoc = \cf4 0.25\cf3 \
+defined = \cf4 0.5\cf3 \
+enforced = \cf4 0.75\cf3 \
+automated = \cf4 1.0
+\f2\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs30 \cf2 4.2 Boolean \uc0\u8594  base score
+\f2\b0\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f6\fs28 \cf3 yes = \cf4 1.0\cf3 \
+no = \cf4 0.0
+\f2\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs30 \cf2 4.3 Evidence cap (applies to all questions)
+\f0\b0\fs28 \
+\
+Determine evidence strength:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	none: no evidence object \uc0\u8594  cap 0.4\
+	\'95	weak: evidence exists but only 
+\f5 note
+\f0  or 
+\f5 document_ref
+\f0  without pointer \uc0\u8594  cap 0.6\
+	\'95	strong: evidence type link/ticket/log/runbook/policy with pointer \uc0\u8594  cap 1.0\
+\
+Final question score:\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f5 \cf2 qScore = min(baseScore, evidenceCap)
+\f0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\i \cf2 (This prevents \'93claiming compliance\'94 without proof.)
+\f0\i0 \
+\
+
+\f3\b\fs30 4.4 Dimension score
+\f0\b0\fs28 \
+\
+For each dimension:\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f5 \cf2 dimScore = round(100 * \uc0\u931 (qScore_i * weight_i))
+\f0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs30 \cf2 4.5 Overall score
+\f0\b0\fs28 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f5 \cf2 overall = round( \uc0\u931 (dimScore_d * 0.2) )
+\f0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs30 \cf2 4.6 Risk flags (simple rules)
+\f0\b0\fs28 \
+\
+Add flags into 
+\f5 system_runs.risk_flags
+\f0  if:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Kill-switch is \'93no\'94 or evidenceCap < 1.0 \uc0\u8594  
+\f5 NO_KILL_SWITCH
+\f0 \
+	\'95	Audit logging maturity < defined \uc0\u8594  
+\f5 WEAK_AUDIT_LOGGING
+\f0 \
+	\'95	Tool sandboxing maturity < enforced \uc0\u8594  
+\f5 WEAK_TOOL_SANDBOX
+\f0 \
+	\'95	No threat model \uc0\u8594  
+\f5 NO_THREAT_MODEL
+\f0 \
+\
+These drive \'93Top risks\'94 card.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f2\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs44 \cf2 5) Recommendations engine (rule-based)
+\f0\b0\fs28 \
+\
+No ML. Use deterministic mappings.\
+\
+For each question with effective score < 0.5:\
+Insert a recommendation row with:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	dimension\
+	\'95	control (question label)\
+	\'95	priority:\
+\pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	<0.25 \uc0\u8594  high\
+	\'95	0.25\'960.49 \uc0\u8594  med\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	recommendation text pulled from a static map.\
+\
+Example:\
+If TXS_RISK_03 < 0.5:\
+\'93Implement least-privilege tool credentials and sandbox agent actions to scoped resources. Add separate service accounts and explicit allowlists.\'94\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f2\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs44 \cf2 6) UI/UX flow (Pro+ only)
+\f0\b0\fs28 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs30 \cf2 Entry point
+\f0\b0\fs28 \
+\
+Dashboard has Systems tab:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Explorer: visible but disabled (grey) + tooltip \'93Available on Pro\'94\
+	\'95	Pro: enabled\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs30 \cf2 Systems list view
+\f0\b0\fs28 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Create system button\
+	\'95	Shows systems + last assessment score + last run date\
+	\'95	If Pro system limit reached (2): disable create + upsell message\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs30 \cf2 Create system
+\f0\b0\fs28 \
+\
+Fields: name, type, environment\
+Create 
+\f5 systems
+\f0  row.\
+\
+
+\f3\b\fs30 Create assessment run
+\f0\b0\fs28 \
+\
+Version label input\
+Create 
+\f5 system_runs
+\f0  draft.\
+\
+
+\f3\b\fs30 Questionnaire wizard
+\f0\b0\fs28 \
+\
+25 questions, grouped by dimension, with:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Question text\
+	\'95	Answer control\
+	\'95	Evidence input block:\
+\pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	evidence type dropdown\
+	\'95	pointer input\
+	\'95	note optional\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Save progress auto (upsert per question)\
+	\'95	Progress indicator\
+	\'95	Submit button at end\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs30 \cf2 Submit behavior
+\f0\b0\fs28 \
+\
+On submit:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	compute scores server-side\
+	\'95	write 
+\f5 system_runs.overall_score
+\f0 , 
+\f5 dimension_scores
+\f0 , 
+\f5 risk_flags
+\f0 , 
+\f5 submitted_at
+\f0 \
+	\'95	generate recommendations into 
+\f5 system_recommendations
+\f0 \
+	\'95	redirect to system run results view\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs30 \cf2 Results view
+\f0\b0\fs28 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Overall score hero\
+	\'95	Radar chart\
+	\'95	Dimension cards\
+	\'95	Top risks from risk_flags\
+	\'95	Recommendations list\
+	\'95	Evidence gaps list (any q where evidenceCap < 1 or evidence missing)\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs30 \cf2 Exports (Pro)
+\f0\b0\fs28 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	CSV export of system_responses + scores\
+	\'95	Light PDF export later (placeholder ok)\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f2\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs44 \cf2 7) API routes (Next.js)
+\f0\b0\fs28 \
+\
+Add endpoints:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f5 POST /api/systems/create
+\f0 \
+	\'95	
+\f5 GET /api/systems/list
+\f0 \
+	\'95	
+\f5 POST /api/systems/run/create
+\f0 \
+	\'95	
+\f5 POST /api/systems/run/save-response
+\f0 \
+	\'95	
+\f5 POST /api/systems/run/submit
+\f0   
+\f4\i (computes scoring server-side)
+\f0\i0 \
+	\'95	
+\f5 GET /api/systems/run/:id
+\f0   
+\f4\i (returns scores + recs)
+\f0\i0 \
+\
+All must:\
+	\'95	require authenticated user\
+	\'95	enforce plan entitlements:\
+\pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f5 plan !== 'explorer'
+\f0 \
+	\'95	cap checks (2 systems for Pro)\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f2\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs44 \cf2 8) Implementation notes (important)
+\f0\b0\fs28 \
+\pard\tqr\tx260\tx420\li420\fi-420\sl324\slmult1\sb240\partightenfactor0
+
+\f7 \cf2 	1.	
+\f1\b Never compute final scores client-side only.
+\f0\b0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\li420\sl324\slmult1\pardirnatural\partightenfactor0
+\cf2 Client may show preview, but submission recomputes server-side.\
+\pard\tqr\tx260\tx420\li420\fi-420\sl324\slmult1\sb240\partightenfactor0
+
+\f7 \cf2 	2.	
+\f1\b Store question bank in code
+\f0\b0  (
+\f5 src/lib/trustsys/questions.ts
+\f0 )\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\li420\sl324\slmult1\pardirnatural\partightenfactor0
+\cf2 This keeps IDs stable and allows versioning later.\
+\pard\tqr\tx260\tx420\li420\fi-420\sl324\slmult1\sb240\partightenfactor0
+
+\f7 \cf2 	3.	
+\f1\b Versioning
+\f0\b0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\li420\sl324\slmult1\pardirnatural\partightenfactor0
+\cf2 In 
+\f5 system_runs
+\f0 , store 
+\f5 question_set_version = "v1"
+\f0  (string) to future-proof.\
+\pard\tqr\tx260\tx420\li420\fi-420\sl324\slmult1\sb240\partightenfactor0
+
+\f7 \cf2 	4.	
+\f1\b Do not block launch on file uploads
+\f0\b0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\li420\sl324\slmult1\pardirnatural\partightenfactor0
+\cf2 Evidence pointers are string references only for MVP.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f2\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs44 \cf2 9) Acceptance tests
+\f0\b0\fs28 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs30 \cf2 A. Entitlements
+\f0\b0\fs28 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Explorer cannot access systems routes (server returns 403 or redirect).\
+	\'95	Pro can create \uc0\u8804  2 systems; third is blocked.\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs30 \cf2 B. Scoring correctness
+\f0\b0\fs28 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	If user selects \'93automated\'94 but no evidence \uc0\u8594  score \u8804  0.4.\
+	\'95	If evidence is strong, automated yields 1.0.\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs30 \cf2 C. Persistence
+\f0\b0\fs28 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Save responses mid-way; reload continues.\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs30 \cf2 D. Recommendation generation
+\f0\b0\fs28 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Low controls generate recommendations.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f2\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f3\b\fs44 \cf2 10) What Cursor should implement first (MVP slice)
+\f0\b0\fs28 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\b \cf2 Slice 1 (ship):
+\f0\b0  DB + API + Systems list + create system\
+
+\f1\b Slice 2 (ship):
+\f0\b0  Run creation + questionnaire + autosave\
+
+\f1\b Slice 3 (ship):
+\f0\b0  Submit scoring + results view + recs\
+
+\f1\b Slice 4 (ship):
+\f0\b0  Exports + polish\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f2\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+If you want, I can also generate the 
+\f1\b exact file skeletons + code stubs
+\f0\b0  (questions map, scoring function, recommendation map, API handlers) in a single Cursor prompt so Claude can implement with minimal interpretation.}

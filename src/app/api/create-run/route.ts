@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { getRunAdminTokensColumns, pickRunIdColumn, pickTokenColumn } from "@/lib/runAdminTokensSchema";
 import { getUserPlan, getUserSurveyCount, canCreateSurvey, getPlanLimits } from "@/lib/entitlements";
 
 function randomToken(length = 28) {
@@ -23,14 +22,21 @@ export async function POST(req: Request) {
       );
     }
 
-    // Read authenticated user (if any) for ownership
+    // Require authenticated user
     let ownerUserId: string | null = null;
     try {
       const authClient = await createSupabaseServerClient();
       const { data: { user } } = await authClient.auth.getUser();
       ownerUserId = user?.id ?? null;
     } catch {
-      // No auth session — ownerUserId stays null
+      // No auth session
+    }
+
+    if (!ownerUserId) {
+      return NextResponse.json(
+        { error: "Authentication required. Please sign in to create a survey." },
+        { status: 401 }
+      );
     }
 
     const body = await req.json();
@@ -139,24 +145,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: inviteErr.message }, { status: 500 });
     }
 
-    const ownerToken = randomToken(32);
-    const columns = await getRunAdminTokensColumns();
-    const runIdCol = pickRunIdColumn(columns);
-    const tokenCol = pickTokenColumn(columns);
-    const insertRow: Record<string, string> = { [runIdCol]: runId, [tokenCol]: ownerToken };
-    const { error: ownerErr } = await supabase.from("run_admin_tokens").insert(insertRow);
-
-    if (ownerErr) {
-      return NextResponse.json({ error: ownerErr.message }, { status: 500 });
-    }
-
     return NextResponse.json({
       runId,
       tokens,
       mode,
-      ownerToken,
       surveyLinks: tokens.map((t) => `/survey/${t}`),
-      dashboardLink: `/dashboard/${runId}`,
+      dashboardLink: `/dashboard/surveys/${runId}`,
     });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || "Unknown error" }, { status: 500 });

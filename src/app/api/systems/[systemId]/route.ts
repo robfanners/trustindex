@@ -37,7 +37,7 @@ async function authenticateAndAuthorise(systemId: string) {
 }
 
 // ---------------------------------------------------------------------------
-// GET /api/systems/[systemId] — system detail + all assessments
+// GET /api/systems/[systemId] — system detail + all runs
 // ---------------------------------------------------------------------------
 
 export async function GET(_req: NextRequest, context: RouteContext) {
@@ -49,14 +49,16 @@ export async function GET(_req: NextRequest, context: RouteContext) {
     const { system } = result;
     const db = supabaseServer();
 
-    const { data: assessments, error: assErr } = await db
-      .from("system_assessments")
-      .select("id, dimension_scores, overall_score, notes, created_at")
+    const { data: runs, error: runsErr } = await db
+      .from("system_runs")
+      .select(
+        "id, version_label, status, overall_score, dimension_scores, risk_flags, created_at, submitted_at"
+      )
       .eq("system_id", systemId)
       .order("created_at", { ascending: false });
 
-    if (assErr) {
-      return NextResponse.json({ error: assErr.message }, { status: 500 });
+    if (runsErr) {
+      return NextResponse.json({ error: runsErr.message }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -67,7 +69,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
         archived: system.archived,
         created_at: system.created_at,
       },
-      assessments: assessments || [],
+      runs: runs || [],
     });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Unknown error";

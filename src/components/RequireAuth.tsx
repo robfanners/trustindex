@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 
 export default function RequireAuth({
@@ -10,14 +10,13 @@ export default function RequireAuth({
   children: React.ReactNode;
 }) {
   const { user, loading } = useAuth();
-  const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
     if (!loading && !user) {
-      router.replace(`/auth/login?next=${encodeURIComponent(pathname)}`);
+      window.location.href = `/auth/login?next=${encodeURIComponent(pathname)}`;
     }
-  }, [loading, user, router, pathname]);
+  }, [loading, user, pathname]);
 
   if (loading) {
     return (

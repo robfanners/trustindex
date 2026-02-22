@@ -48,6 +48,23 @@ export function canExportResults(plan: string | null | undefined): boolean {
   return getPlanLimits(plan).canExport;
 }
 
+/** Can the user access billing settings? (Pro+) */
+export function hasBillingAccess(plan: string | null | undefined): boolean {
+  const p = plan ?? "explorer";
+  return p === "pro" || p === "enterprise";
+}
+
+/** Can the user manage team members? (Enterprise only) */
+export function canManageTeam(plan: string | null | undefined): boolean {
+  return (plan ?? "explorer") === "enterprise";
+}
+
+/** Can the user access data & export settings? (Pro+) */
+export function canAccessDataSettings(plan: string | null | undefined): boolean {
+  const p = plan ?? "explorer";
+  return p === "pro" || p === "enterprise";
+}
+
 // ---------------------------------------------------------------------------
 // Server-only helpers (use supabaseServer — service role, bypasses RLS)
 // ---------------------------------------------------------------------------
