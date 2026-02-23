@@ -238,6 +238,41 @@ function SurveyResultsContent() {
   }, [dims]);
 
   // -------------------------------------------------------------------------
+  // Derived values (plain assignments, not hooks)
+  // -------------------------------------------------------------------------
+
+  const minRespondents = 5;
+  const respondents = counts?.respondents ?? 0;
+  const isExplorer = run?.mode === "explorer";
+  const gateActive = !isExplorer && respondents < minRespondents;
+
+  // Build executive summary if we have trust data and dimensions
+  const execSummary = useMemo(() => {
+    if (!trust || !dims.length) return null;
+    const dimRecord = {} as Record<DimensionKey, number>;
+    const dimKeyMap: Record<string, DimensionKey> = {
+      "Transparency": "transparency",
+      "Inclusion": "inclusion",
+      "Employee Confidence": "confidence",
+      "AI Explainability": "explainability",
+      "Risk": "risk",
+    };
+    for (const d of dims) {
+      const key = dimKeyMap[d.dimension];
+      if (key) dimRecord[key] = (d.mean_1_to_5 - 1) * 25; // convert 1-5 to 0-100
+    }
+    // Only build if we have all 5 dimensions
+    if (Object.keys(dimRecord).length < 5) return null;
+    return buildExecutiveSummary({
+      module: "org",
+      score: Number(trust.trustindex_0_to_100),
+      responseCount: counts?.respondents ?? 0,
+      minResponseThreshold: isExplorer ? 1 : 5,
+      dimensions: dimRecord,
+    });
+  }, [trust, dims, counts, isExplorer]);
+
+  // -------------------------------------------------------------------------
   // Load data
   // -------------------------------------------------------------------------
 
@@ -454,42 +489,6 @@ function SurveyResultsContent() {
       </div>
     );
   }
-
-  // -------------------------------------------------------------------------
-  // Derived
-  // -------------------------------------------------------------------------
-
-  const minRespondents = 5;
-  const respondents = counts?.respondents ?? 0;
-  const isExplorer = run?.mode === "explorer";
-  const gateActive = !isExplorer && respondents < minRespondents;
-
-  // Build executive summary if we have trust data and dimensions
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const execSummary = useMemo(() => {
-    if (!trust || !dims.length) return null;
-    const dimRecord = {} as Record<DimensionKey, number>;
-    const dimKeyMap: Record<string, DimensionKey> = {
-      "Transparency": "transparency",
-      "Inclusion": "inclusion",
-      "Employee Confidence": "confidence",
-      "AI Explainability": "explainability",
-      "Risk": "risk",
-    };
-    for (const d of dims) {
-      const key = dimKeyMap[d.dimension];
-      if (key) dimRecord[key] = (d.mean_1_to_5 - 1) * 25; // convert 1-5 to 0-100
-    }
-    // Only build if we have all 5 dimensions
-    if (Object.keys(dimRecord).length < 5) return null;
-    return buildExecutiveSummary({
-      module: "org",
-      score: Number(trust.trustindex_0_to_100),
-      responseCount: counts?.respondents ?? 0,
-      minResponseThreshold: isExplorer ? 1 : 5,
-      dimensions: dimRecord,
-    });
-  }, [trust, dims, counts, isExplorer]);
 
   // -------------------------------------------------------------------------
   // Render: not enough responses (org mode)
