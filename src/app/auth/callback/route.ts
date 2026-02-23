@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { safeRedirectPath } from "@/lib/url";
 
 // ---------------------------------------------------------------------------
 // GET /auth/callback — Server-side PKCE code exchange
@@ -13,7 +14,7 @@ import { cookies } from "next/headers";
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/dashboard";
+  const next = safeRedirectPath(searchParams.get("next"));
   const claim = searchParams.get("claim");
 
   if (code) {

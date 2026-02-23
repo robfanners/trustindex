@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
+import { safeRedirectPath } from "@/lib/url";
 
 // ---------------------------------------------------------------------------
 // /auth/complete — Client-side post-auth page
@@ -87,7 +88,7 @@ function CompleteHandler() {
     if (hasRun.current) return;
     hasRun.current = true;
 
-    const next = searchParams.get("next") ?? "/dashboard";
+    const next = safeRedirectPath(searchParams.get("next"));
     const claim = searchParams.get("claim");
 
     if (claim === "1") {

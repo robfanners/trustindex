@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
+import { getServerOrigin } from "@/lib/url";
 
 export async function POST(req: Request) {
   try {
@@ -77,7 +78,7 @@ export async function POST(req: Request) {
     }
 
     // 5. Create Checkout Session
-    const origin = req.headers.get("origin") || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const origin = getServerOrigin(req);
 
     const session = await getStripe().checkout.sessions.create({
       customer: customerId,

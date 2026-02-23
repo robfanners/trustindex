@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-auth-browser";
+import { getClientOrigin } from "@/lib/url";
 
 // ---------------------------------------------------------------------------
 // OnboardingForm — multi-step: profile info → email (magic link)
@@ -43,10 +44,7 @@ export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
   const [error, setError] = useState<string | null>(null);
 
   const supabase = createSupabaseBrowserClient();
-  const siteUrl =
-    typeof window !== "undefined"
-      ? process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin
-      : "";
+  const siteUrl = getClientOrigin();
 
   // Step 1 → Step 2
   function handleProfileNext(e: React.FormEvent) {

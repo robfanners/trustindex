@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-auth-browser";
 import { useAuth } from "@/context/AuthContext";
+import { getClientOrigin, safeRedirectPath } from "@/lib/url";
 import AppShell from "@/components/AppShell";
 
 export default function LoginPage() {
@@ -15,10 +16,11 @@ export default function LoginPage() {
   const supabase = createSupabaseBrowserClient();
 
   // Read `next` param once — used for both auto-redirect and magic link callback
-  const next =
+  const rawNext =
     typeof window !== "undefined"
-      ? new URLSearchParams(window.location.search).get("next") ?? "/dashboard"
-      : "/dashboard";
+      ? new URLSearchParams(window.location.search).get("next")
+      : null;
+  const next = safeRedirectPath(rawNext);
 
   // If the user is already authenticated, redirect them away from login
   useEffect(() => {
@@ -27,9 +29,7 @@ export default function LoginPage() {
     }
   }, [authLoading, user, next]);
 
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    (typeof window !== "undefined" ? window.location.origin : "");
+  const siteUrl = getClientOrigin();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
