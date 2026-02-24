@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
@@ -63,13 +64,12 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  // Hydrate collapsed state from localStorage (client-only)
   useEffect(() => {
     try {
       const stored = localStorage.getItem(SIDEBAR_KEY);
       if (stored === "true") setSidebarCollapsed(true);
     } catch {
-      // localStorage unavailable — stay expanded
+      // localStorage unavailable
     }
   }, []);
 
@@ -99,13 +99,13 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
   }, [pathname, searchParams]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Top bar */}
-      <header className="sticky top-0 z-50 bg-verisum-white border-b border-verisum-grey h-14 flex items-center px-4 sm:px-6">
+    <div className="min-h-screen bg-muted flex flex-col">
+      {/* Top bar — glass morphism */}
+      <header className="sticky top-0 z-50 h-14 border-b border-border backdrop-blur-[20px] backdrop-saturate-[180%] bg-white/80 flex items-center px-4 sm:px-6">
         {/* Mobile sidebar toggle */}
         <button
           type="button"
-          className="lg:hidden mr-3 p-1.5 text-verisum-grey hover:text-verisum-black"
+          className="lg:hidden mr-3 p-1.5 text-muted-foreground hover:text-foreground transition-colors"
           onClick={() => setSidebarOpen(!sidebarOpen)}
           aria-label="Toggle sidebar"
         >
@@ -119,28 +119,36 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
         </button>
 
         {/* Branding */}
-        <div className="flex items-center gap-3">
-          <a
-            href="/dashboard"
-            className="text-base font-semibold text-verisum-black hover:text-verisum-blue transition-colors"
-          >
-            TrustGraph™
-          </a>
-        </div>
+        <a
+          href="/dashboard"
+          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+        >
+          <Image
+            src="/verisum-icon.png"
+            alt="TrustGraph"
+            width={24}
+            height={24}
+            className="rounded-sm"
+            style={{ filter: "hue-rotate(-30deg) saturate(0.8)" }}
+          />
+          <span className="text-base font-bold text-brand">
+            TrustGraph
+          </span>
+        </a>
 
         {/* Right side: user info */}
         <div className="ml-auto flex items-center gap-3">
           {profile && (
-            <span className="hidden sm:inline text-xs px-2 py-0.5 rounded-full bg-verisum-blue/10 text-verisum-blue font-medium capitalize">
+            <span className="hidden sm:inline text-xs px-2 py-0.5 rounded-full bg-brand-subtle text-brand font-medium capitalize">
               {profile.plan}
             </span>
           )}
-          <span className="text-sm text-verisum-grey hidden sm:inline">
+          <span className="text-sm text-muted-foreground hidden sm:inline">
             {user?.email}
           </span>
           <button
             onClick={signOut}
-            className="text-sm text-verisum-grey hover:text-verisum-black transition-colors"
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             Log out
           </button>
@@ -160,7 +168,7 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
         <aside
           className={`
             fixed lg:sticky top-14 z-40 h-[calc(100vh-3.5rem)]
-            bg-verisum-white border-r border-verisum-grey
+            bg-card border-r border-border
             flex flex-col
             transition-all duration-200 ease-in-out
             ${sidebarCollapsed ? "lg:w-14" : "lg:w-56"}
@@ -177,11 +185,11 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
                   href={link.href}
                   title={sidebarCollapsed ? link.label : undefined}
                   className={`
-                    flex items-center gap-3 py-2 rounded-lg text-sm transition-colors
+                    flex items-center gap-3 py-2 rounded-lg text-sm transition-all
                     ${sidebarCollapsed ? "lg:justify-center lg:px-0 px-3" : "px-3"}
                     ${isActive
-                      ? "bg-verisum-blue/10 text-verisum-blue font-medium"
-                      : "text-verisum-grey hover:text-verisum-black hover:bg-gray-100"
+                      ? "bg-brand/10 text-brand font-medium"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
                     }
                   `}
                   onClick={() => setSidebarOpen(false)}
@@ -196,11 +204,11 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
           </nav>
 
           {/* Collapse toggle (desktop only) */}
-          <div className="hidden lg:block border-t border-verisum-grey">
+          <div className="hidden lg:block border-t border-border">
             <button
               type="button"
               onClick={toggleCollapsed}
-              className="w-full flex items-center justify-center py-3 text-verisum-grey hover:text-verisum-black transition-colors"
+              className="w-full flex items-center justify-center py-3 text-muted-foreground hover:text-foreground transition-colors"
               aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
               title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
@@ -216,8 +224,8 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
           </div>
 
           {/* Sidebar footer */}
-          <div className={`border-t border-verisum-grey px-4 py-3 ${sidebarCollapsed ? "lg:hidden" : ""}`}>
-            <div className="text-xs text-verisum-grey">
+          <div className={`border-t border-border px-4 py-3 ${sidebarCollapsed ? "lg:hidden" : ""}`}>
+            <div className="text-xs text-muted-foreground">
               &copy; {currentYear} Verisum &middot; TrustGraph&trade;
             </div>
           </div>
