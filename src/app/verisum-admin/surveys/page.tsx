@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import type { SurveyListItem } from "@/lib/vcc/types";
 
 type SurveysResponse = {
@@ -11,14 +12,15 @@ type SurveysResponse = {
 };
 
 export default function SurveysPage() {
+  const urlParams = useSearchParams();
   const [data, setData] = useState<SurveysResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Filters
+  // Filters — hydrate from URL params when arriving from dashboard links
   const [search, setSearch] = useState("");
-  const [mode, setMode] = useState("");
-  const [status, setStatus] = useState("");
+  const [mode, setMode] = useState(urlParams.get("mode") ?? "");
+  const [status, setStatus] = useState(urlParams.get("status") ?? "");
   const [page, setPage] = useState(1);
   const perPage = 25;
 

@@ -24,6 +24,24 @@ export type DashboardMetrics = {
   suspendedCount: number;
   riskFlagCount: number;
   totalSurveys: number;
+
+  // Activity & Growth
+  newUsersThisWeek: number;
+  newUsersThisMonth: number;
+  liveSurveys: number;
+  closedSurveys: number;
+  totalRespondents: number;
+
+  // Assessment Quality
+  submittedRuns: number;
+  draftRuns: number;
+  avgSystemScore: number | null;
+  lowScoreSystems: number;
+  systemsByType: Record<string, number>;
+
+  // Engagement
+  avgRespondentsPerSurvey: number;
+  surveysWithZeroResponses: number;
 };
 
 /** Organisation/user list item */

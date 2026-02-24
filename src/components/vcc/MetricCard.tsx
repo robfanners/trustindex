@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 type MetricCardProps = {
   label: string;
   value: string | number;
@@ -7,6 +9,8 @@ type MetricCardProps = {
   sub?: string;
   /** Optional colour accent: "blue" | "green" | "amber" | "red" | "gray" */
   accent?: "blue" | "green" | "amber" | "red" | "gray";
+  /** Optional link — makes the entire card clickable */
+  href?: string;
 };
 
 const accentStyles: Record<string, string> = {
@@ -30,11 +34,10 @@ export default function MetricCard({
   value,
   sub,
   accent = "gray",
+  href,
 }: MetricCardProps) {
-  return (
-    <div
-      className={`rounded-lg border border-gray-200 border-l-4 p-4 ${accentStyles[accent] ?? accentStyles.gray}`}
-    >
+  const content = (
+    <>
       <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
         {label}
       </div>
@@ -46,6 +49,25 @@ export default function MetricCard({
       {sub && (
         <div className="text-xs text-gray-500 mt-1">{sub}</div>
       )}
+    </>
+  );
+
+  const baseClass = `rounded-lg border border-gray-200 border-l-4 p-4 ${accentStyles[accent] ?? accentStyles.gray}`;
+
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className={`${baseClass} block transition-all duration-150 hover:shadow-md hover:-translate-y-0.5 cursor-pointer`}
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <div className={baseClass}>
+      {content}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import type { SystemListItem } from "@/lib/vcc/types";
 
 type SystemsResponse = {
@@ -11,14 +12,15 @@ type SystemsResponse = {
 };
 
 export default function SystemsPage() {
+  const urlParams = useSearchParams();
   const [data, setData] = useState<SystemsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Filters
+  // Filters — hydrate from URL params when arriving from dashboard links
   const [search, setSearch] = useState("");
-  const [type, setType] = useState("");
-  const [environment, setEnvironment] = useState("");
+  const [type, setType] = useState(urlParams.get("type") ?? "");
+  const [environment, setEnvironment] = useState(urlParams.get("environment") ?? "");
   const [page, setPage] = useState(1);
   const perPage = 25;
 

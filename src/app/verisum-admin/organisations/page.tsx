@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import type { OrgListItem } from "@/lib/vcc/types";
 
 type OrgsResponse = {
@@ -11,14 +12,15 @@ type OrgsResponse = {
 };
 
 export default function OrganisationsPage() {
+  const urlParams = useSearchParams();
   const [data, setData] = useState<OrgsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Filters
+  // Filters — hydrate from URL params when arriving from dashboard links
   const [search, setSearch] = useState("");
-  const [plan, setPlan] = useState("");
-  const [status, setStatus] = useState("");
+  const [plan, setPlan] = useState(urlParams.get("plan") ?? "");
+  const [status, setStatus] = useState(urlParams.get("status") ?? "");
   const [page, setPage] = useState(1);
   const perPage = 25;
 
