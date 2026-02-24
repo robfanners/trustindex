@@ -37,7 +37,7 @@ export async function GET(
     const { data: survey, error: survErr } = await db
       .from("survey_runs")
       .select(
-        "id, title, mode, status, respondent_count, opens_at, created_at, owner_user_id, organisation_id"
+        "id, title, mode, status, opens_at, created_at, owner_user_id, organisation_id"
       )
       .eq("id", runId)
       .single();
@@ -48,6 +48,15 @@ export async function GET(
         { status: 404 }
       );
     }
+
+    // Fetch respondent count from view
+    const { data: countData } = await db
+      .from("v_run_response_counts")
+      .select("respondents")
+      .eq("run_id", runId)
+      .maybeSingle();
+
+    const respondentCount = countData?.respondents ?? 0;
 
     // Fetch invites and owner email in parallel
     const [invitesRes, profileRes] = await Promise.all([
@@ -70,7 +79,7 @@ export async function GET(
         title: survey.title,
         mode: survey.mode,
         status: survey.status,
-        respondent_count: survey.respondent_count,
+        respondent_count: respondentCount,
         opens_at: survey.opens_at,
         created_at: survey.created_at,
         owner_user_id: survey.owner_user_id,

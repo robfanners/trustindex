@@ -39,7 +39,7 @@ export async function GET(
     const [surveysRes, systemsRes, overridesRes] = await Promise.all([
       db
         .from("survey_runs")
-        .select("id, title, mode, created_at, respondent_count")
+        .select("id, title, mode, created_at")
         .eq("owner_user_id", orgId)
         .order("created_at", { ascending: false })
         .limit(50),
@@ -57,6 +57,32 @@ export async function GET(
         .eq("user_id", orgId)
         .order("created_at", { ascending: false }),
     ]);
+
+    // Enrich surveys with respondent counts from view
+    const rawSurveys = surveysRes.data ?? [];
+    let enrichedSurveys = rawSurveys.map((s) => ({
+      ...s,
+      respondent_count: 0,
+    }));
+
+    if (rawSurveys.length > 0) {
+      const surveyIds = rawSurveys.map((s) => s.id as string);
+      const { data: surveyCounts } = await db
+        .from("v_run_response_counts")
+        .select("run_id, respondents")
+        .in("run_id", surveyIds);
+
+      const surveyCountMap = new Map(
+        (surveyCounts || []).map(
+          (c: { run_id: string; respondents: number }) => [c.run_id, c.respondents]
+        )
+      );
+
+      enrichedSurveys = rawSurveys.map((s) => ({
+        ...s,
+        respondent_count: surveyCountMap.get(s.id as string) ?? 0,
+      }));
+    }
 
     // For each system, get latest score + run count
     const systems = systemsRes.data ?? [];
@@ -102,7 +128,7 @@ export async function GET(
         created_at: profile.created_at,
         suspended_at: profile.suspended_at,
         suspended_reason: profile.suspended_reason,
-        surveys: surveysRes.data ?? [],
+        surveys: enrichedSurveys,
         systems: enrichedSystems,
         overrides: overridesRes.data ?? [],
       },

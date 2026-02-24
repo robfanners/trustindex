@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     let query = db
       .from("survey_runs")
       .select(
-        "id, title, mode, status, respondent_count, created_at, owner_user_id",
+        "id, title, mode, status, created_at, owner_user_id",
         { count: "exact" }
       )
       .order("created_at", { ascending: false });
@@ -81,6 +81,19 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Fetch respondent counts from view
+    const runIds = surveys.map((s) => s.id as string);
+    const { data: counts } = await db
+      .from("v_run_response_counts")
+      .select("run_id, respondents")
+      .in("run_id", runIds);
+
+    const countMap = new Map(
+      (counts || []).map(
+        (c: { run_id: string; respondents: number }) => [c.run_id, c.respondents]
+      )
+    );
+
     // Enrich with owner emails
     const ownerIds = [
       ...new Set(
@@ -108,7 +121,7 @@ export async function GET(request: NextRequest) {
       title: s.title,
       mode: s.mode,
       status: s.status,
-      respondent_count: s.respondent_count,
+      respondent_count: countMap.get(s.id as string) ?? 0,
       created_at: s.created_at,
       owner_email:
         emailMap.get(s.owner_user_id as string) ?? null,
