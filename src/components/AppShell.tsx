@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
@@ -27,7 +28,6 @@ export default function AppShell({ children }: AppShellProps) {
       { label: "Create survey", href: "/admin/new-run" },
     ];
 
-    // Survey Dashboard and Results: show on admin and dashboard pages. Link to run when we have runId, else to resume flow.
     if (isAdminOrDashboard) {
       items.push(
         {
@@ -51,50 +51,59 @@ export default function AppShell({ children }: AppShellProps) {
   }, [pathname, runId, isAdminOrDashboard]);
 
   return (
-    <div className="min-h-screen bg-verisum-white text-verisum-black flex flex-col">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-verisum-white border-b border-verisum-grey backdrop-blur-sm bg-opacity-95">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-14 md:h-16">
-            {/* Left: Branding */}
-            <div className="flex items-center gap-3">
-              <a
-                href="/"
-                className="text-base md:text-lg font-semibold text-verisum-black hover:text-verisum-blue transition-colors"
-              >
-                TrustGraph™
-              </a>
-            </div>
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
+      {/* Header — glass morphism */}
+      <header className="sticky top-0 z-50 h-16 border-b border-border backdrop-blur-[20px] backdrop-saturate-[180%] bg-white/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
+          <div className="flex items-center justify-between h-full">
+            {/* Left: Logo + Brand */}
+            <a
+              href="/"
+              className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
+            >
+              <Image
+                src="/verisum-icon.png"
+                alt="TrustGraph"
+                width={28}
+                height={28}
+                className="rounded-sm"
+                style={{ filter: "hue-rotate(-30deg) saturate(0.8)" }}
+              />
+              <span className="text-base font-bold text-brand">
+                TrustGraph
+              </span>
+            </a>
 
             {/* Right: Navigation */}
-            <nav className="hidden md:flex items-center gap-4">
+            <nav className="hidden md:flex items-center gap-1">
               {navItems.map((item) => (
                 <a
                   key={`${item.href}-${item.label}`}
                   href={item.href}
                   target={item.isExternal ? "_blank" : undefined}
                   rel={item.isExternal ? "noopener noreferrer" : undefined}
-                  className={`text-sm px-3 py-2 rounded transition-colors ${
+                  className={`text-sm font-medium px-3 py-2 rounded-md transition-all ${
                     item.isActive
-                      ? "text-verisum-blue font-medium"
-                      : "text-verisum-grey hover:text-verisum-black"
+                      ? "text-brand bg-brand-subtle"
+                      : "text-muted-foreground hover:text-foreground hover:bg-brand-subtle"
                   }`}
                 >
                   {item.label}
                 </a>
               ))}
+
               {!authLoading && (
                 user ? (
-                  <div className="flex items-center gap-3 ml-2 pl-2 border-l border-verisum-grey">
+                  <div className="flex items-center gap-2 ml-3 pl-3 border-l border-border">
                     <a
                       href="/dashboard"
-                      className="text-sm text-verisum-grey hover:text-verisum-black transition-colors"
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                     >
                       {user.email}
                     </a>
                     <button
                       onClick={signOut}
-                      className="text-sm text-verisum-grey hover:text-verisum-black transition-colors"
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                     >
                       Log out
                     </button>
@@ -102,7 +111,7 @@ export default function AppShell({ children }: AppShellProps) {
                 ) : (
                   <a
                     href="/auth/login"
-                    className="text-sm px-3 py-2 rounded transition-colors text-verisum-blue hover:text-verisum-black font-medium ml-2"
+                    className="ml-3 text-sm font-medium px-4 py-2 rounded-lg bg-gradient-to-br from-brand to-brand-hover text-brand-foreground shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all"
                   >
                     Log in
                   </a>
@@ -113,7 +122,7 @@ export default function AppShell({ children }: AppShellProps) {
             {/* Mobile menu button */}
             <button
               type="button"
-              className="md:hidden p-2 text-verisum-grey hover:text-verisum-black"
+              className="md:hidden p-2 text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Toggle menu"
             >
@@ -135,18 +144,18 @@ export default function AppShell({ children }: AppShellProps) {
 
           {/* Mobile menu */}
           {mobileMenuOpen && (
-            <div className="md:hidden py-4 border-t border-verisum-grey">
-              <div className="flex flex-col gap-2">
+            <div className="md:hidden py-4 border-t border-border">
+              <div className="flex flex-col gap-1">
                 {navItems.map((item) => (
                   <a
                     key={`${item.href}-${item.label}`}
                     href={item.href}
                     target={item.isExternal ? "_blank" : undefined}
                     rel={item.isExternal ? "noopener noreferrer" : undefined}
-                    className={`text-sm px-3 py-2 rounded transition-colors ${
+                    className={`text-sm font-medium px-3 py-2 rounded-md transition-all ${
                       item.isActive
-                        ? "text-verisum-blue font-medium bg-verisum-white"
-                        : "text-verisum-grey hover:text-verisum-black hover:bg-verisum-white"
+                        ? "text-brand bg-brand-subtle"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
                     }`}
                     onClick={() => setMobileMenuOpen(false)}
                   >
@@ -155,27 +164,25 @@ export default function AppShell({ children }: AppShellProps) {
                 ))}
                 {!authLoading && (
                   user ? (
-                    <>
-                      <div className="border-t border-verisum-grey mt-2 pt-2">
-                        <a
-                          href="/dashboard"
-                          className="text-sm px-3 py-2 rounded text-verisum-grey hover:text-verisum-black block"
-                          onClick={() => setMobileMenuOpen(false)}
-                        >
-                          {user.email}
-                        </a>
-                        <button
-                          onClick={() => { signOut(); setMobileMenuOpen(false); }}
-                          className="text-sm px-3 py-2 rounded text-verisum-grey hover:text-verisum-black w-full text-left"
-                        >
-                          Log out
-                        </button>
-                      </div>
-                    </>
+                    <div className="border-t border-border mt-2 pt-2 flex flex-col gap-1">
+                      <a
+                        href="/dashboard"
+                        className="text-sm px-3 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        {user.email}
+                      </a>
+                      <button
+                        onClick={() => { signOut(); setMobileMenuOpen(false); }}
+                        className="text-sm px-3 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted w-full text-left transition-all"
+                      >
+                        Log out
+                      </button>
+                    </div>
                   ) : (
                     <a
                       href="/auth/login"
-                      className="text-sm px-3 py-2 rounded text-verisum-blue font-medium"
+                      className="text-sm font-medium px-4 py-2 mt-2 rounded-lg bg-gradient-to-br from-brand to-brand-hover text-brand-foreground text-center shadow-sm"
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       Log in
@@ -195,33 +202,105 @@ export default function AppShell({ children }: AppShellProps) {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-verisum-grey bg-verisum-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-verisum-grey">
-            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
-              <span>© {currentYear} Verisum • TrustGraph™</span>
-              <span className="hidden sm:inline">•</span>
-              <span className="text-xs">Built in the UK</span>
+      {/* Footer — dark navy gradient */}
+      <footer
+        className="text-white"
+        style={{ background: "linear-gradient(180deg, #0a2540 0%, #061b2e 100%)" }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Brand column */}
+            <div className="sm:col-span-2 lg:col-span-1">
+              <div className="flex items-center gap-2.5 mb-3">
+                <Image
+                  src="/verisum-icon-white.png"
+                  alt="Verisum"
+                  width={24}
+                  height={24}
+                  className="rounded-sm opacity-90"
+                />
+                <span className="text-sm font-bold text-white">
+                  TrustGraph
+                </span>
+              </div>
+              <p className="text-sm text-white/50 leading-relaxed">
+                Measure, map and strengthen organisational trust.
+              </p>
             </div>
-            <div className="flex items-center gap-4">
-              <a
-                href="https://www.verisum.org/privacy-policy"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-verisum-black transition-colors"
-              >
-                Privacy
-              </a>
-              <a
-                href="https://www.verisum.org/terms-and-conditions"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-verisum-black transition-colors"
-              >
-                Terms
-              </a>
+
+            {/* Product */}
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-white/70 mb-3">
+                Product
+              </h4>
+              <ul className="space-y-2">
+                <li>
+                  <a href="/try" className="text-sm text-white/50 hover:text-white transition-colors">
+                    Try Explorer
+                  </a>
+                </li>
+                <li>
+                  <a href="/upgrade" className="text-sm text-white/50 hover:text-white transition-colors">
+                    Pricing
+                  </a>
+                </li>
+              </ul>
             </div>
+
+            {/* Company */}
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-white/70 mb-3">
+                Company
+              </h4>
+              <ul className="space-y-2">
+                <li>
+                  <a
+                    href="https://www.verisum.org"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-white/50 hover:text-white transition-colors"
+                  >
+                    Verisum
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Legal */}
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-white/70 mb-3">
+                Legal
+              </h4>
+              <ul className="space-y-2">
+                <li>
+                  <a
+                    href="https://www.verisum.org/privacy-policy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-white/50 hover:text-white transition-colors"
+                  >
+                    Privacy
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://www.verisum.org/terms-and-conditions"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-white/50 hover:text-white transition-colors"
+                  >
+                    Terms
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Bottom bar */}
+          <div className="mt-10 pt-6 border-t border-white/10 text-center">
+            <p className="text-xs text-white/40">
+              © {currentYear} Verisum • TrustGraph™ • Built in the UK
+            </p>
           </div>
         </div>
       </footer>
