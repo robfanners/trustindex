@@ -256,7 +256,7 @@ export default function VCCShell({ children }: VCCShellProps) {
         {/* Right side: admin info */}
         <div className="ml-auto flex items-center gap-3">
           {primaryRoleLabel && (
-            <span className="hidden sm:inline text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-medium">
+            <span className="hidden sm:inline text-xs px-2 py-0.5 rounded-full bg-brand/20 text-[#5ab0e8] font-medium">
               {primaryRoleLabel}
             </span>
           )}
@@ -313,7 +313,7 @@ export default function VCCShell({ children }: VCCShellProps) {
                           flex items-center gap-3 py-2 rounded-lg text-sm transition-colors
                           ${sidebarCollapsed ? "lg:justify-center lg:px-0 px-3" : "px-3"}
                           ${active
-                            ? "bg-gray-800 text-amber-400 font-medium"
+                            ? "bg-gray-800 text-[#5ab0e8] font-medium"
                             : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/60"
                           }
                         `}
