@@ -27,6 +27,11 @@ export default function OrgDetailPage() {
   );
   const [actionLoading, setActionLoading] = useState(false);
 
+  // Plan change dialog
+  const [planOpen, setPlanOpen] = useState(false);
+  const [planLoading, setPlanLoading] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<string>("");
+
   const fetchOrg = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -75,6 +80,34 @@ export default function OrgDetailPage() {
     [orgId, suspendAction, fetchOrg]
   );
 
+  const handlePlanChange = useCallback(
+    async (reason: string) => {
+      setPlanLoading(true);
+      try {
+        const res = await fetch(
+          `/api/verisum-admin/organisations/${orgId}/plan`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ plan: selectedPlan, reason }),
+          }
+        );
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          alert(body.error ?? "Failed to change plan");
+          return;
+        }
+        setPlanOpen(false);
+        fetchOrg();
+      } catch {
+        alert("Failed to change plan");
+      } finally {
+        setPlanLoading(false);
+      }
+    },
+    [orgId, selectedPlan, fetchOrg]
+  );
+
   if (loading) {
     return (
       <div className="animate-pulse space-y-4">
@@ -121,6 +154,17 @@ export default function OrgDetailPage() {
             <span className="text-sm capitalize text-gray-600 bg-gray-100 px-2 py-0.5 rounded">
               {org.plan}
             </span>
+            {hasPermission("change_plans") && (
+              <button
+                onClick={() => {
+                  setSelectedPlan(org.plan);
+                  setPlanOpen(true);
+                }}
+                className="text-xs text-brand hover:text-brand-hover font-medium transition-colors"
+              >
+                Change Plan
+              </button>
+            )}
             {isSuspended ? (
               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
                 Suspended
@@ -222,7 +266,7 @@ export default function OrgDetailPage() {
       {/* Overrides */}
       <OverrideTable overrides={org.overrides} />
 
-      {/* Confirm Dialog */}
+      {/* Suspend/Reinstate Dialog */}
       <ConfirmDialog
         open={suspendOpen}
         title={
@@ -242,6 +286,53 @@ export default function OrgDetailPage() {
         onConfirm={handleSuspendReinstate}
         onCancel={() => setSuspendOpen(false)}
       />
+
+      {/* Plan Change Dialog */}
+      {planOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setPlanOpen(false)}
+          />
+          <div
+            className="relative bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6"
+            role="dialog"
+            aria-modal="true"
+          >
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Change Plan for {org.email}
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Select the new plan and provide a reason for the change.
+            </p>
+
+            {/* Plan selector */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Plan
+              </label>
+              <select
+                value={selectedPlan}
+                onChange={(e) => setSelectedPlan(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand/30 focus:border-brand"
+              >
+                <option value="explorer">Explorer</option>
+                <option value="pro">Pro</option>
+                <option value="enterprise">Enterprise</option>
+              </select>
+            </div>
+
+            {/* Reason */}
+            <PlanChangeReasonForm
+              loading={planLoading}
+              currentPlan={org.plan}
+              selectedPlan={selectedPlan}
+              onConfirm={handlePlanChange}
+              onCancel={() => setPlanOpen(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -347,6 +438,65 @@ function SystemTable({ systems }: { systems: OrgSystem[] }) {
         </table>
       </div>
     </div>
+  );
+}
+
+function PlanChangeReasonForm({
+  loading,
+  currentPlan,
+  selectedPlan,
+  onConfirm,
+  onCancel,
+}: {
+  loading: boolean;
+  currentPlan: string;
+  selectedPlan: string;
+  onConfirm: (reason: string) => void;
+  onCancel: () => void;
+}) {
+  const [reason, setReason] = useState("");
+  const isSamePlan = currentPlan === selectedPlan;
+  const canConfirm = !isSamePlan && reason.trim().length > 0 && !loading;
+
+  return (
+    <>
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Reason <span className="text-red-500">*</span>
+        </label>
+        <textarea
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          rows={3}
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand/30 focus:border-brand resize-none"
+          placeholder="Explain why this plan change is being made…"
+          autoFocus
+        />
+      </div>
+      {isSamePlan && (
+        <p className="text-xs text-amber-600 mb-3">
+          Selected plan is the same as the current plan.
+        </p>
+      )}
+      <div className="flex gap-3 justify-end">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+          disabled={loading}
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={() => canConfirm && onConfirm(reason.trim())}
+          disabled={!canConfirm}
+          className="px-4 py-2 text-sm font-medium text-white bg-brand hover:bg-brand-hover rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand/30 focus:ring-offset-2 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          {loading ? "Updating…" : "Change Plan"}
+        </button>
+      </div>
+    </>
   );
 }
 
