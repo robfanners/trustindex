@@ -157,7 +157,7 @@ export default function SurveyPage() {
     return (
       <AppShell>
         <div className="max-w-3xl mx-auto p-4 md:p-6 lg:p-10">
-          <div className="text-verisum-grey">Loading survey…</div>
+          <div className="text-muted-foreground">Loading survey…</div>
         </div>
       </AppShell>
     );
@@ -168,7 +168,7 @@ export default function SurveyPage() {
       <AppShell>
         <div className="max-w-3xl mx-auto p-4 md:p-6 lg:p-10 space-y-4">
           <h1 className="text-2xl font-bold">TrustOrg Survey</h1>
-          <div className="text-verisum-red">{error}</div>
+          <div className="text-destructive">{error}</div>
         </div>
       </AppShell>
     );
@@ -179,19 +179,19 @@ export default function SurveyPage() {
       <AppShell>
         <div className="max-w-3xl mx-auto p-4 md:p-6 lg:p-10 space-y-4">
           <h1 className="text-3xl font-bold">Thank you</h1>
-          <p className="text-verisum-grey">
+          <p className="text-muted-foreground">
             Your responses have been recorded. You can now close this window.
           </p>
           {runId && (
             <div className="flex flex-wrap items-center gap-3">
               <a
-                className="px-5 py-3 rounded bg-verisum-blue text-verisum-white font-semibold hover:bg-[#2a7bb8]"
+                className="px-5 py-3 rounded bg-brand text-white font-semibold hover:bg-brand-hover"
                 href={`/dashboard/${runId}`}
               >
                 View results
               </a>
               {runMode === "org" && (
-                <a className="text-verisum-blue underline" href={`/admin/run/${runId}`}>
+                <a className="text-brand underline" href={`/admin/run/${runId}`}>
                   Open Survey Dashboard
                 </a>
               )}
@@ -225,7 +225,7 @@ export default function SurveyPage() {
       <div className="max-w-3xl mx-auto p-4 md:p-6 lg:p-10 space-y-6 md:space-y-8">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold">TrustOrg Survey</h1>
-          <p className="text-verisum-grey">
+          <p className="text-muted-foreground">
             This survey helps your organisation understand how trust, transparency, and decision-making are experienced in practice.
           </p>
         </div>

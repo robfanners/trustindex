@@ -70,20 +70,20 @@ function bandFor(score0to100: number) {
   if (score0to100 < 40)
     return {
       label: "Fragile",
-      color: "text-verisum-red",
+      color: "text-destructive",
       summary:
         "Low trust signals systemic friction and elevated execution risk.",
     };
   if (score0to100 < 70)
     return {
       label: "Mixed",
-      color: "text-verisum-yellow",
+      color: "text-warning",
       summary:
         "Trust is inconsistent; performance is likely uneven across teams or cohorts.",
     };
   return {
     label: "Strong",
-    color: "text-verisum-green",
+    color: "text-success",
     summary: "Trust is an asset; protect it and scale what is working.",
   };
 }
@@ -471,8 +471,8 @@ function SurveyResultsContent() {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 text-sm text-verisum-grey py-8">
-        <div className="w-4 h-4 border-2 border-verisum-blue border-t-transparent rounded-full animate-spin" />
+      <div className="flex items-center gap-2 text-sm text-muted-foreground py-8">
+        <div className="w-4 h-4 border-2 border-brand border-t-transparent rounded-full animate-spin" />
         Loading results...
       </div>
     );
@@ -482,8 +482,8 @@ function SurveyResultsContent() {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold">TrustGraph Results</h1>
-        <div className="text-verisum-red">{error}</div>
-        <a className="text-verisum-blue underline" href={manageHref}>
+        <div className="text-destructive">{error}</div>
+        <a className="text-brand underline" href={manageHref}>
           Back to Survey Dashboard
         </a>
       </div>
@@ -498,21 +498,21 @@ function SurveyResultsContent() {
     return (
       <div className="space-y-6">
         <h1 className="text-3xl font-bold">TrustGraph Results</h1>
-        <div className="text-verisum-grey">{run?.title}</div>
+        <div className="text-muted-foreground">{run?.title}</div>
 
         <div className="rounded-xl border border-border p-6 shadow-sm space-y-2">
           <div className="font-semibold">Not enough responses yet</div>
-          <div className="text-verisum-grey">
+          <div className="text-muted-foreground">
             This survey is in{" "}
             <span className="font-semibold">Organisational</span> mode and
             requires at least{" "}
             <span className="font-semibold">{minRespondents}</span>{" "}
             respondents before results are shown.
           </div>
-          <div className="text-sm text-verisum-grey">
+          <div className="text-sm text-muted-foreground">
             Current respondents: {respondents}
           </div>
-          <div className="text-xs text-verisum-grey">
+          <div className="text-xs text-muted-foreground">
             This threshold protects anonymity and avoids over-interpreting very
             small samples.
           </div>
@@ -520,7 +520,7 @@ function SurveyResultsContent() {
           {/* Invite completion list */}
           <div className="rounded-xl border border-border p-6 shadow-sm space-y-3 mt-4">
             <h2 className="text-lg font-semibold">Survey links</h2>
-            <div className="text-sm text-verisum-grey">
+            <div className="text-sm text-muted-foreground">
               Completed: {invites.filter((i) => i.used_at).length} \u00b7
               Pending: {invites.filter((i) => !i.used_at).length}
             </div>
@@ -531,14 +531,14 @@ function SurveyResultsContent() {
                   key={i.token}
                   className="flex items-center justify-between text-sm"
                 >
-                  <div className="text-verisum-grey">
+                  <div className="text-muted-foreground">
                     {i.token.slice(0, 6)}\u2026{i.token.slice(-4)}
                   </div>
                   <div
                     className={
                       i.used_at
-                        ? "text-verisum-green"
-                        : "text-verisum-yellow"
+                        ? "text-success"
+                        : "text-warning"
                     }
                   >
                     {i.used_at ? "Completed" : "Pending"}
@@ -547,22 +547,22 @@ function SurveyResultsContent() {
               ))}
             </div>
 
-            <div className="text-xs text-verisum-grey">
+            <div className="text-xs text-muted-foreground">
               Tokens are masked for safety. Each token corresponds to one survey
               link.
             </div>
           </div>
         </div>
 
-        <div className="text-sm text-verisum-grey">
+        <div className="text-sm text-muted-foreground">
           <span className="font-medium">
             Need to share or chase responses?
           </span>{" "}
-          <a className="text-verisum-blue underline" href={manageHref}>
+          <a className="text-brand underline" href={manageHref}>
             Open Survey Dashboard
           </a>
         </div>
-        <a className="text-verisum-blue underline" href={manageHref}>
+        <a className="text-brand underline" href={manageHref}>
           Back to Survey Dashboard
         </a>
       </div>
@@ -577,22 +577,22 @@ function SurveyResultsContent() {
     return (
       <div className="space-y-6">
         <h1 className="text-3xl font-bold">TrustGraph Results</h1>
-        <div className="text-verisum-grey">{run?.title}</div>
+        <div className="text-muted-foreground">{run?.title}</div>
         <div className="rounded-xl border border-border p-6 shadow-sm space-y-2">
-          <div className="text-verisum-grey font-medium">
+          <div className="text-muted-foreground font-medium">
             No responses yet.
           </div>
-          <div className="text-verisum-grey text-sm mt-1">
+          <div className="text-muted-foreground text-sm mt-1">
             Once someone completes the survey, results will appear here.
           </div>
-          <div className="text-sm text-verisum-grey">
+          <div className="text-sm text-muted-foreground">
             Respondents so far: {counts?.respondents ?? 0}
           </div>
         </div>
 
         <div className="rounded-xl border border-border p-6 shadow-sm space-y-3">
           <h2 className="text-lg font-semibold">Survey links</h2>
-          <div className="text-sm text-verisum-grey">
+          <div className="text-sm text-muted-foreground">
             Completed: {invites.filter((i) => i.used_at).length} \u00b7
             Pending: {invites.filter((i) => !i.used_at).length}
           </div>
@@ -603,14 +603,14 @@ function SurveyResultsContent() {
                   key={i.token}
                   className="flex items-center justify-between text-sm"
                 >
-                  <div className="text-verisum-grey">
+                  <div className="text-muted-foreground">
                     {i.token.slice(0, 6)}\u2026{i.token.slice(-4)}
                   </div>
                   <div
                     className={
                       i.used_at
-                        ? "text-verisum-green"
-                        : "text-verisum-yellow"
+                        ? "text-success"
+                        : "text-warning"
                     }
                   >
                     {i.used_at ? "Completed" : "Pending"}
@@ -620,19 +620,19 @@ function SurveyResultsContent() {
             </div>
           )}
           {isExplorer ? (
-            <div className="text-xs text-verisum-grey">
+            <div className="text-xs text-muted-foreground">
               Explorer mode uses a single private link. In organisational
               surveys, each person receives a unique link.
             </div>
           ) : (
-            <div className="text-xs text-verisum-grey">
+            <div className="text-xs text-muted-foreground">
               Tokens are masked for safety. Each token corresponds to one survey
               link.
             </div>
           )}
         </div>
 
-        <a className="text-verisum-blue underline" href={manageHref}>
+        <a className="text-brand underline" href={manageHref}>
           Back to Survey Dashboard
         </a>
       </div>
@@ -647,17 +647,17 @@ function SurveyResultsContent() {
     <div className="space-y-6 md:space-y-8">
       <header className="space-y-2">
         <h1 className="text-3xl font-bold">TrustGraph Results</h1>
-        <p className="text-sm text-verisum-grey">
+        <p className="text-sm text-muted-foreground">
           This view shows a live TrustGraph snapshot based on current
           responses.
         </p>
-        <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-verisum-grey">
+        <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
           <div>
             Mode: {run?.mode ?? "\u2014"} \u00b7 Respondents:{" "}
             {counts?.respondents ?? 0}
           </div>
           <a
-            className="text-verisum-blue underline whitespace-nowrap"
+            className="text-brand underline whitespace-nowrap"
             href={manageHref}
           >
             Back to Survey Dashboard
@@ -694,7 +694,7 @@ function SurveyResultsContent() {
 
       {/* Band interpretation */}
       <div className="rounded-xl border border-border p-6 shadow-sm space-y-3">
-        <div className="text-sm text-verisum-grey">What this means</div>
+        <div className="text-sm text-muted-foreground">What this means</div>
 
         {(() => {
           const score = Math.round(Number(trust.trustindex_0_to_100));
@@ -704,10 +704,10 @@ function SurveyResultsContent() {
               <div className={`text-xl font-semibold ${band.color}`}>
                 {band.label} trust ({score}/100)
               </div>
-              <div className="text-sm text-verisum-grey">
+              <div className="text-sm text-muted-foreground">
                 {band.summary}
               </div>
-              <div className="text-sm text-verisum-grey">
+              <div className="text-sm text-muted-foreground">
                 Recommended next step:{" "}
                 {run?.mode === "org"
                   ? "Review pending responses and then focus on the lowest-scoring dimension first."
@@ -724,18 +724,18 @@ function SurveyResultsContent() {
           <div className="text-lg font-semibold">
             Validate this with your organisation
           </div>
-          <div className="text-sm text-verisum-grey">
+          <div className="text-sm text-muted-foreground">
             Explorer is a single self-assessment. To validate, run an
             organisational survey with 5\u201315 respondents. Results unlock once
             5 people respond.
           </div>
           <a
-            className="inline-flex items-center px-3 py-2 rounded bg-verisum-blue text-verisum-white text-sm font-semibold hover:bg-[#2a7bb8]"
+            className="inline-flex items-center px-3 py-2 rounded bg-brand text-white text-sm font-semibold hover:bg-brand-hover"
             href="/dashboard/surveys/new"
           >
             Run an organisational survey
           </a>
-          <div className="text-xs text-verisum-grey">
+          <div className="text-xs text-muted-foreground">
             Takes ~2 minutes to set up. Results unlock once 5 people respond.
           </div>
         </div>
@@ -746,7 +746,7 @@ function SurveyResultsContent() {
         <h2 className="text-lg font-semibold">
           {isExplorer ? "Your completion" : "Survey completion"}
         </h2>
-        <div className="text-sm text-verisum-grey">
+        <div className="text-sm text-muted-foreground">
           Completed: {invites.filter((i) => i.used_at).length} \u00b7
           Pending: {invites.filter((i) => !i.used_at).length}
         </div>
@@ -758,14 +758,14 @@ function SurveyResultsContent() {
                 key={i.token}
                 className="flex items-center justify-between text-sm"
               >
-                <div className="text-verisum-grey">
+                <div className="text-muted-foreground">
                   {i.token.slice(0, 6)}\u2026{i.token.slice(-4)}
                 </div>
                 <div
                   className={
                     i.used_at
-                      ? "text-verisum-green"
-                      : "text-verisum-yellow"
+                      ? "text-success"
+                      : "text-warning"
                   }
                 >
                   {i.used_at ? "Completed" : "Pending"}
@@ -776,12 +776,12 @@ function SurveyResultsContent() {
         )}
 
         {isExplorer ? (
-          <div className="text-xs text-verisum-grey">
+          <div className="text-xs text-muted-foreground">
             Explorer mode uses a single private link. In organisational surveys,
             each person receives a unique link.
           </div>
         ) : (
-          <div className="text-xs text-verisum-grey">
+          <div className="text-xs text-muted-foreground">
             Tokens are masked for safety. Each token corresponds to one survey
             link.
           </div>
@@ -794,23 +794,23 @@ function SurveyResultsContent() {
         {exportAllowed ? (
           <>
             <button
-              className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-2 border border-border rounded hover:bg-[#f5f5f5] text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={downloadResponsesCsv}
               disabled={exporting}
             >
               {exporting ? "Preparing CSV..." : "Download responses CSV"}
             </button>
             {exportStatus && (
-              <div className="text-sm text-verisum-grey">{exportStatus}</div>
+              <div className="text-sm text-muted-foreground">{exportStatus}</div>
             )}
           </>
         ) : (
           <>
-            <p className="text-sm text-verisum-grey">
+            <p className="text-sm text-muted-foreground">
               CSV export is available on Pro and Enterprise plans.
             </p>
             <a
-              className="inline-block px-4 py-2 rounded bg-verisum-blue text-verisum-white text-sm font-semibold hover:bg-[#2a7bb8]"
+              className="inline-block px-4 py-2 rounded bg-brand text-white text-sm font-semibold hover:bg-brand-hover"
               href="/upgrade"
             >
               Upgrade to Pro
@@ -840,12 +840,12 @@ function SurveyResultsContent() {
                 >
                   <div className="flex items-baseline justify-between gap-4">
                     <div className="font-semibold">{info.short}</div>
-                    <div className="text-sm text-verisum-grey">
+                    <div className="text-sm text-muted-foreground">
                       {score}/100
                     </div>
                   </div>
 
-                  <div className="text-sm text-verisum-grey">
+                  <div className="text-sm text-muted-foreground">
                     {score < 40
                       ? info.lowMeans
                       : score >= 70
@@ -854,10 +854,10 @@ function SurveyResultsContent() {
                   </div>
 
                   <div className="text-sm">
-                    <div className="font-semibold text-verisum-grey">
+                    <div className="font-semibold text-muted-foreground">
                       Actions
                     </div>
-                    <ul className="list-disc pl-5 text-verisum-grey">
+                    <ul className="list-disc pl-5 text-muted-foreground">
                       {info.actions.map((a) => (
                         <li key={a}>{a}</li>
                       ))}
@@ -865,10 +865,10 @@ function SurveyResultsContent() {
                   </div>
 
                   <div className="text-sm">
-                    <div className="font-semibold text-verisum-grey">
+                    <div className="font-semibold text-muted-foreground">
                       Probe questions
                     </div>
-                    <ul className="list-disc pl-5 text-verisum-grey">
+                    <ul className="list-disc pl-5 text-muted-foreground">
                       {info.probes.map((p) => (
                         <li key={p}>{p}</li>
                       ))}
@@ -905,11 +905,11 @@ function SurveyResultsContent() {
       </div>
 
       {/* Back link */}
-      <div className="text-sm text-verisum-grey">
+      <div className="text-sm text-muted-foreground">
         <span className="font-medium">
           Need to share or chase responses?
         </span>{" "}
-        <a className="text-verisum-blue underline" href={manageHref}>
+        <a className="text-brand underline" href={manageHref}>
           Open Survey Dashboard
         </a>
       </div>

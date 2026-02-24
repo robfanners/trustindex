@@ -61,18 +61,18 @@ export default function SurveyForm({
     <>
       {/* Header / progress */}
       <header className="space-y-2">
-        <p className="text-sm text-verisum-grey">
+        <p className="text-sm text-muted-foreground">
           Please answer all questions. Scale: 1 (Strongly disagree) → 5 (Strongly agree).
         </p>
-        <div className="text-sm text-verisum-grey">
+        <div className="text-sm text-muted-foreground">
           Progress: {answeredCount}/{questions.length}
         </div>
         {unansweredCount > 0 && (
-          <div className="text-sm text-verisum-grey">
+          <div className="text-sm text-muted-foreground">
             You have {unansweredCount} unanswered question(s).{" "}
             <button
               type="button"
-              className="text-verisum-blue underline"
+              className="text-brand underline"
               onClick={jumpToFirstUnanswered}
             >
               Jump to first unanswered
@@ -83,7 +83,7 @@ export default function SurveyForm({
 
       {/* Validation banner */}
       {validationError && (
-        <div className="border border-verisum-red bg-[#ffe5e5] text-verisum-red rounded-lg p-4 text-sm">
+        <div className="border border-destructive bg-[#ffe5e5] text-destructive rounded-lg p-4 text-sm">
           {validationError}
         </div>
       )}
@@ -99,16 +99,16 @@ export default function SurveyForm({
               className={[
                 "border rounded-lg p-6 space-y-3",
                 isMissing
-                  ? "border-verisum-red bg-[#ffe5e5]"
-                  : "border-verisum-grey",
+                  ? "border-destructive bg-[#ffe5e5]"
+                  : "border-border",
               ].join(" ")}
             >
               <div className="flex items-center justify-between gap-3">
-                <div className="text-xs uppercase tracking-wide text-verisum-grey">
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">
                   {q.dimension}
                 </div>
                 {isMissing && (
-                  <div className="text-xs font-semibold text-verisum-red">Required</div>
+                  <div className="text-xs font-semibold text-destructive">Required</div>
                 )}
               </div>
               <div className="font-medium">
@@ -124,8 +124,8 @@ export default function SurveyForm({
                     className={[
                       "w-10 h-10 rounded border text-sm",
                       answers[q.id] === v
-                        ? "bg-verisum-black text-verisum-white border-verisum-black"
-                        : "bg-verisum-white text-verisum-black border-verisum-grey hover:border-verisum-grey",
+                        ? "bg-foreground text-white border-foreground"
+                        : "bg-background text-foreground border-border hover:border-border",
                     ].join(" ")}
                     aria-label={`Answer ${v}`}
                   >
@@ -134,11 +134,11 @@ export default function SurveyForm({
                 ))}
               </div>
 
-              <div className="text-xs text-verisum-grey">
+              <div className="text-xs text-muted-foreground">
                 1 = Strongly disagree · 3 = Neutral · 5 = Strongly agree
               </div>
               {isMissing && (
-                <div className="text-xs font-medium text-verisum-red">
+                <div className="text-xs font-medium text-destructive">
                   Please answer this question.
                 </div>
               )}
@@ -148,7 +148,7 @@ export default function SurveyForm({
       </div>
 
       {/* Error */}
-      {error && <div className="text-verisum-red">{error}</div>}
+      {error && <div className="text-destructive">{error}</div>}
 
       {/* Submit bar */}
       <div className="pt-2">
@@ -157,7 +157,7 @@ export default function SurveyForm({
             type="button"
             onClick={onSubmit}
             disabled={submitting || answeredCount !== questions.length}
-            className="px-6 py-3 rounded bg-verisum-blue text-verisum-white font-semibold hover:bg-[#2a7bb8] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-3 rounded bg-brand text-white font-semibold hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting
               ? "Submitting…"

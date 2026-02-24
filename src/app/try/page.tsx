@@ -39,20 +39,20 @@ function bandFor(score: number) {
   if (score < 40)
     return {
       label: "Fragile",
-      color: "text-verisum-red",
+      color: "text-destructive",
       summary:
         "Low trust signals systemic friction and elevated execution risk.",
     };
   if (score < 70)
     return {
       label: "Mixed",
-      color: "text-verisum-yellow",
+      color: "text-warning",
       summary:
         "Trust is inconsistent; performance is likely uneven across teams or cohorts.",
     };
   return {
     label: "Strong",
-    color: "text-verisum-green",
+    color: "text-success",
     summary: "Trust is an asset; protect it and scale what is working.",
   };
 }
@@ -301,10 +301,10 @@ export default function TryExplorerPage() {
       <AppShell>
         <div className="max-w-3xl mx-auto p-4 md:p-6 lg:p-10">
           {error ? (
-            <div className="text-verisum-red">{error}</div>
+            <div className="text-destructive">{error}</div>
           ) : (
-            <div className="flex items-center gap-3 text-sm text-verisum-grey">
-              <div className="w-5 h-5 border-2 border-verisum-blue border-t-transparent rounded-full animate-spin" />
+            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <div className="w-5 h-5 border-2 border-brand border-t-transparent rounded-full animate-spin" />
               Setting up your self-assessment…
             </div>
           )}
@@ -321,8 +321,8 @@ export default function TryExplorerPage() {
     return (
       <AppShell>
         <div className="max-w-3xl mx-auto p-4 md:p-6 lg:p-10">
-          <div className="flex items-center gap-3 text-sm text-verisum-grey">
-            <div className="w-5 h-5 border-2 border-verisum-blue border-t-transparent rounded-full animate-spin" />
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+            <div className="w-5 h-5 border-2 border-brand border-t-transparent rounded-full animate-spin" />
             Calculating your TrustGraph score…
           </div>
         </div>
@@ -345,7 +345,7 @@ export default function TryExplorerPage() {
         <div className="max-w-3xl mx-auto p-4 md:p-6 lg:p-10 space-y-6 md:space-y-8">
           <header className="space-y-2">
             <h1 className="text-3xl font-bold">Your TrustGraph™ Results</h1>
-            <p className="text-verisum-grey">
+            <p className="text-muted-foreground">
               Here&apos;s a snapshot of how trust is experienced based on your
               self-assessment.
             </p>
@@ -366,23 +366,23 @@ export default function TryExplorerPage() {
                     {score !== null && <TierBadge score={score} />}
                   </div>
                 </div>
-                <div className="text-sm text-verisum-grey">
+                <div className="text-sm text-muted-foreground">
                   Mean: {Number(trust.overall_mean_1_to_5).toFixed(2)} / 5
                 </div>
               </div>
 
-              <div className="border border-verisum-grey rounded-lg p-6 space-y-3">
+              <div className="border border-border rounded-lg p-6 space-y-3">
                 <div className={`text-xl font-semibold ${band.color}`}>
                   {band.label} trust ({score}/100)
                 </div>
-                <div className="text-sm text-verisum-grey">{band.summary}</div>
+                <div className="text-sm text-muted-foreground">{band.summary}</div>
               </div>
             </>
           )}
 
           {/* Radar */}
           {radarData.length > 0 && (
-            <div className="border border-verisum-grey rounded-lg p-6">
+            <div className="border border-border rounded-lg p-6">
               <h2 className="text-lg font-semibold mb-4">Radar</h2>
               <div style={{ width: "100%", height: 300 }}>
                 <ResponsiveContainer>
@@ -411,7 +411,7 @@ export default function TryExplorerPage() {
             <h2 className="text-lg font-semibold">
               Save your results &amp; unlock the full dashboard
             </h2>
-            <p className="text-sm text-verisum-grey">
+            <p className="text-sm text-muted-foreground">
               Sign up free to keep your TrustGraph results, run organisational
               surveys, and access dimension-level analysis with recommended
               actions.
@@ -419,7 +419,7 @@ export default function TryExplorerPage() {
             <OnboardingForm />
             <div className="text-center">
               <a
-                className="text-sm text-verisum-grey hover:text-verisum-black underline"
+                className="text-sm text-muted-foreground hover:text-foreground underline"
                 href="/auth/login?next=/dashboard"
               >
                 Already have an account? Sign in
@@ -428,7 +428,7 @@ export default function TryExplorerPage() {
           </div>
 
           {!trust && (
-            <div className="text-sm text-verisum-grey">
+            <div className="text-sm text-muted-foreground">
               We couldn&apos;t calculate your score just yet. Sign up and your
               results will be waiting on your dashboard.
             </div>
@@ -447,7 +447,7 @@ export default function TryExplorerPage() {
       <div className="max-w-3xl mx-auto p-4 md:p-6 lg:p-10 space-y-6 md:space-y-8">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold">TrustGraph Explorer</h1>
-          <p className="text-verisum-grey">
+          <p className="text-muted-foreground">
             Take a free, private self-assessment. See how trust, transparency,
             and decision-making are experienced in your organisation — in about
             3 minutes.

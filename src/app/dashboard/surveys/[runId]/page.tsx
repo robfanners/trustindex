@@ -434,8 +434,8 @@ function SurveyManageContent() {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 text-sm text-verisum-grey py-8">
-        <div className="w-4 h-4 border-2 border-verisum-blue border-t-transparent rounded-full animate-spin" />
+      <div className="flex items-center gap-2 text-sm text-muted-foreground py-8">
+        <div className="w-4 h-4 border-2 border-brand border-t-transparent rounded-full animate-spin" />
         Loading survey...
       </div>
     );
@@ -445,7 +445,7 @@ function SurveyManageContent() {
     return (
       <div className="space-y-3">
         <h1 className="text-2xl font-bold">Survey</h1>
-        <div className="text-verisum-red">{error || "Missing survey ID"}</div>
+        <div className="text-destructive">{error || "Missing survey ID"}</div>
       </div>
     );
   }
@@ -531,7 +531,7 @@ function SurveyManageContent() {
       <h1 className="text-2xl md:text-3xl font-bold">Survey Dashboard</h1>
 
       {/* Survey info */}
-      <div className="border border-verisum-grey rounded-lg p-6 space-y-2">
+      <div className="border border-border rounded-lg p-6 space-y-2">
         <div>
           <span className="font-semibold">Survey:</span> {run?.title}
         </div>
@@ -548,10 +548,10 @@ function SurveyManageContent() {
       </div>
 
       {/* Results & progress */}
-      <div className="border border-verisum-grey rounded-lg p-6 space-y-4">
+      <div className="border border-border rounded-lg p-6 space-y-4">
         <div>
           <h2 className="text-xl font-semibold">Results & progress</h2>
-          <div className="text-sm text-verisum-grey">
+          <div className="text-sm text-muted-foreground">
             Track progress and manage distribution in one place.
           </div>
         </div>
@@ -570,7 +570,7 @@ function SurveyManageContent() {
                     : `${responseCount} responses received \u00b7 Results available`}
                 </div>
                 {isEarlyState && (
-                  <div className="text-sm text-verisum-grey">
+                  <div className="text-sm text-muted-foreground">
                     Share your survey link below to start collecting responses.
                   </div>
                 )}
@@ -587,7 +587,7 @@ function SurveyManageContent() {
 
         {/* Last updated */}
         {lastUpdated && (
-          <div className="text-xs text-verisum-grey flex items-center gap-2">
+          <div className="text-xs text-muted-foreground flex items-center gap-2">
             <span>
               Updates every 10 mins. Last updated:{" "}
               {lastUpdated.toLocaleTimeString("en-GB", {
@@ -598,7 +598,7 @@ function SurveyManageContent() {
             </span>
             <button
               type="button"
-              className="text-verisum-blue underline hover:no-underline"
+              className="text-brand underline hover:no-underline"
               onClick={() => loadData()}
               disabled={loading}
             >
@@ -610,27 +610,27 @@ function SurveyManageContent() {
         {/* Primary CTA */}
         <div className="space-y-2">
           <a
-            className="inline-block px-5 py-3 rounded bg-verisum-blue text-verisum-white font-semibold hover:bg-[#2a7bb8]"
+            className="inline-block px-5 py-3 rounded bg-brand text-white font-semibold hover:bg-brand-hover"
             href={resultsHref}
           >
             View results
           </a>
           {invites.filter((i) => i.used_at).length < 5 &&
           run?.mode === "org" ? (
-            <div className="text-xs text-verisum-grey">
+            <div className="text-xs text-muted-foreground">
               Share your survey link below to start collecting responses.
             </div>
           ) : (
-            <div className="text-xs text-verisum-grey">
+            <div className="text-xs text-muted-foreground">
               View live results and manage survey access below.
             </div>
           )}
         </div>
 
         {/* Survey links list */}
-        <div className="space-y-3 pt-4 border-t border-verisum-grey">
+        <div className="space-y-3 pt-4 border-t border-border">
           <div className="font-semibold text-sm">Survey links</div>
-          <div className="text-sm text-verisum-grey">
+          <div className="text-sm text-muted-foreground">
             Completed: {invites.filter((i) => i.used_at).length} \u00b7
             Pending: {invites.filter((i) => !i.used_at).length}
           </div>
@@ -641,12 +641,12 @@ function SurveyManageContent() {
                 key={i.token}
                 className="flex items-center justify-between text-sm"
               >
-                <div className="text-verisum-grey">
+                <div className="text-muted-foreground">
                   {i.token.slice(0, 6)}...{i.token.slice(-4)}
                 </div>
                 <div
                   className={
-                    i.used_at ? "text-verisum-green" : "text-verisum-yellow"
+                    i.used_at ? "text-success" : "text-warning"
                   }
                 >
                   {i.used_at ? "Completed" : "Pending"}
@@ -655,7 +655,7 @@ function SurveyManageContent() {
             ))}
           </div>
 
-          <div className="text-xs text-verisum-grey">
+          <div className="text-xs text-muted-foreground">
             Tokens are masked for safety. Each token corresponds to one survey
             link.
           </div>
@@ -663,23 +663,23 @@ function SurveyManageContent() {
       </div>
 
       {/* Share, save & chase */}
-      <div className="border border-verisum-grey rounded-lg p-6 space-y-4">
+      <div className="border border-border rounded-lg p-6 space-y-4">
         <h2 className="text-xl font-semibold">Share, save & chase</h2>
 
         {run?.mode === "org" && (
           <>
-            <div className="text-sm text-verisum-grey">
+            <div className="text-sm text-muted-foreground">
               Copy links and send one per person (recommended for organisational
               mode). Use &ldquo;pending&rdquo; for reminders.
             </div>
 
             <div className="flex flex-wrap items-end gap-3">
               <div>
-                <label className="text-xs text-verisum-grey">
+                <label className="text-xs text-muted-foreground">
                   Filter pending by
                 </label>
                 <select
-                  className="mt-1 w-full border border-verisum-grey rounded px-3 py-2 text-sm"
+                  className="mt-1 w-full border border-border rounded px-3 py-2 text-sm"
                   value={pendingFilterType}
                   onChange={(e) => {
                     setPendingFilterType(
@@ -700,9 +700,9 @@ function SurveyManageContent() {
               </div>
               {pendingFilterType !== "all" && (
                 <div>
-                  <label className="text-xs text-verisum-grey">Value</label>
+                  <label className="text-xs text-muted-foreground">Value</label>
                   <select
-                    className="mt-1 w-full border border-verisum-grey rounded px-3 py-2 text-sm"
+                    className="mt-1 w-full border border-border rounded px-3 py-2 text-sm"
                     value={pendingFilterValue}
                     onChange={(e) => setPendingFilterValue(e.target.value)}
                   >
@@ -724,7 +724,7 @@ function SurveyManageContent() {
 
             <div className="flex flex-wrap gap-2">
               <button
-                className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm"
+                className="px-3 py-2 border border-border rounded hover:bg-[#f5f5f5] text-sm"
                 onClick={() =>
                   copyText("Pending links copied", pendingLinks)
                 }
@@ -733,7 +733,7 @@ function SurveyManageContent() {
               </button>
 
               <a
-                className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm inline-block"
+                className="px-3 py-2 border border-border rounded hover:bg-[#f5f5f5] text-sm inline-block"
                 href={
                   "mailto:?" +
                   "subject=" +
@@ -756,7 +756,7 @@ function SurveyManageContent() {
 
         <div className="flex flex-wrap gap-2">
           <button
-            className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm"
+            className="px-3 py-2 border border-border rounded hover:bg-[#f5f5f5] text-sm"
             onClick={() =>
               copyText("All survey links copied", surveyLinks)
             }
@@ -765,14 +765,14 @@ function SurveyManageContent() {
           </button>
 
           <button
-            className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm"
+            className="px-3 py-2 border border-border rounded hover:bg-[#f5f5f5] text-sm"
             onClick={downloadLinkPack}
           >
             Download link pack (.txt)
           </button>
 
           <a
-            className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm inline-block"
+            className="px-3 py-2 border border-border rounded hover:bg-[#f5f5f5] text-sm inline-block"
             href={
               "mailto:?" +
               "subject=" +
@@ -788,13 +788,13 @@ function SurveyManageContent() {
 
           {invites.length > 0 && (
             <>
-              <div className="text-xs text-verisum-grey w-full">
+              <div className="text-xs text-muted-foreground w-full">
                 Do not forward. If you are taking the survey yourself, use this
                 link.
               </div>
               <div className="flex flex-wrap items-center gap-2 mt-2">
                 <a
-                  className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm inline-block"
+                  className="px-3 py-2 border border-border rounded hover:bg-[#f5f5f5] text-sm inline-block"
                   href={`/survey/${invites[0].token}`}
                   target="_blank"
                   rel="noreferrer"
@@ -802,7 +802,7 @@ function SurveyManageContent() {
                   Open Your Survey
                 </a>
                 <button
-                  className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm"
+                  className="px-3 py-2 border border-border rounded hover:bg-[#f5f5f5] text-sm"
                   onClick={() => {
                     const firstLink = `${window.location.origin}/survey/${invites[0].token}`;
                     copyText("Your survey link copied", firstLink);
@@ -816,12 +816,12 @@ function SurveyManageContent() {
         </div>
 
         {copied && (
-          <div className="text-sm text-verisum-green">{copied}</div>
+          <div className="text-sm text-success">{copied}</div>
         )}
       </div>
 
       {/* Export data */}
-      <div className="border border-verisum-grey rounded-lg p-6 space-y-4">
+      <div className="border border-border rounded-lg p-6 space-y-4">
         <h2 className="text-xl font-semibold">
           {run?.mode === "explorer"
             ? "Download your responses (CSV)"
@@ -830,7 +830,7 @@ function SurveyManageContent() {
         {exportAllowed ? (
           <>
             <div className="space-y-3">
-              <label className="flex items-start gap-3 text-sm text-verisum-grey">
+              <label className="flex items-start gap-3 text-sm text-muted-foreground">
                 <input
                   type="checkbox"
                   className="mt-1"
@@ -841,13 +841,13 @@ function SurveyManageContent() {
                   <span className="font-medium">
                     Client-safe export (mask tokens)
                   </span>
-                  <div className="text-xs text-verisum-grey">
+                  <div className="text-xs text-muted-foreground">
                     Masks invite tokens to protect respondent privacy. Use this
                     when sharing externally.
                   </div>
                 </span>
               </label>
-              <label className="flex items-start gap-3 text-sm text-verisum-grey">
+              <label className="flex items-start gap-3 text-sm text-muted-foreground">
                 <input
                   type="checkbox"
                   className="mt-1"
@@ -858,7 +858,7 @@ function SurveyManageContent() {
                   <span className="font-medium">
                     Include segmentation (team / level / location)
                   </span>
-                  <div className="text-xs text-verisum-grey">
+                  <div className="text-xs text-muted-foreground">
                     Only enable if you&apos;re confident it won&apos;t identify
                     individuals in small teams.
                   </div>
@@ -867,14 +867,14 @@ function SurveyManageContent() {
             </div>
             <div className="flex flex-wrap gap-2">
               <button
-                className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-2 border border-border rounded hover:bg-[#f5f5f5] text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={downloadResponsesCsv}
                 disabled={exporting}
               >
                 {exporting ? "Preparing CSV..." : "Download responses CSV"}
               </button>
               <button
-                className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-2 border border-border rounded hover:bg-[#f5f5f5] text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={downloadSummaryCsv}
                 disabled={summaryExporting}
               >
@@ -884,16 +884,16 @@ function SurveyManageContent() {
               </button>
             </div>
             {exportStatus && (
-              <div className="text-sm text-verisum-grey">{exportStatus}</div>
+              <div className="text-sm text-muted-foreground">{exportStatus}</div>
             )}
           </>
         ) : (
           <>
-            <p className="text-sm text-verisum-grey">
+            <p className="text-sm text-muted-foreground">
               CSV export is available on Pro and Enterprise plans.
             </p>
             <a
-              className="inline-block px-4 py-2 rounded bg-verisum-blue text-verisum-white text-sm font-semibold hover:bg-[#2a7bb8]"
+              className="inline-block px-4 py-2 rounded bg-brand text-white text-sm font-semibold hover:bg-brand-hover"
               href="/upgrade"
             >
               Upgrade to Pro
@@ -904,22 +904,22 @@ function SurveyManageContent() {
 
       {/* Segmentation summary (org mode only) */}
       {run?.mode === "org" && (
-        <div className="border border-verisum-grey rounded-lg p-6 space-y-3">
+        <div className="border border-border rounded-lg p-6 space-y-3">
           <h2 className="text-xl font-semibold">Segmentation summary</h2>
-          <div className="text-sm text-verisum-grey">
+          <div className="text-sm text-muted-foreground">
             Teams: {formatCounts(invites.map((i) => i.team))}
           </div>
-          <div className="text-sm text-verisum-grey">
+          <div className="text-sm text-muted-foreground">
             Levels: {formatCounts(invites.map((i) => i.level))}
           </div>
-          <div className="text-sm text-verisum-grey">
+          <div className="text-sm text-muted-foreground">
             Locations: {formatCounts(invites.map((i) => i.location))}
           </div>
         </div>
       )}
 
       <a
-        className="text-verisum-blue underline"
+        className="text-brand underline"
         href="/dashboard/surveys/new"
       >
         Create another survey

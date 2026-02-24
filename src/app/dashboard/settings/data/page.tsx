@@ -79,15 +79,15 @@ export default function DataSettingsPage() {
   // Plan gate: only Pro+
   if (!canAccessDataSettings(profile?.plan)) {
     return (
-      <div className="border border-verisum-grey rounded-lg p-6 space-y-3">
-        <h2 className="text-lg font-semibold text-verisum-black">Data & Export</h2>
-        <p className="text-sm text-verisum-grey">
+      <div className="border border-border rounded-lg p-6 space-y-3">
+        <h2 className="text-lg font-semibold text-foreground">Data & Export</h2>
+        <p className="text-sm text-muted-foreground">
           Data export and account management are available on Pro and Enterprise
           plans.
         </p>
         <a
           href="/upgrade"
-          className="inline-block px-4 py-2 rounded bg-verisum-blue text-verisum-white text-sm font-semibold hover:bg-[#2a7bb8]"
+          className="inline-block px-4 py-2 rounded bg-brand text-white text-sm font-semibold hover:bg-brand-hover"
         >
           Upgrade your plan
         </a>
@@ -98,36 +98,36 @@ export default function DataSettingsPage() {
   return (
     <div className="space-y-6">
       {/* Export TrustOrg data */}
-      <div className="border border-verisum-grey rounded-lg p-6 space-y-3">
-        <h2 className="text-lg font-semibold text-verisum-black">
+      <div className="border border-border rounded-lg p-6 space-y-3">
+        <h2 className="text-lg font-semibold text-foreground">
           Export TrustOrg data
         </h2>
-        <p className="text-sm text-verisum-grey">
+        <p className="text-sm text-muted-foreground">
           Download all your survey data as a CSV file, including questions,
           responses, dimensions, and scores.
         </p>
         <button
           onClick={() => downloadCsv("surveys")}
           disabled={exportingSurveys}
-          className="px-4 py-2 rounded border border-verisum-grey text-sm hover:bg-gray-50 disabled:opacity-50"
+          className="px-4 py-2 rounded border border-border text-sm hover:bg-gray-50 disabled:opacity-50"
         >
           {exportingSurveys ? "Exporting..." : "Download survey CSV"}
         </button>
       </div>
 
       {/* Export TrustSys data */}
-      <div className="border border-verisum-grey rounded-lg p-6 space-y-3">
-        <h2 className="text-lg font-semibold text-verisum-black">
+      <div className="border border-border rounded-lg p-6 space-y-3">
+        <h2 className="text-lg font-semibold text-foreground">
           Export TrustSys data
         </h2>
-        <p className="text-sm text-verisum-grey">
+        <p className="text-sm text-muted-foreground">
           Download all your system assessment data as a CSV file, including
           questions, answers, evidence, and scores.
         </p>
         <button
           onClick={() => downloadCsv("systems")}
           disabled={exportingSystems}
-          className="px-4 py-2 rounded border border-verisum-grey text-sm hover:bg-gray-50 disabled:opacity-50"
+          className="px-4 py-2 rounded border border-border text-sm hover:bg-gray-50 disabled:opacity-50"
         >
           {exportingSystems ? "Exporting..." : "Download systems CSV"}
         </button>
@@ -136,7 +136,7 @@ export default function DataSettingsPage() {
       {exportMsg && (
         <div
           className={`text-sm ${
-            exportMsg.includes("exported") ? "text-verisum-green" : "text-verisum-red"
+            exportMsg.includes("exported") ? "text-success" : "text-destructive"
           }`}
         >
           {exportMsg}
@@ -144,17 +144,17 @@ export default function DataSettingsPage() {
       )}
 
       {/* Data retention */}
-      <div className="border border-verisum-grey rounded-lg p-6 space-y-3">
-        <h2 className="text-lg font-semibold text-verisum-black">
+      <div className="border border-border rounded-lg p-6 space-y-3">
+        <h2 className="text-lg font-semibold text-foreground">
           Data retention
         </h2>
-        <p className="text-sm text-verisum-grey">
+        <p className="text-sm text-muted-foreground">
           Your data is retained for the duration of your subscription. If your
           subscription is cancelled, your data is retained for 90 days before
           being permanently deleted. Contact{" "}
           <a
             href="mailto:hello@verisum.org"
-            className="text-verisum-blue underline hover:text-verisum-black"
+            className="text-brand underline hover:text-foreground"
           >
             hello@verisum.org
           </a>{" "}
@@ -166,7 +166,7 @@ export default function DataSettingsPage() {
       <div className="border border-red-300 rounded-lg p-6 space-y-4">
         <h2 className="text-lg font-semibold text-red-600">Danger zone</h2>
 
-        <p className="text-sm text-verisum-grey">
+        <p className="text-sm text-muted-foreground">
           Deleting your account will deactivate it and remove access to all your
           data. Your data will be retained for 90 days before permanent
           deletion. This action requires confirmation from our team.
@@ -204,7 +204,7 @@ export default function DataSettingsPage() {
                   setDeleteInput("");
                   setDeleteError(null);
                 }}
-                className="px-4 py-2 rounded border border-verisum-grey text-sm hover:bg-gray-50"
+                className="px-4 py-2 rounded border border-border text-sm hover:bg-gray-50"
               >
                 Cancel
               </button>

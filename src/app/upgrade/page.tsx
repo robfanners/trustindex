@@ -159,8 +159,8 @@ function UpgradeContent() {
     <div className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 py-12 space-y-12">
       {/* Success / cancelled banners */}
       {success && (
-        <div className="border border-verisum-green rounded-lg p-4 bg-green-50 text-sm">
-          <span className="font-semibold text-verisum-green">
+        <div className="border border-success rounded-lg p-4 bg-green-50 text-sm">
+          <span className="font-semibold text-success">
             Payment successful.
           </span>{" "}
           Your plan has been upgraded to Pro. It may take a moment to reflect in
@@ -168,8 +168,8 @@ function UpgradeContent() {
         </div>
       )}
       {cancelled && (
-        <div className="border border-verisum-yellow rounded-lg p-4 bg-yellow-50 text-sm">
-          <span className="font-semibold text-verisum-yellow">
+        <div className="border border-warning rounded-lg p-4 bg-yellow-50 text-sm">
+          <span className="font-semibold text-warning">
             Checkout cancelled.
           </span>{" "}
           No charge was made. You can upgrade at any time.
@@ -181,7 +181,7 @@ function UpgradeContent() {
         <h1 className="text-3xl md:text-4xl font-bold">
           Plans &amp; pricing
         </h1>
-        <p className="text-verisum-grey max-w-xl mx-auto">
+        <p className="text-muted-foreground max-w-xl mx-auto">
           Start free with Explorer. Upgrade when you need organisational
           surveys, data export, and systems assessment.
         </p>
@@ -196,12 +196,12 @@ function UpgradeContent() {
               key={tier.name}
               className={`border rounded-lg p-6 flex flex-col justify-between space-y-6 ${
                 tier.highlighted
-                  ? "border-verisum-blue border-2 relative"
-                  : "border-verisum-grey"
+                  ? "border-brand border-2 relative"
+                  : "border-border"
               }`}
             >
               {tier.highlighted && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-verisum-blue text-verisum-white text-xs font-semibold px-3 py-1 rounded-full">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand text-white text-xs font-semibold px-3 py-1 rounded-full">
                   Most popular
                 </div>
               )}
@@ -212,22 +212,22 @@ function UpgradeContent() {
                   <div className="mt-2">
                     <span className="text-3xl font-bold">{tier.price}</span>
                     {tier.period && (
-                      <span className="text-verisum-grey text-sm">
+                      <span className="text-muted-foreground text-sm">
                         {tier.period}
                       </span>
                     )}
                   </div>
                   {tier.name === "Pro" && (
-                    <div className="text-xs text-verisum-grey mt-1">
+                    <div className="text-xs text-muted-foreground mt-1">
                       or &pound;1,788/year (save &pound;600)
                     </div>
                   )}
                 </div>
-                <p className="text-sm text-verisum-grey">{tier.description}</p>
+                <p className="text-sm text-muted-foreground">{tier.description}</p>
                 <ul className="space-y-2">
                   {tier.features.map((f) => (
                     <li key={f} className="flex items-start gap-2 text-sm">
-                      <span className="text-verisum-green mt-0.5">&#10003;</span>
+                      <span className="text-success mt-0.5">&#10003;</span>
                       <span>{f}</span>
                     </li>
                   ))}
@@ -240,7 +240,7 @@ function UpgradeContent() {
                   onClick={handleCheckout}
                   disabled={cta.disabled}
                   className={`w-full text-center px-5 py-3 rounded font-semibold text-sm transition-colors ${
-                    "bg-verisum-blue text-verisum-white hover:bg-[#2a7bb8]"
+                    "bg-brand text-white hover:bg-brand-hover"
                   } disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   {cta.label}
@@ -250,10 +250,10 @@ function UpgradeContent() {
                   href={cta.disabled ? undefined : cta.href}
                   className={`w-full text-center block px-5 py-3 rounded font-semibold text-sm transition-colors ${
                     tier.ctaStyle === "primary"
-                      ? "bg-verisum-blue text-verisum-white hover:bg-[#2a7bb8]"
+                      ? "bg-brand text-white hover:bg-brand-hover"
                       : tier.ctaStyle === "secondary"
-                        ? "bg-verisum-black text-verisum-white hover:bg-[#333]"
-                        : "border border-verisum-grey text-verisum-black hover:bg-[#f5f5f5]"
+                        ? "bg-foreground text-white hover:bg-[#333]"
+                        : "border border-border text-foreground hover:bg-[#f5f5f5]"
                   } ${cta.disabled ? "opacity-50 cursor-not-allowed pointer-events-none" : ""}`}
                 >
                   {cta.label}
@@ -277,7 +277,7 @@ function UpgradeContent() {
                 alert("Could not open billing portal.");
               }
             }}
-            className="text-sm text-verisum-blue underline hover:text-verisum-black transition-colors"
+            className="text-sm text-brand underline hover:text-foreground transition-colors"
           >
             Manage billing &amp; subscription
           </button>
@@ -290,10 +290,10 @@ function UpgradeContent() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm border-collapse">
             <thead>
-              <tr className="border-b border-verisum-grey">
+              <tr className="border-b border-border">
                 <th className="text-left py-3 px-4 font-semibold">Feature</th>
                 <th className="text-center py-3 px-4 font-semibold">Explorer</th>
-                <th className="text-center py-3 px-4 font-semibold text-verisum-blue">
+                <th className="text-center py-3 px-4 font-semibold text-brand">
                   Pro
                 </th>
                 <th className="text-center py-3 px-4 font-semibold">Enterprise</th>
@@ -301,8 +301,8 @@ function UpgradeContent() {
             </thead>
             <tbody>
               {featureMatrix.map((row) => (
-                <tr key={row.feature} className="border-b border-verisum-grey/30">
-                  <td className="py-3 px-4 text-verisum-grey">{row.feature}</td>
+                <tr key={row.feature} className="border-b border-border/30">
+                  <td className="py-3 px-4 text-muted-foreground">{row.feature}</td>
                   <td className="py-3 px-4 text-center">{row.explorer}</td>
                   <td className="py-3 px-4 text-center font-medium">
                     {row.pro}
@@ -316,8 +316,8 @@ function UpgradeContent() {
       </div>
 
       {/* Back link */}
-      <div className="text-center text-sm text-verisum-grey">
-        <a href="/dashboard" className="text-verisum-blue underline hover:text-verisum-black">
+      <div className="text-center text-sm text-muted-foreground">
+        <a href="/dashboard" className="text-brand underline hover:text-foreground">
           Back to dashboard
         </a>
       </div>
@@ -334,7 +334,7 @@ export default function UpgradePage() {
     <AppShell>
       <Suspense
         fallback={
-          <div className="max-w-5xl mx-auto p-12 text-center text-verisum-grey">
+          <div className="max-w-5xl mx-auto p-12 text-center text-muted-foreground">
             Loading pricing...
           </div>
         }

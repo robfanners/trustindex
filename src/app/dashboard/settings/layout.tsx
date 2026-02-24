@@ -51,10 +51,10 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
       <AuthenticatedShell>
         <div className="space-y-6">
           {/* Page header */}
-          <h1 className="text-2xl font-semibold text-verisum-black">Settings</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Settings</h1>
 
           {/* Horizontal tab bar */}
-          <nav className="border-b border-verisum-grey flex gap-1 overflow-x-auto">
+          <nav className="border-b border-border flex gap-1 overflow-x-auto">
             {visibleTabs.map((tab) => {
               const isActive =
                 tab.href === "/dashboard/settings"
@@ -69,8 +69,8 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
                     px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-colors
                     ${
                       isActive
-                        ? "border-b-2 border-verisum-blue text-verisum-blue"
-                        : "text-verisum-grey hover:text-verisum-black"
+                        ? "border-b-2 border-brand text-brand"
+                        : "text-muted-foreground hover:text-foreground"
                     }
                   `}
                 >

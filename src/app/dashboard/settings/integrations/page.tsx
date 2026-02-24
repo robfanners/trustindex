@@ -48,7 +48,7 @@ const integrations = [
     description: "Export trust data in formats compatible with GRC platforms.",
     icon: (
       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" className="text-verisum-grey" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" className="text-muted-foreground" />
       </svg>
     ),
     action: "Configure",
@@ -58,16 +58,16 @@ const integrations = [
 export default function IntegrationsSettingsPage() {
   return (
     <div className="space-y-6">
-      <div className="border border-verisum-grey rounded-lg p-6 space-y-2">
+      <div className="border border-border rounded-lg p-6 space-y-2">
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold text-verisum-black">
+          <h2 className="text-lg font-semibold text-foreground">
             Connectors
           </h2>
-          <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-verisum-grey font-medium">
+          <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-muted-foreground font-medium">
             Coming soon
           </span>
         </div>
-        <p className="text-sm text-verisum-grey">
+        <p className="text-sm text-muted-foreground">
           Connect TrustGraph with your existing tools and workflows.
           Integrations are coming in a future release.
         </p>
@@ -77,20 +77,20 @@ export default function IntegrationsSettingsPage() {
         {integrations.map((int) => (
           <div
             key={int.name}
-            className="border border-verisum-grey rounded-lg p-5 space-y-3 opacity-60"
+            className="border border-border rounded-lg p-5 space-y-3 opacity-60"
           >
             <div className="flex items-center gap-3">
               {int.icon}
               <div>
-                <h3 className="text-sm font-semibold text-verisum-black">
+                <h3 className="text-sm font-semibold text-foreground">
                   {int.name}
                 </h3>
               </div>
             </div>
-            <p className="text-xs text-verisum-grey">{int.description}</p>
+            <p className="text-xs text-muted-foreground">{int.description}</p>
             <button
               disabled
-              className="px-3 py-1.5 rounded border border-verisum-grey text-xs text-verisum-grey cursor-not-allowed"
+              className="px-3 py-1.5 rounded border border-border text-xs text-muted-foreground cursor-not-allowed"
             >
               {int.action}
             </button>
@@ -98,11 +98,11 @@ export default function IntegrationsSettingsPage() {
         ))}
       </div>
 
-      <p className="text-xs text-verisum-grey text-center">
+      <p className="text-xs text-muted-foreground text-center">
         Integrations are coming in a future release. Contact{" "}
         <a
           href="mailto:hello@verisum.org"
-          className="text-verisum-blue underline hover:text-verisum-black"
+          className="text-brand underline hover:text-foreground"
         >
           hello@verisum.org
         </a>{" "}

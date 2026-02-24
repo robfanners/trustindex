@@ -13,8 +13,8 @@ export default function AdminHomePage() {
 
   // Show minimal loading state during redirect
   return (
-    <main className="min-h-screen bg-verisum-white text-verisum-black p-12">
-      <p className="text-verisum-grey">Redirecting...</p>
+    <main className="min-h-screen bg-background text-foreground p-12">
+      <p className="text-muted-foreground">Redirecting...</p>
     </main>
   );
 }

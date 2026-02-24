@@ -98,14 +98,14 @@ export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
 
   if (step === 3) {
     return (
-      <div className="border border-verisum-grey rounded-lg p-6 space-y-3">
-        <div className="bg-verisum-blue/10 border border-verisum-blue/30 rounded-lg p-6 text-center">
-          <p className="text-verisum-black font-medium mb-1">
+      <div className="border border-border rounded-lg p-6 space-y-3">
+        <div className="bg-brand/10 border border-brand/30 rounded-lg p-6 text-center">
+          <p className="text-foreground font-medium mb-1">
             Check your email
           </p>
-          <p className="text-sm text-verisum-grey">
+          <p className="text-sm text-muted-foreground">
             We sent a sign-in link to{" "}
-            <span className="font-medium text-verisum-black">{email}</span>.
+            <span className="font-medium text-foreground">{email}</span>.
             Click the link to save your results and access your dashboard.
           </p>
         </div>
@@ -119,14 +119,14 @@ export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
 
   if (step === 2) {
     return (
-      <div className="border border-verisum-grey rounded-lg p-6 space-y-4">
+      <div className="border border-border rounded-lg p-6 space-y-4">
         <h3 className="text-lg font-semibold">Almost there — enter your email</h3>
-        <p className="text-sm text-verisum-grey">
+        <p className="text-sm text-muted-foreground">
           We&apos;ll send you a magic link. No password needed.
         </p>
         <form onSubmit={handleEmailSubmit} className="space-y-4">
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-verisum-black">
+            <label className="block text-sm font-medium text-foreground">
               Email address
             </label>
             <input
@@ -135,27 +135,27 @@ export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@company.com"
-              className="w-full px-3 py-2 border border-verisum-grey rounded-lg text-sm
-                focus:outline-none focus:ring-2 focus:ring-verisum-blue focus:border-transparent
-                placeholder:text-verisum-grey/60"
+              className="w-full px-3 py-2 border border-border rounded-lg text-sm
+                focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent
+                placeholder:text-muted-foreground/60"
             />
           </div>
 
-          {error && <p className="text-sm text-verisum-red">{error}</p>}
+          {error && <p className="text-sm text-destructive">{error}</p>}
 
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => setStep(1)}
-              className="text-sm text-verisum-grey hover:text-verisum-black"
+              className="text-sm text-muted-foreground hover:text-foreground"
             >
               ← Back
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-5 py-2 bg-verisum-blue text-white font-medium rounded-lg
-                hover:bg-verisum-blue/90 transition-colors disabled:opacity-50 text-sm"
+              className="px-5 py-2 bg-brand text-white font-medium rounded-lg
+                hover:bg-brand/90 transition-colors disabled:opacity-50 text-sm"
             >
               {loading ? "Sending…" : "Send magic link"}
             </button>
@@ -170,14 +170,14 @@ export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
   // -------------------------------------------------------------------------
 
   return (
-    <div className="border border-verisum-grey rounded-lg p-6 space-y-4">
+    <div className="border border-border rounded-lg p-6 space-y-4">
       <h3 className="text-lg font-semibold">Create your free account</h3>
-      <p className="text-sm text-verisum-grey">
+      <p className="text-sm text-muted-foreground">
         Tell us a bit about yourself to personalise your experience.
       </p>
       <form onSubmit={handleProfileNext} className="space-y-4">
         <div className="space-y-1">
-          <label className="block text-sm font-medium text-verisum-black">
+          <label className="block text-sm font-medium text-foreground">
             Full name
           </label>
           <input
@@ -186,14 +186,14 @@ export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             placeholder="Jane Smith"
-            className="w-full px-3 py-2 border border-verisum-grey rounded-lg text-sm
-              focus:outline-none focus:ring-2 focus:ring-verisum-blue focus:border-transparent
-              placeholder:text-verisum-grey/60"
+            className="w-full px-3 py-2 border border-border rounded-lg text-sm
+              focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent
+              placeholder:text-muted-foreground/60"
           />
         </div>
 
         <div className="space-y-1">
-          <label className="block text-sm font-medium text-verisum-black">
+          <label className="block text-sm font-medium text-foreground">
             Company name
           </label>
           <input
@@ -202,22 +202,22 @@ export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
             value={companyName}
             onChange={(e) => setCompanyName(e.target.value)}
             placeholder="Acme Inc"
-            className="w-full px-3 py-2 border border-verisum-grey rounded-lg text-sm
-              focus:outline-none focus:ring-2 focus:ring-verisum-blue focus:border-transparent
-              placeholder:text-verisum-grey/60"
+            className="w-full px-3 py-2 border border-border rounded-lg text-sm
+              focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent
+              placeholder:text-muted-foreground/60"
           />
         </div>
 
         <div className="space-y-1">
-          <label className="block text-sm font-medium text-verisum-black">
+          <label className="block text-sm font-medium text-foreground">
             Company size
           </label>
           <select
             required
             value={companySize}
             onChange={(e) => setCompanySize(e.target.value)}
-            className="w-full px-3 py-2 border border-verisum-grey rounded-lg text-sm
-              focus:outline-none focus:ring-2 focus:ring-verisum-blue focus:border-transparent"
+            className="w-full px-3 py-2 border border-border rounded-lg text-sm
+              focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
           >
             <option value="">Select…</option>
             {COMPANY_SIZES.map((s) => (
@@ -229,15 +229,15 @@ export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
         </div>
 
         <div className="space-y-1">
-          <label className="block text-sm font-medium text-verisum-black">
+          <label className="block text-sm font-medium text-foreground">
             Your role
           </label>
           <select
             required
             value={role}
             onChange={(e) => setRole(e.target.value)}
-            className="w-full px-3 py-2 border border-verisum-grey rounded-lg text-sm
-              focus:outline-none focus:ring-2 focus:ring-verisum-blue focus:border-transparent"
+            className="w-full px-3 py-2 border border-border rounded-lg text-sm
+              focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
           >
             <option value="">Select…</option>
             {ROLES.map((r) => (
@@ -250,8 +250,8 @@ export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
 
         <button
           type="submit"
-          className="px-5 py-2 bg-verisum-blue text-white font-medium rounded-lg
-            hover:bg-verisum-blue/90 transition-colors text-sm"
+          className="px-5 py-2 bg-brand text-white font-medium rounded-lg
+            hover:bg-brand/90 transition-colors text-sm"
         >
           Continue →
         </button>

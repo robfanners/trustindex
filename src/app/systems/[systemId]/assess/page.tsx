@@ -41,32 +41,32 @@ function bandFor(score: number) {
   if (score < 40)
     return {
       label: "Fragile",
-      color: "text-verisum-red",
-      bg: "bg-verisum-red/10",
+      color: "text-destructive",
+      bg: "bg-destructive/10",
       summary:
         "Significant trust gaps exist in this system. Immediate attention is recommended before further deployment or reliance.",
     };
   if (score < 70)
     return {
       label: "Mixed",
-      color: "text-verisum-yellow",
-      bg: "bg-verisum-yellow/10",
+      color: "text-warning",
+      bg: "bg-warning/10",
       summary:
         "Some trust dimensions are adequate but others need work. Target the weakest dimension first.",
     };
   return {
     label: "Strong",
-    color: "text-verisum-green",
-    bg: "bg-verisum-green/10",
+    color: "text-success",
+    bg: "bg-success/10",
     summary:
       "This system demonstrates strong trust characteristics. Continue monitoring and protect what is working.",
   };
 }
 
 function scoreBadgeColor(score: number): string {
-  if (score < 0.25) return "bg-verisum-red/15 text-verisum-red";
-  if (score < 0.5) return "bg-verisum-yellow/15 text-verisum-yellow";
-  return "bg-verisum-green/15 text-verisum-green";
+  if (score < 0.25) return "bg-destructive/15 text-destructive";
+  if (score < 0.5) return "bg-warning/15 text-warning";
+  return "bg-success/15 text-success";
 }
 
 // CSV helpers
@@ -511,8 +511,8 @@ function SystemAssessContent() {
 
   if (phase === "loading") {
     return (
-      <div className="flex items-center gap-2 text-sm text-verisum-grey py-8">
-        <div className="w-4 h-4 border-2 border-verisum-blue border-t-transparent rounded-full animate-spin" />
+      <div className="flex items-center gap-2 text-sm text-muted-foreground py-8">
+        <div className="w-4 h-4 border-2 border-brand border-t-transparent rounded-full animate-spin" />
         Loading...
       </div>
     );
@@ -528,25 +528,25 @@ function SystemAssessContent() {
         <header className="space-y-2">
           <h1 className="text-2xl font-bold">System assessment</h1>
           {systemName && (
-            <p className="text-verisum-grey">{systemName}</p>
+            <p className="text-muted-foreground">{systemName}</p>
           )}
-          <p className="text-sm text-verisum-grey">
+          <p className="text-sm text-muted-foreground">
             Assess this system across five trust dimensions: Transparency,
             Explainability, Human Oversight, Risk Controls, and Accountability.
           </p>
         </header>
 
         {error && (
-          <div className="border border-verisum-red bg-verisum-red/5 text-verisum-red rounded-lg p-4 text-sm">
+          <div className="border border-destructive bg-destructive/5 text-destructive rounded-lg p-4 text-sm">
             {error}
           </div>
         )}
 
         {/* Resume existing draft */}
         {existingDraft && (
-          <div className="border border-verisum-blue bg-verisum-blue/5 rounded-lg p-5 space-y-3">
+          <div className="border border-brand bg-brand/5 rounded-lg p-5 space-y-3">
             <div className="font-medium">You have a draft in progress</div>
-            <p className="text-sm text-verisum-grey">
+            <p className="text-sm text-muted-foreground">
               Started{" "}
               {existingDraft.created_at ? new Date(existingDraft.created_at).toLocaleDateString() : "recently"}.
               {existingDraft.version_label && (
@@ -556,7 +556,7 @@ function SystemAssessContent() {
             <button
               type="button"
               onClick={() => resumeRun(existingDraft.id)}
-              className="px-5 py-2.5 rounded bg-verisum-blue text-verisum-white font-semibold hover:bg-[#2a7bb8] text-sm"
+              className="px-5 py-2.5 rounded bg-brand text-white font-semibold hover:bg-brand-hover text-sm"
             >
               Continue draft
             </button>
@@ -564,14 +564,14 @@ function SystemAssessContent() {
         )}
 
         {/* New run */}
-        <div className="border border-verisum-grey rounded-lg p-5 space-y-4">
+        <div className="border border-border rounded-lg p-5 space-y-4">
           <div className="font-medium">
             {existingDraft ? "Or start a new assessment" : "Start a new assessment"}
           </div>
           <div className="space-y-1">
             <label
               htmlFor="version-label"
-              className="block text-sm text-verisum-grey"
+              className="block text-sm text-muted-foreground"
             >
               Version label (optional)
             </label>
@@ -581,13 +581,13 @@ function SystemAssessContent() {
               value={versionLabel}
               onChange={(e) => setVersionLabel(e.target.value)}
               placeholder="e.g. v0.8, Jan 2026 prod"
-              className="w-full border border-verisum-grey rounded px-3 py-2 text-sm focus:outline-none focus:border-verisum-blue"
+              className="w-full border border-border rounded px-3 py-2 text-sm focus:outline-none focus:border-brand"
             />
           </div>
           <button
             type="button"
             onClick={createRun}
-            className="px-5 py-2.5 rounded bg-verisum-black text-verisum-white font-semibold hover:bg-verisum-grey text-sm"
+            className="px-5 py-2.5 rounded bg-foreground text-white font-semibold hover:bg-muted-foreground text-sm"
           >
             Start assessment
           </button>
@@ -625,14 +625,14 @@ function SystemAssessContent() {
         <header className="space-y-2">
           <h1 className="text-2xl font-bold">Assessment complete</h1>
           {systemName && (
-            <p className="text-verisum-grey">{systemName}</p>
+            <p className="text-muted-foreground">{systemName}</p>
           )}
         </header>
 
         {/* Score hero */}
-        <div className="border border-verisum-grey rounded-lg p-6 flex items-end justify-between">
+        <div className="border border-border rounded-lg p-6 flex items-end justify-between">
           <div>
-            <div className="text-sm text-verisum-grey">
+            <div className="text-sm text-muted-foreground">
               TrustSysGraph score
             </div>
             <div className="text-5xl font-bold">{overall}</div>
@@ -643,17 +643,17 @@ function SystemAssessContent() {
         </div>
 
         {/* Band interpretation */}
-        <div className="border border-verisum-grey rounded-lg p-6 space-y-2">
-          <div className="text-sm text-verisum-grey">What this means</div>
+        <div className="border border-border rounded-lg p-6 space-y-2">
+          <div className="text-sm text-muted-foreground">What this means</div>
           <div className={`text-xl font-semibold ${band.color}`}>
             {band.label} trust ({overall}/100)
           </div>
-          <div className="text-sm text-verisum-grey">{band.summary}</div>
+          <div className="text-sm text-muted-foreground">{band.summary}</div>
         </div>
 
         {/* Radar + Dimensions */}
         <div className="grid md:grid-cols-2 gap-6">
-          <div className="border border-verisum-grey rounded-lg p-6">
+          <div className="border border-border rounded-lg p-6">
             <h2 className="text-lg font-semibold mb-4">Radar</h2>
             <div style={{ width: "100%", height: 300 }}>
               <ResponsiveContainer>
@@ -676,7 +676,7 @@ function SystemAssessContent() {
             </div>
           </div>
 
-          <div className="border border-verisum-grey rounded-lg p-6">
+          <div className="border border-border rounded-lg p-6">
             <h2 className="text-lg font-semibold mb-4">Dimensions</h2>
             <div className="space-y-3">
               {SYSTEM_DIMENSIONS.map((dim) => {
@@ -685,7 +685,7 @@ function SystemAssessContent() {
                 return (
                   <div
                     key={dim}
-                    className="flex items-center justify-between border border-verisum-grey rounded p-3"
+                    className="flex items-center justify-between border border-border rounded p-3"
                   >
                     <div className="font-medium text-sm">{dim}</div>
                     <div
@@ -702,20 +702,20 @@ function SystemAssessContent() {
 
         {/* Risk flags */}
         {riskFlags.length > 0 && (
-          <div className="border border-verisum-red/30 bg-verisum-red/5 rounded-lg p-6 space-y-3">
-            <h2 className="text-lg font-semibold text-verisum-red">
+          <div className="border border-destructive/30 bg-destructive/5 rounded-lg p-6 space-y-3">
+            <h2 className="text-lg font-semibold text-destructive">
               Risk flags ({riskFlags.length})
             </h2>
             <div className="space-y-2">
               {riskFlags.map((flag) => (
                 <div
                   key={flag.code}
-                  className="border border-verisum-red/20 rounded p-3 space-y-1"
+                  className="border border-destructive/20 rounded p-3 space-y-1"
                 >
-                  <div className="font-medium text-sm text-verisum-red">
+                  <div className="font-medium text-sm text-destructive">
                     {flag.label}
                   </div>
-                  <div className="text-xs text-verisum-grey">
+                  <div className="text-xs text-muted-foreground">
                     {flag.description}
                   </div>
                 </div>
@@ -726,7 +726,7 @@ function SystemAssessContent() {
 
         {/* Recommendations */}
         {recommendations.length > 0 && (
-          <div className="border border-verisum-grey rounded-lg p-6 space-y-3">
+          <div className="border border-border rounded-lg p-6 space-y-3">
             <h2 className="text-lg font-semibold">
               Recommendations ({recommendations.length})
             </h2>
@@ -734,19 +734,19 @@ function SystemAssessContent() {
               {recommendations.map((rec, idx) => (
                 <div
                   key={idx}
-                  className="border border-verisum-grey rounded p-4 space-y-2"
+                  className="border border-border rounded p-4 space-y-2"
                 >
                   <div className="flex items-center gap-2">
                     <span
                       className={`text-xs font-semibold px-2 py-0.5 rounded ${
                         rec.priority === "high"
-                          ? "bg-verisum-red/15 text-verisum-red"
-                          : "bg-verisum-yellow/15 text-verisum-yellow"
+                          ? "bg-destructive/15 text-destructive"
+                          : "bg-warning/15 text-warning"
                       }`}
                     >
                       {rec.priority.toUpperCase()}
                     </span>
-                    <span className="text-xs text-verisum-grey">
+                    <span className="text-xs text-muted-foreground">
                       {rec.dimension} &middot; {rec.control}
                     </span>
                   </div>
@@ -759,11 +759,11 @@ function SystemAssessContent() {
 
         {/* Evidence gaps */}
         {evidenceGaps.length > 0 && (
-          <div className="border border-verisum-grey rounded-lg p-6 space-y-3">
+          <div className="border border-border rounded-lg p-6 space-y-3">
             <h2 className="text-lg font-semibold">
               Evidence gaps ({evidenceGaps.length})
             </h2>
-            <p className="text-sm text-verisum-grey">
+            <p className="text-sm text-muted-foreground">
               These questions are missing strong evidence. Adding evidence will
               improve your score.
             </p>
@@ -771,10 +771,10 @@ function SystemAssessContent() {
               {evidenceGaps.map((q) => (
                 <div
                   key={q.id}
-                  className="flex items-center justify-between border border-verisum-grey rounded p-3"
+                  className="flex items-center justify-between border border-border rounded p-3"
                 >
                   <div className="text-sm">{q.control}</div>
-                  <div className="text-xs text-verisum-grey">
+                  <div className="text-xs text-muted-foreground">
                     {q.dimension}
                   </div>
                 </div>
@@ -784,28 +784,28 @@ function SystemAssessContent() {
         )}
 
         {/* Export */}
-        <div className="border border-verisum-grey rounded-lg p-6 space-y-3">
+        <div className="border border-border rounded-lg p-6 space-y-3">
           <h2 className="text-lg font-semibold">Export</h2>
           {exportAllowed ? (
             <>
               <button
-                className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-2 border border-border rounded hover:bg-[#f5f5f5] text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={downloadAssessmentCsv}
                 disabled={exporting}
               >
                 {exporting ? "Preparing CSV..." : "Download assessment CSV"}
               </button>
               {exportStatus && (
-                <div className="text-sm text-verisum-grey">{exportStatus}</div>
+                <div className="text-sm text-muted-foreground">{exportStatus}</div>
               )}
             </>
           ) : (
             <>
-              <p className="text-sm text-verisum-grey">
+              <p className="text-sm text-muted-foreground">
                 CSV export is available on Pro and Enterprise plans.
               </p>
               <a
-                className="inline-block px-4 py-2 rounded bg-verisum-blue text-verisum-white text-sm font-semibold hover:bg-[#2a7bb8]"
+                className="inline-block px-4 py-2 rounded bg-brand text-white text-sm font-semibold hover:bg-brand-hover"
                 href="/upgrade"
               >
                 Upgrade to Pro
@@ -817,14 +817,14 @@ function SystemAssessContent() {
         {/* Navigation */}
         <div className="flex flex-wrap gap-3 text-sm">
           <a
-            className="text-verisum-blue underline hover:text-verisum-black"
+            className="text-brand underline hover:text-foreground"
             href="/dashboard?tab=systems"
           >
             Back to Systems
           </a>
-          <span className="text-verisum-grey">&middot;</span>
+          <span className="text-muted-foreground">&middot;</span>
           <a
-            className="text-verisum-blue underline hover:text-verisum-black"
+            className="text-brand underline hover:text-foreground"
             href={`/systems/${systemId}/assess`}
           >
             Run another assessment
@@ -843,9 +843,9 @@ function SystemAssessContent() {
       <header className="space-y-2">
         <h1 className="text-2xl font-bold">System assessment</h1>
         {systemName && (
-          <p className="text-verisum-grey">{systemName}</p>
+          <p className="text-muted-foreground">{systemName}</p>
         )}
-        <p className="text-sm text-verisum-grey">
+        <p className="text-sm text-muted-foreground">
           Assess this system across five trust dimensions. For each control,
           select the maturity level or yes/no, then provide supporting evidence.
         </p>
@@ -854,18 +854,18 @@ function SystemAssessContent() {
       {/* Progress bar */}
       <div className="space-y-2">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-verisum-grey">
+          <span className="text-muted-foreground">
             Progress: {answeredCount}/{totalQuestions}
           </span>
           {previewScores && (
-            <span className="text-verisum-grey">
+            <span className="text-muted-foreground">
               Preview score: {previewScores.overall}/100
             </span>
           )}
         </div>
         <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
           <div
-            className="h-full bg-verisum-blue rounded-full transition-all duration-300"
+            className="h-full bg-brand rounded-full transition-all duration-300"
             style={{ width: `${progressPct}%` }}
           />
         </div>
@@ -873,7 +873,7 @@ function SystemAssessContent() {
 
       {/* Error */}
       {error && (
-        <div className="border border-verisum-red bg-verisum-red/5 text-verisum-red rounded-lg p-4 text-sm">
+        <div className="border border-destructive bg-destructive/5 text-destructive rounded-lg p-4 text-sm">
           {error}
         </div>
       )}
@@ -885,7 +885,7 @@ function SystemAssessContent() {
         );
         return (
           <div key={dim} className="space-y-4">
-            <h2 className="text-lg font-semibold border-b border-verisum-grey pb-2">
+            <h2 className="text-lg font-semibold border-b border-border pb-2">
               {dim}
             </h2>
             {dimQuestions.map((q) => (
@@ -902,12 +902,12 @@ function SystemAssessContent() {
       })}
 
       {/* Submit bar */}
-      <div className="sticky bottom-0 bg-gray-50 border-t border-verisum-grey py-4 flex flex-wrap items-center gap-3">
+      <div className="sticky bottom-0 bg-gray-50 border-t border-border py-4 flex flex-wrap items-center gap-3">
         <button
           type="button"
           onClick={handleSubmit}
           disabled={phase === "submitting" || !allAnswered}
-          className="px-6 py-3 rounded bg-verisum-blue text-verisum-white font-semibold hover:bg-[#2a7bb8] disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+          className="px-6 py-3 rounded bg-brand text-white font-semibold hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed text-sm"
         >
           {phase === "submitting"
             ? "Submitting..."
@@ -917,11 +917,11 @@ function SystemAssessContent() {
         </button>
         <a
           href="/dashboard?tab=systems"
-          className="px-4 py-3 rounded border border-verisum-grey hover:bg-gray-100 text-sm"
+          className="px-4 py-3 rounded border border-border hover:bg-gray-100 text-sm"
         >
           Save &amp; continue later
         </a>
-        <span className="text-xs text-verisum-grey">
+        <span className="text-xs text-muted-foreground">
           Answers are saved automatically.
         </span>
       </div>
@@ -960,20 +960,20 @@ function QuestionCard({
     <div
       data-qid={question.id}
       className={`border rounded-lg p-5 space-y-4 ${
-        hasAnswer ? "border-verisum-grey" : "border-verisum-grey/50"
+        hasAnswer ? "border-border" : "border-border/50"
       }`}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
-          <div className="text-xs uppercase tracking-wide text-verisum-grey">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">
             {question.dimension} &middot; {question.control}
           </div>
           <div className="font-medium text-sm">{question.prompt}</div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {saving && (
-            <div className="w-3 h-3 border border-verisum-blue border-t-transparent rounded-full animate-spin" />
+            <div className="w-3 h-3 border border-brand border-t-transparent rounded-full animate-spin" />
           )}
           {liveScore != null && (
             <span
@@ -990,7 +990,7 @@ function QuestionCard({
       {/* Answer input */}
       {question.answerType === "enum_maturity" ? (
         <div className="space-y-1">
-          <label className="block text-xs text-verisum-grey">
+          <label className="block text-xs text-muted-foreground">
             Maturity level
           </label>
           <div className="flex flex-wrap gap-2">
@@ -1003,8 +1003,8 @@ function QuestionCard({
                 }
                 className={`px-3 py-1.5 rounded border text-xs font-medium transition-colors ${
                   current.maturity === ml.value
-                    ? "bg-verisum-black text-verisum-white border-verisum-black"
-                    : "bg-verisum-white text-verisum-black border-verisum-grey hover:border-verisum-black"
+                    ? "bg-foreground text-white border-foreground"
+                    : "bg-background text-foreground border-border hover:border-foreground"
                 }`}
               >
                 {ml.label}
@@ -1014,7 +1014,7 @@ function QuestionCard({
         </div>
       ) : (
         <div className="space-y-1">
-          <label className="block text-xs text-verisum-grey">
+          <label className="block text-xs text-muted-foreground">
             Is this in place?
           </label>
           <div className="flex gap-2">
@@ -1028,8 +1028,8 @@ function QuestionCard({
                 onClick={() => onChange({ ...current, boolean: opt.value })}
                 className={`px-4 py-1.5 rounded border text-xs font-medium transition-colors ${
                   current.boolean === opt.value
-                    ? "bg-verisum-black text-verisum-white border-verisum-black"
-                    : "bg-verisum-white text-verisum-black border-verisum-grey hover:border-verisum-black"
+                    ? "bg-foreground text-white border-foreground"
+                    : "bg-background text-foreground border-border hover:border-foreground"
                 }`}
               >
                 {opt.label}
@@ -1068,7 +1068,7 @@ function EvidenceBlock({
         onClick={() =>
           onChange({ type: "link", pointer: "" })
         }
-        className="text-xs text-verisum-blue hover:underline"
+        className="text-xs text-brand hover:underline"
       >
         + Add evidence
       </button>
@@ -1076,15 +1076,15 @@ function EvidenceBlock({
   }
 
   return (
-    <div className="border border-dashed border-verisum-grey rounded p-3 space-y-3 bg-gray-50">
+    <div className="border border-dashed border-border rounded p-3 space-y-3 bg-gray-50">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-verisum-grey uppercase tracking-wide">
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
           Evidence
         </span>
         <button
           type="button"
           onClick={() => onChange(undefined)}
-          className="text-xs text-verisum-red hover:underline"
+          className="text-xs text-destructive hover:underline"
         >
           Remove
         </button>
@@ -1092,13 +1092,13 @@ function EvidenceBlock({
 
       <div className="grid sm:grid-cols-2 gap-3">
         <div className="space-y-1">
-          <label className="block text-xs text-verisum-grey">Type</label>
+          <label className="block text-xs text-muted-foreground">Type</label>
           <select
             value={evidence.type}
             onChange={(e) =>
               onChange({ ...evidence, type: e.target.value as EvidenceType })
             }
-            className="w-full border border-verisum-grey rounded px-2 py-1.5 text-xs focus:outline-none focus:border-verisum-blue bg-verisum-white"
+            className="w-full border border-border rounded px-2 py-1.5 text-xs focus:outline-none focus:border-brand bg-background"
           >
             {EVIDENCE_TYPES.map((et) => (
               <option key={et.value} value={et.value}>
@@ -1109,7 +1109,7 @@ function EvidenceBlock({
         </div>
 
         <div className="space-y-1">
-          <label className="block text-xs text-verisum-grey">
+          <label className="block text-xs text-muted-foreground">
             Pointer (URL, ID, path)
           </label>
           <input
@@ -1119,13 +1119,13 @@ function EvidenceBlock({
               onChange({ ...evidence, pointer: e.target.value })
             }
             placeholder="https://... or JIRA-123"
-            className="w-full border border-verisum-grey rounded px-2 py-1.5 text-xs focus:outline-none focus:border-verisum-blue"
+            className="w-full border border-border rounded px-2 py-1.5 text-xs focus:outline-none focus:border-brand"
           />
         </div>
       </div>
 
       <div className="space-y-1">
-        <label className="block text-xs text-verisum-grey">
+        <label className="block text-xs text-muted-foreground">
           Note (optional)
         </label>
         <textarea
@@ -1138,7 +1138,7 @@ function EvidenceBlock({
           }
           rows={2}
           placeholder="Additional context about the evidence..."
-          className="w-full border border-verisum-grey rounded px-2 py-1.5 text-xs focus:outline-none focus:border-verisum-blue resize-none"
+          className="w-full border border-border rounded px-2 py-1.5 text-xs focus:outline-none focus:border-brand resize-none"
         />
       </div>
     </div>

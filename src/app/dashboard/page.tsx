@@ -70,17 +70,17 @@ function DashboardContent() {
       <div>
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-verisum-black">
+          <h1 className="text-2xl font-semibold text-foreground">
             Welcome{user?.email ? `, ${user.email.split("@")[0]}` : ""}
           </h1>
-          <p className="text-sm text-verisum-grey mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Your TrustGraph dashboard
           </p>
         </div>
 
         {/* Plan badge */}
         {profile && (
-          <div className="mb-6 inline-flex items-center gap-2 bg-verisum-blue/10 text-verisum-blue px-3 py-1.5 rounded-full text-sm font-medium capitalize">
+          <div className="mb-6 inline-flex items-center gap-2 bg-brand/10 text-brand px-3 py-1.5 rounded-full text-sm font-medium capitalize">
             {profile.plan} plan
           </div>
         )}
@@ -93,8 +93,8 @@ function DashboardContent() {
               onClick={() => setTab("organisation")}
               className={`pb-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
                 activeTab === "organisation"
-                  ? "border-verisum-blue text-verisum-blue"
-                  : "border-transparent text-verisum-grey hover:text-verisum-black"
+                  ? "border-brand text-brand"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
               TrustOrg
@@ -106,10 +106,10 @@ function DashboardContent() {
               title={systemsDisabled ? "TrustSys available on Org plan and above." : undefined}
               className={`pb-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
                 systemsDisabled
-                  ? "border-transparent text-verisum-grey opacity-50 cursor-not-allowed"
+                  ? "border-transparent text-muted-foreground opacity-50 cursor-not-allowed"
                   : activeTab === "systems"
-                    ? "border-verisum-blue text-verisum-blue"
-                    : "border-transparent text-verisum-grey hover:text-verisum-black"
+                    ? "border-brand text-brand"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
               TrustSys
@@ -176,9 +176,9 @@ function OrganisationTab({ limits }: { limits: ReturnType<typeof getPlanLimits> 
               </svg>
               Create a new survey
             </span>
-            <p className="text-sm text-verisum-red mt-2">
+            <p className="text-sm text-destructive mt-2">
               You&apos;ve reached your plan limit of {limits.maxSurveys} survey{limits.maxSurveys !== 1 ? "s" : ""}.{" "}
-              <a href="/upgrade" className="underline hover:text-verisum-black transition-colors">
+              <a href="/upgrade" className="underline hover:text-foreground transition-colors">
                 Upgrade to continue
               </a>
               .
@@ -188,7 +188,7 @@ function OrganisationTab({ limits }: { limits: ReturnType<typeof getPlanLimits> 
           <div>
             <a
               href="/dashboard/surveys/new"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-verisum-blue text-white font-medium rounded-lg hover:bg-verisum-blue/90 transition-colors text-sm"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-brand text-white font-medium rounded-lg hover:bg-brand/90 transition-colors text-sm"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -196,7 +196,7 @@ function OrganisationTab({ limits }: { limits: ReturnType<typeof getPlanLimits> 
               Create a new survey
             </a>
             {approachingCap && (
-              <p className="text-xs text-verisum-grey mt-2">
+              <p className="text-xs text-muted-foreground mt-2">
                 {surveys.length} of {limits.maxSurveys} surveys used
               </p>
             )}
@@ -205,25 +205,25 @@ function OrganisationTab({ limits }: { limits: ReturnType<typeof getPlanLimits> 
       </div>
 
       {/* Surveys list */}
-      <h2 className="text-lg font-semibold text-verisum-black mb-4">My surveys</h2>
+      <h2 className="text-lg font-semibold text-foreground mb-4">My surveys</h2>
 
       {loading && (
-        <div className="flex items-center gap-2 text-sm text-verisum-grey py-8">
-          <div className="w-4 h-4 border-2 border-verisum-blue border-t-transparent rounded-full animate-spin" />
+        <div className="flex items-center gap-2 text-sm text-muted-foreground py-8">
+          <div className="w-4 h-4 border-2 border-brand border-t-transparent rounded-full animate-spin" />
           Loading surveys…
         </div>
       )}
 
-      {error && <div className="text-sm text-verisum-red py-4">{error}</div>}
+      {error && <div className="text-sm text-destructive py-4">{error}</div>}
 
       {!loading && !error && surveys.length === 0 && (
-        <div className="border border-verisum-grey rounded-xl p-8 text-center">
-          <div className="text-verisum-grey mb-2">No surveys yet</div>
-          <p className="text-sm text-verisum-grey mb-4">Create your first survey to get started.</p>
+        <div className="border border-border rounded-xl p-8 text-center">
+          <div className="text-muted-foreground mb-2">No surveys yet</div>
+          <p className="text-sm text-muted-foreground mb-4">Create your first survey to get started.</p>
           {atCap ? (
-            <p className="text-sm text-verisum-red">
+            <p className="text-sm text-destructive">
               You&apos;ve reached your plan limit.{" "}
-              <a href="/upgrade" className="underline hover:text-verisum-black transition-colors">
+              <a href="/upgrade" className="underline hover:text-foreground transition-colors">
                 Upgrade to continue
               </a>
               .
@@ -231,7 +231,7 @@ function OrganisationTab({ limits }: { limits: ReturnType<typeof getPlanLimits> 
           ) : (
             <a
               href="/dashboard/surveys/new"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-verisum-blue text-white font-medium rounded-lg hover:bg-verisum-blue/90 transition-colors text-sm"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-brand text-white font-medium rounded-lg hover:bg-brand/90 transition-colors text-sm"
             >
               Create survey
             </a>
@@ -240,23 +240,23 @@ function OrganisationTab({ limits }: { limits: ReturnType<typeof getPlanLimits> 
       )}
 
       {!loading && !error && surveys.length > 0 && (
-        <div className="border border-verisum-grey rounded-xl overflow-hidden">
+        <div className="border border-border rounded-xl overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-50 border-b border-verisum-grey text-left">
-                <th className="px-4 py-3 font-medium text-verisum-grey">Survey</th>
-                <th className="px-4 py-3 font-medium text-verisum-grey hidden sm:table-cell">Mode</th>
-                <th className="px-4 py-3 font-medium text-verisum-grey hidden md:table-cell">Respondents</th>
-                <th className="px-4 py-3 font-medium text-verisum-grey hidden md:table-cell">Created</th>
-                <th className="px-4 py-3 font-medium text-verisum-grey text-right">Actions</th>
+              <tr className="bg-gray-50 border-b border-border text-left">
+                <th className="px-4 py-3 font-medium text-muted-foreground">Survey</th>
+                <th className="px-4 py-3 font-medium text-muted-foreground hidden sm:table-cell">Mode</th>
+                <th className="px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Respondents</th>
+                <th className="px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Created</th>
+                <th className="px-4 py-3 font-medium text-muted-foreground text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
               {surveys.map((survey) => (
-                <tr key={survey.id} className="border-b border-verisum-grey last:border-0 hover:bg-gray-50 transition-colors">
+                <tr key={survey.id} className="border-b border-border last:border-0 hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3">
-                    <div className="font-medium text-verisum-black">{survey.title}</div>
-                    <div className="text-xs text-verisum-grey sm:hidden mt-0.5">
+                    <div className="font-medium text-foreground">{survey.title}</div>
+                    <div className="text-xs text-muted-foreground sm:hidden mt-0.5">
                       {survey.mode === "explorer" ? "Explorer" : "Org"} · {survey.respondents} respondent{survey.respondents !== 1 ? "s" : ""}
                     </div>
                   </td>
@@ -264,15 +264,15 @@ function OrganisationTab({ limits }: { limits: ReturnType<typeof getPlanLimits> 
                     <span
                       className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                         survey.mode === "explorer"
-                          ? "bg-verisum-blue/10 text-verisum-blue"
-                          : "bg-verisum-green/10 text-verisum-green"
+                          ? "bg-brand/10 text-brand"
+                          : "bg-success/10 text-success"
                       }`}
                     >
                       {survey.mode === "explorer" ? "Explorer" : "Org"}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-verisum-grey hidden md:table-cell">{survey.respondents}</td>
-                  <td className="px-4 py-3 text-verisum-grey hidden md:table-cell">
+                  <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{survey.respondents}</td>
+                  <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
                     {new Date(survey.created_at).toLocaleDateString("en-GB", {
                       day: "numeric",
                       month: "short",
@@ -283,13 +283,13 @@ function OrganisationTab({ limits }: { limits: ReturnType<typeof getPlanLimits> 
                     <div className="flex items-center justify-end gap-2">
                       <a
                         href={`/dashboard/surveys/${survey.id}`}
-                        className="text-xs px-2 py-1 rounded border border-verisum-grey text-verisum-grey hover:text-verisum-black hover:border-verisum-black transition-colors"
+                        className="text-xs px-2 py-1 rounded border border-border text-muted-foreground hover:text-foreground hover:border-foreground transition-colors"
                       >
                         Manage
                       </a>
                       <a
                         href={`/dashboard/surveys/${survey.id}/results`}
-                        className="text-xs px-2 py-1 rounded bg-verisum-blue text-white hover:bg-verisum-blue/90 transition-colors"
+                        className="text-xs px-2 py-1 rounded bg-brand text-white hover:bg-brand/90 transition-colors"
                       >
                         Results
                       </a>
@@ -406,9 +406,9 @@ function SystemsTab({ limits }: { limits: ReturnType<typeof getPlanLimits> }) {
               </svg>
               Create system assessment
             </span>
-            <p className="text-sm text-verisum-grey mt-2">
+            <p className="text-sm text-muted-foreground mt-2">
               Systems assessment is available on Pro plans.{" "}
-              <a href="/upgrade" className="text-verisum-blue underline hover:text-verisum-black transition-colors">
+              <a href="/upgrade" className="text-brand underline hover:text-foreground transition-colors">
                 Upgrade
               </a>
             </p>
@@ -424,18 +424,18 @@ function SystemsTab({ limits }: { limits: ReturnType<typeof getPlanLimits> }) {
               </svg>
               Create system assessment
             </span>
-            <p className="text-sm text-verisum-red mt-2">
+            <p className="text-sm text-destructive mt-2">
               You&apos;ve reached your plan limit of {limits.maxSystems} system{limits.maxSystems !== 1 ? "s" : ""}.{" "}
-              <a href="/upgrade" className="underline hover:text-verisum-black transition-colors">
+              <a href="/upgrade" className="underline hover:text-foreground transition-colors">
                 Upgrade to continue
               </a>
               .
             </p>
           </div>
         ) : showForm ? (
-          <form onSubmit={handleCreate} className="border border-verisum-grey rounded-xl p-4 max-w-md space-y-3">
+          <form onSubmit={handleCreate} className="border border-border rounded-xl p-4 max-w-md space-y-3">
             <div>
-              <label htmlFor="sys-name" className="block text-sm font-medium text-verisum-black mb-1">
+              <label htmlFor="sys-name" className="block text-sm font-medium text-foreground mb-1">
                 System name
               </label>
               <input
@@ -445,12 +445,12 @@ function SystemsTab({ limits }: { limits: ReturnType<typeof getPlanLimits> }) {
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
                 placeholder="e.g. Customer AI Chatbot"
-                className="w-full px-3 py-2 border border-verisum-grey rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-verisum-blue focus:border-transparent placeholder:text-verisum-grey/60"
+                className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent placeholder:text-muted-foreground/60"
               />
             </div>
             <div>
-              <label htmlFor="sys-version" className="block text-sm font-medium text-verisum-black mb-1">
-                Version label <span className="text-verisum-grey font-normal">(optional)</span>
+              <label htmlFor="sys-version" className="block text-sm font-medium text-foreground mb-1">
+                Version label <span className="text-muted-foreground font-normal">(optional)</span>
               </label>
               <input
                 id="sys-version"
@@ -458,19 +458,19 @@ function SystemsTab({ limits }: { limits: ReturnType<typeof getPlanLimits> }) {
                 value={formVersion}
                 onChange={(e) => setFormVersion(e.target.value)}
                 placeholder="e.g. v1.0"
-                className="w-full px-3 py-2 border border-verisum-grey rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-verisum-blue focus:border-transparent placeholder:text-verisum-grey/60"
+                className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent placeholder:text-muted-foreground/60"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label htmlFor="sys-type" className="block text-sm font-medium text-verisum-black mb-1">
-                  Type <span className="text-verisum-grey font-normal">(optional)</span>
+                <label htmlFor="sys-type" className="block text-sm font-medium text-foreground mb-1">
+                  Type <span className="text-muted-foreground font-normal">(optional)</span>
                 </label>
                 <select
                   id="sys-type"
                   value={formType}
                   onChange={(e) => setFormType(e.target.value)}
-                  className="w-full px-3 py-2 border border-verisum-grey rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-verisum-blue focus:border-transparent bg-white"
+                  className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent bg-white"
                 >
                   <option value="">Select type</option>
                   <option value="rag_app">RAG app</option>
@@ -481,14 +481,14 @@ function SystemsTab({ limits }: { limits: ReturnType<typeof getPlanLimits> }) {
                 </select>
               </div>
               <div>
-                <label htmlFor="sys-env" className="block text-sm font-medium text-verisum-black mb-1">
-                  Environment <span className="text-verisum-grey font-normal">(optional)</span>
+                <label htmlFor="sys-env" className="block text-sm font-medium text-foreground mb-1">
+                  Environment <span className="text-muted-foreground font-normal">(optional)</span>
                 </label>
                 <select
                   id="sys-env"
                   value={formEnvironment}
                   onChange={(e) => setFormEnvironment(e.target.value)}
-                  className="w-full px-3 py-2 border border-verisum-grey rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-verisum-blue focus:border-transparent bg-white"
+                  className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent bg-white"
                 >
                   <option value="">Select environment</option>
                   <option value="prod">Production</option>
@@ -497,12 +497,12 @@ function SystemsTab({ limits }: { limits: ReturnType<typeof getPlanLimits> }) {
                 </select>
               </div>
             </div>
-            {formError && <p className="text-sm text-verisum-red">{formError}</p>}
+            {formError && <p className="text-sm text-destructive">{formError}</p>}
             <div className="flex items-center gap-2">
               <button
                 type="submit"
                 disabled={formLoading}
-                className="px-4 py-2 bg-verisum-blue text-white font-medium rounded-lg hover:bg-verisum-blue/90 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-brand text-white font-medium rounded-lg hover:bg-brand/90 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {formLoading ? "Creating…" : "Create"}
               </button>
@@ -512,7 +512,7 @@ function SystemsTab({ limits }: { limits: ReturnType<typeof getPlanLimits> }) {
                   setShowForm(false);
                   setFormError(null);
                 }}
-                className="px-4 py-2 text-verisum-grey hover:text-verisum-black transition-colors text-sm"
+                className="px-4 py-2 text-muted-foreground hover:text-foreground transition-colors text-sm"
               >
                 Cancel
               </button>
@@ -523,7 +523,7 @@ function SystemsTab({ limits }: { limits: ReturnType<typeof getPlanLimits> }) {
             <button
               type="button"
               onClick={() => setShowForm(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-verisum-blue text-white font-medium rounded-lg hover:bg-verisum-blue/90 transition-colors text-sm"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-brand text-white font-medium rounded-lg hover:bg-brand/90 transition-colors text-sm"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -531,7 +531,7 @@ function SystemsTab({ limits }: { limits: ReturnType<typeof getPlanLimits> }) {
               Create system assessment
             </button>
             {approachingCap && (
-              <p className="text-xs text-verisum-grey mt-2">
+              <p className="text-xs text-muted-foreground mt-2">
                 {systems.length} of {limits.maxSystems} systems used
               </p>
             )}
@@ -540,21 +540,21 @@ function SystemsTab({ limits }: { limits: ReturnType<typeof getPlanLimits> }) {
       </div>
 
       {/* Systems list */}
-      <h2 className="text-lg font-semibold text-verisum-black mb-4">My systems</h2>
+      <h2 className="text-lg font-semibold text-foreground mb-4">My systems</h2>
 
       {loading && (
-        <div className="flex items-center gap-2 text-sm text-verisum-grey py-8">
-          <div className="w-4 h-4 border-2 border-verisum-blue border-t-transparent rounded-full animate-spin" />
+        <div className="flex items-center gap-2 text-sm text-muted-foreground py-8">
+          <div className="w-4 h-4 border-2 border-brand border-t-transparent rounded-full animate-spin" />
           Loading systems…
         </div>
       )}
 
-      {error && <div className="text-sm text-verisum-red py-4">{error}</div>}
+      {error && <div className="text-sm text-destructive py-4">{error}</div>}
 
       {!loading && !error && systems.length === 0 && (
-        <div className="border border-verisum-grey rounded-xl p-8 text-center">
-          <div className="text-verisum-grey mb-2">No systems yet</div>
-          <p className="text-sm text-verisum-grey mb-4">
+        <div className="border border-border rounded-xl p-8 text-center">
+          <div className="text-muted-foreground mb-2">No systems yet</div>
+          <p className="text-sm text-muted-foreground mb-4">
             {blocked
               ? "Systems assessment is available on Pro plans."
               : "Create your first system assessment to get started."}
@@ -563,7 +563,7 @@ function SystemsTab({ limits }: { limits: ReturnType<typeof getPlanLimits> }) {
             <button
               type="button"
               onClick={() => setShowForm(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-verisum-blue text-white font-medium rounded-lg hover:bg-verisum-blue/90 transition-colors text-sm"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-brand text-white font-medium rounded-lg hover:bg-brand/90 transition-colors text-sm"
             >
               Create system assessment
             </button>
@@ -572,42 +572,42 @@ function SystemsTab({ limits }: { limits: ReturnType<typeof getPlanLimits> }) {
       )}
 
       {!loading && !error && systems.length > 0 && (
-        <div className="border border-verisum-grey rounded-xl overflow-hidden">
+        <div className="border border-border rounded-xl overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-50 border-b border-verisum-grey text-left">
-                <th className="px-4 py-3 font-medium text-verisum-grey">System</th>
-                <th className="px-4 py-3 font-medium text-verisum-grey hidden sm:table-cell">Score</th>
-                <th className="px-4 py-3 font-medium text-verisum-grey hidden md:table-cell">Runs</th>
-                <th className="px-4 py-3 font-medium text-verisum-grey hidden md:table-cell">Created</th>
-                <th className="px-4 py-3 font-medium text-verisum-grey text-right">Actions</th>
+              <tr className="bg-gray-50 border-b border-border text-left">
+                <th className="px-4 py-3 font-medium text-muted-foreground">System</th>
+                <th className="px-4 py-3 font-medium text-muted-foreground hidden sm:table-cell">Score</th>
+                <th className="px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Runs</th>
+                <th className="px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Created</th>
+                <th className="px-4 py-3 font-medium text-muted-foreground text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
               {systems.map((system) => (
-                <tr key={system.id} className="border-b border-verisum-grey last:border-0 hover:bg-gray-50 transition-colors">
+                <tr key={system.id} className="border-b border-border last:border-0 hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3">
-                    <div className="font-medium text-verisum-black">{system.name}</div>
+                    <div className="font-medium text-foreground">{system.name}</div>
                     {system.version_label && (
-                      <div className="text-xs text-verisum-grey mt-0.5">{system.version_label}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">{system.version_label}</div>
                     )}
-                    <div className="text-xs text-verisum-grey sm:hidden mt-0.5">
+                    <div className="text-xs text-muted-foreground sm:hidden mt-0.5">
                       Score: {system.latest_score !== null ? system.latest_score : "—"} · {system.run_count} run{system.run_count !== 1 ? "s" : ""}
                     </div>
                   </td>
                   <td className="px-4 py-3 hidden sm:table-cell">
                     {system.latest_score !== null ? (
-                      <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-verisum-blue/10 text-verisum-blue">
+                      <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-brand/10 text-brand">
                         {system.latest_score}
                       </span>
                     ) : (
-                      <span className="text-verisum-grey">—</span>
+                      <span className="text-muted-foreground">—</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-verisum-grey hidden md:table-cell">
+                  <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
                     {system.run_count}
                   </td>
-                  <td className="px-4 py-3 text-verisum-grey hidden md:table-cell">
+                  <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
                     {new Date(system.created_at).toLocaleDateString("en-GB", {
                       day: "numeric",
                       month: "short",
@@ -617,7 +617,7 @@ function SystemsTab({ limits }: { limits: ReturnType<typeof getPlanLimits> }) {
                   <td className="px-4 py-3 text-right">
                     <a
                       href={`/systems/${system.id}/assess`}
-                      className="text-xs px-2 py-1 rounded bg-verisum-blue text-white hover:bg-verisum-blue/90 transition-colors"
+                      className="text-xs px-2 py-1 rounded bg-brand text-white hover:bg-brand/90 transition-colors"
                     >
                       {system.has_draft ? "Continue assessment" : "Assess"}
                     </a>

@@ -318,7 +318,7 @@ export default function AdminRunPage() {
   if (authorising) {
     return (
       <main className="p-10">
-        <div className="text-verisum-grey">Authorising…</div>
+        <div className="text-muted-foreground">Authorising…</div>
       </main>
     );
   }
@@ -326,7 +326,7 @@ export default function AdminRunPage() {
   if (loading) {
     return (
       <main className="p-10">
-        <div className="text-verisum-grey">Loading…</div>
+        <div className="text-muted-foreground">Loading…</div>
       </main>
     );
   }
@@ -336,7 +336,7 @@ export default function AdminRunPage() {
       <AppShell>
         <div className="p-4 md:p-6 lg:p-10 space-y-3">
           <h1 className="text-2xl font-bold">Survey Dashboard</h1>
-          <div className="text-verisum-red">{error || "Missing runId"}</div>
+          <div className="text-destructive">{error || "Missing runId"}</div>
         </div>
       </AppShell>
     );
@@ -627,7 +627,7 @@ export default function AdminRunPage() {
       <div className="p-4 md:p-6 lg:p-10 space-y-6">
         <h1 className="text-2xl md:text-3xl font-bold">Survey Dashboard</h1>
 
-      <div className="border border-verisum-grey rounded-lg p-6 space-y-2">
+      <div className="border border-border rounded-lg p-6 space-y-2">
         <div>
           <span className="font-semibold">Survey:</span> {run?.title}
         </div>
@@ -643,7 +643,7 @@ export default function AdminRunPage() {
             <div className="break-words">
               <span className="font-semibold">Admin Code:</span> <span className="font-mono">{adminCode}</span>
             </div>
-            <div className="text-xs text-verisum-grey mt-1">
+            <div className="text-xs text-muted-foreground mt-1">
               Safely save this admin code. It cannot be recovered. Do not share it.
             </div>
           </div>
@@ -660,7 +660,7 @@ export default function AdminRunPage() {
         </div>
       </div>
 
-      <div className="border border-verisum-grey rounded-lg p-6 space-y-4">
+      <div className="border border-border rounded-lg p-6 space-y-4">
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-lg font-semibold">
             Your surveys
@@ -696,7 +696,7 @@ export default function AdminRunPage() {
             </label>
             {recentRuns.length > 0 && (
               <button
-                className="text-xs text-verisum-grey underline"
+                className="text-xs text-muted-foreground underline"
                 onClick={() => {
                   clearHistory();
                   setRecentRuns([]);
@@ -707,7 +707,7 @@ export default function AdminRunPage() {
             )}
           </div>
         </div>
-          <div className="text-xs text-verisum-grey">
+          <div className="text-xs text-muted-foreground">
             If enabled, your surveys will be available on this device after you close your browser.
           </div>
 
@@ -721,9 +721,9 @@ export default function AdminRunPage() {
               const completed = counts?.completed ?? 0;
               const status = total > 0 && completed === total ? "Completed" : "In progress";
               return (
-                <div key={r.runId} className="border border-verisum-grey rounded p-4 space-y-2">
-                  <div className="font-semibold text-verisum-black">{r.title}</div>
-                  <div className="text-xs text-verisum-grey">
+                <div key={r.runId} className="border border-border rounded p-4 space-y-2">
+                  <div className="font-semibold text-foreground">{r.title}</div>
+                  <div className="text-xs text-muted-foreground">
                     {r.mode === "org" ? "Organisational" : "Explorer"} ·{" "}
                     {new Date(r.createdAtISO).toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" })}
                     {counts != null && (
@@ -736,14 +736,14 @@ export default function AdminRunPage() {
                   <div className="flex flex-wrap gap-2">
                     {isCurrentRun ? (
                       <button
-                        className="px-3 py-2 border border-verisum-grey rounded text-sm opacity-50 cursor-not-allowed bg-[#f5f5f5]"
+                        className="px-3 py-2 border border-border rounded text-sm opacity-50 cursor-not-allowed bg-[#f5f5f5]"
                         disabled
                         title="You're already viewing the Survey Dashboard for this survey"
                       >
                         Open Survey Dashboard
                       </button>
                     ) : (
-                      <a className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm" href={`/admin/run/${r.runId}`}>
+                      <a className="px-3 py-2 border border-border rounded hover:bg-[#f5f5f5] text-sm" href={`/admin/run/${r.runId}`}>
                         Open Survey Dashboard
                       </a>
                     )}
@@ -755,12 +755,12 @@ export default function AdminRunPage() {
         )}
       </div>
 
-      <div className="border border-verisum-grey rounded-lg p-6 space-y-4">
+      <div className="border border-border rounded-lg p-6 space-y-4">
         <h2 className="text-xl font-semibold">
           {run?.mode === "explorer" ? "Download your responses (CSV)" : "Export data (CSV)"}
         </h2>
         <div className="space-y-3">
-          <label className="flex items-start gap-3 text-sm text-verisum-grey">
+          <label className="flex items-start gap-3 text-sm text-muted-foreground">
             <input
               type="checkbox"
               className="mt-1"
@@ -769,12 +769,12 @@ export default function AdminRunPage() {
             />
             <span>
               <span className="font-medium">Client-safe export (mask tokens)</span>
-              <div className="text-xs text-verisum-grey">
+              <div className="text-xs text-muted-foreground">
                 Masks invite tokens to protect respondent privacy. Use this when sharing externally.
               </div>
             </span>
           </label>
-          <label className="flex items-start gap-3 text-sm text-verisum-grey">
+          <label className="flex items-start gap-3 text-sm text-muted-foreground">
             <input
               type="checkbox"
               className="mt-1"
@@ -783,7 +783,7 @@ export default function AdminRunPage() {
             />
             <span>
               <span className="font-medium">Include segmentation (team / level / location)</span>
-              <div className="text-xs text-verisum-grey">
+              <div className="text-xs text-muted-foreground">
                 Only enable if you’re confident it won’t identify individuals in small teams.
               </div>
             </span>
@@ -791,37 +791,37 @@ export default function AdminRunPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <button
-            className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-2 border border-border rounded hover:bg-[#f5f5f5] text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={downloadResponsesCsv}
             disabled={exporting}
           >
             {exporting ? "Preparing CSV…" : "Download responses CSV"}
           </button>
           <button
-            className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-2 border border-border rounded hover:bg-[#f5f5f5] text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={downloadSummaryCsv}
             disabled={summaryExporting}
           >
             {summaryExporting ? "Preparing summary…" : "Download summary CSV"}
           </button>
         </div>
-        {exportStatus && <div className="text-sm text-verisum-grey">{exportStatus}</div>}
+        {exportStatus && <div className="text-sm text-muted-foreground">{exportStatus}</div>}
       </div>
 
       {run?.mode === "org" && (
-        <div className="border border-verisum-grey rounded-lg p-6 space-y-3">
+        <div className="border border-border rounded-lg p-6 space-y-3">
           <h2 className="text-xl font-semibold">Segmentation summary</h2>
-          <div className="text-sm text-verisum-grey">Teams: {formatCounts(invites.map((i) => i.team))}</div>
-          <div className="text-sm text-verisum-grey">Levels: {formatCounts(invites.map((i) => i.level))}</div>
-          <div className="text-sm text-verisum-grey">Locations: {formatCounts(invites.map((i) => i.location))}</div>
+          <div className="text-sm text-muted-foreground">Teams: {formatCounts(invites.map((i) => i.team))}</div>
+          <div className="text-sm text-muted-foreground">Levels: {formatCounts(invites.map((i) => i.level))}</div>
+          <div className="text-sm text-muted-foreground">Locations: {formatCounts(invites.map((i) => i.location))}</div>
         </div>
       )}
 
 
-      <div className="border border-verisum-grey rounded-lg p-6 space-y-4">
+      <div className="border border-border rounded-lg p-6 space-y-4">
         <div>
           <h2 className="text-xl font-semibold">Results & progress</h2>
-          <div className="text-sm text-verisum-grey">Track progress and manage distribution in one place.</div>
+          <div className="text-sm text-muted-foreground">Track progress and manage distribution in one place.</div>
         </div>
 
         {/* Live progress line */}
@@ -838,7 +838,7 @@ export default function AdminRunPage() {
                     : `${responseCount} responses received • Results available`}
                 </div>
                 {isEarlyState && (
-                  <div className="text-sm text-verisum-grey">
+                  <div className="text-sm text-muted-foreground">
                     Share your survey link below to start collecting responses.
                   </div>
                 )}
@@ -857,13 +857,13 @@ export default function AdminRunPage() {
 
         {/* Live feel status line */}
         {lastUpdated && (
-          <div className="text-xs text-verisum-grey flex items-center gap-2">
+          <div className="text-xs text-muted-foreground flex items-center gap-2">
             <span>
               Updates every 10 mins. Last updated: {lastUpdated.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}.
             </span>
             <button
               type="button"
-              className="text-verisum-blue underline hover:no-underline"
+              className="text-brand underline hover:no-underline"
               onClick={() => loadData()}
               disabled={loading}
             >
@@ -875,27 +875,27 @@ export default function AdminRunPage() {
         {/* Primary CTA button */}
         <div className="space-y-2">
           <a
-            className="inline-block px-5 py-3 rounded bg-verisum-blue text-verisum-white font-semibold hover:bg-[#2a7bb8]"
+            className="inline-block px-5 py-3 rounded bg-brand text-white font-semibold hover:bg-brand-hover"
             href={dashboardHref}
             onClick={() => sessionStorage.setItem(`ti_admin_${runId}`, "1")}
           >
             View results
           </a>
           {(invites.filter((i) => i.used_at).length < 5 && run?.mode === "org") ? (
-            <div className="text-xs text-verisum-grey">
+            <div className="text-xs text-muted-foreground">
               Share your survey link below to start collecting responses.
             </div>
           ) : (
-            <div className="text-xs text-verisum-grey">
+            <div className="text-xs text-muted-foreground">
               View live results and manage survey access below.
             </div>
           )}
         </div>
 
         {/* Survey links list */}
-        <div className="space-y-3 pt-4 border-t border-verisum-grey">
+        <div className="space-y-3 pt-4 border-t border-border">
           <div className="font-semibold text-sm">Survey links</div>
-          <div className="text-sm text-verisum-grey">
+          <div className="text-sm text-muted-foreground">
           Completed: {invites.filter((i) => i.used_at).length} · Pending:{" "}
           {invites.filter((i) => !i.used_at).length}
         </div>
@@ -903,36 +903,36 @@ export default function AdminRunPage() {
         <div className="space-y-2">
           {invites.map((i) => (
             <div key={i.token} className="flex items-center justify-between text-sm">
-                <div className="text-verisum-grey">
+                <div className="text-muted-foreground">
                 {i.token.slice(0, 6)}…{i.token.slice(-4)}
               </div>
-                <div className={i.used_at ? "text-verisum-green" : "text-verisum-yellow"}>
+                <div className={i.used_at ? "text-success" : "text-warning"}>
                 {i.used_at ? "Completed" : "Pending"}
               </div>
             </div>
           ))}
         </div>
 
-          <div className="text-xs text-verisum-grey">
+          <div className="text-xs text-muted-foreground">
           Tokens are masked for safety. Each token corresponds to one survey link.
         </div>
         </div>
       </div>
 
-      <div className="border border-verisum-grey rounded-lg p-6 space-y-4">
+      <div className="border border-border rounded-lg p-6 space-y-4">
         <h2 className="text-xl font-semibold">Share, save & chase</h2>
 
         {run?.mode === "org" && (
           <>
-            <div className="text-sm text-verisum-grey">
+            <div className="text-sm text-muted-foreground">
               Copy links and send one per person (recommended for organisational mode). Use "pending" for reminders.
             </div>
 
             <div className="flex flex-wrap items-end gap-3">
               <div>
-                <label className="text-xs text-verisum-grey">Filter pending by</label>
+                <label className="text-xs text-muted-foreground">Filter pending by</label>
                 <select
-                  className="mt-1 w-full border border-verisum-grey rounded px-3 py-2 text-sm"
+                  className="mt-1 w-full border border-border rounded px-3 py-2 text-sm"
                   value={pendingFilterType}
                   onChange={(e) => {
                     setPendingFilterType(e.target.value as "all" | "team" | "level" | "location");
@@ -947,9 +947,9 @@ export default function AdminRunPage() {
               </div>
               {pendingFilterType !== "all" && (
                 <div>
-                  <label className="text-xs text-verisum-grey">Value</label>
+                  <label className="text-xs text-muted-foreground">Value</label>
                   <select
-                    className="mt-1 w-full border border-verisum-grey rounded px-3 py-2 text-sm"
+                    className="mt-1 w-full border border-border rounded px-3 py-2 text-sm"
                     value={pendingFilterValue}
                     onChange={(e) => setPendingFilterValue(e.target.value)}
                   >
@@ -968,14 +968,14 @@ export default function AdminRunPage() {
 
             <div className="flex flex-wrap gap-2">
               <button
-                className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm"
+                className="px-3 py-2 border border-border rounded hover:bg-[#f5f5f5] text-sm"
                 onClick={() => copyText("Pending links copied", pendingLinks)}
               >
                 Copy pending links
               </button>
 
               <a
-                className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm inline-block"
+                className="px-3 py-2 border border-border rounded hover:bg-[#f5f5f5] text-sm inline-block"
                 href={
                   "mailto:?" +
                   "subject=" +
@@ -996,21 +996,21 @@ export default function AdminRunPage() {
 
         <div className="flex flex-wrap gap-2">
           <button
-            className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm"
+            className="px-3 py-2 border border-border rounded hover:bg-[#f5f5f5] text-sm"
             onClick={() => copyText("All survey links copied", surveyLinks)}
           >
             Copy all survey links
           </button>
 
           <button
-            className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm"
+            className="px-3 py-2 border border-border rounded hover:bg-[#f5f5f5] text-sm"
             onClick={downloadLinkPack}
           >
             Download link pack (.txt)
           </button>
 
           <a
-            className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm inline-block"
+            className="px-3 py-2 border border-border rounded hover:bg-[#f5f5f5] text-sm inline-block"
             href={
               "mailto:?" +
               "subject=" +
@@ -1026,12 +1026,12 @@ export default function AdminRunPage() {
 
           {invites.length > 0 && (
             <>
-              <div className="text-xs text-verisum-grey w-full">
+              <div className="text-xs text-muted-foreground w-full">
                 Do not forward. If you are taking the survey yourself, use this link.
               </div>
               <div className="flex flex-wrap items-center gap-2 mt-2">
                 <a
-                  className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm inline-block"
+                  className="px-3 py-2 border border-border rounded hover:bg-[#f5f5f5] text-sm inline-block"
                   href={`/survey/${invites[0].token}`}
                   target="_blank"
                   rel="noreferrer"
@@ -1039,7 +1039,7 @@ export default function AdminRunPage() {
                   Open Your Survey
                 </a>
                 <button
-                  className="px-3 py-2 border border-verisum-grey rounded hover:bg-[#f5f5f5] text-sm"
+                  className="px-3 py-2 border border-border rounded hover:bg-[#f5f5f5] text-sm"
                   onClick={() => {
                     const firstLink = `${window.location.origin}/survey/${invites[0].token}`;
                     copyText("Your survey link copied", firstLink);
@@ -1058,7 +1058,7 @@ export default function AdminRunPage() {
                     statusLabel = "Results available";
                   }
                   return (
-                    <span className="text-xs text-verisum-grey">
+                    <span className="text-xs text-muted-foreground">
                       {statusLabel}
                     </span>
                   );
@@ -1068,10 +1068,10 @@ export default function AdminRunPage() {
           )}
         </div>
 
-        {copied && <div className="text-sm text-verisum-green">{copied}</div>}
+        {copied && <div className="text-sm text-success">{copied}</div>}
       </div>
 
-        <a className="text-verisum-blue underline" href="/admin/new-run">
+        <a className="text-brand underline" href="/admin/new-run">
           Create another survey
         </a>
       </div>

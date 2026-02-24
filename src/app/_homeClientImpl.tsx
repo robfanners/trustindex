@@ -18,11 +18,11 @@ export default function Home() {
         <div className="space-y-8">
           <div className="rounded-xl border border-border p-8 shadow-sm">
             <h2 className="text-xl font-semibold mb-2">What this measures</h2>
-            <p className="text-sm text-verisum-grey mb-3">
+            <p className="text-sm text-muted-foreground mb-3">
               TrustGraph measures five dimensions that directly affect
               organisational performance:
             </p>
-            <ul className="list-disc pl-6 text-verisum-grey space-y-1">
+            <ul className="list-disc pl-6 text-muted-foreground space-y-1">
               <li>Transparency in decision-making</li>
               <li>Inclusion and psychological safety</li>
               <li>Employee confidence in leadership</li>
@@ -36,19 +36,19 @@ export default function Home() {
             <h2 className="text-xl font-semibold">
               Try a free Explorer self-assessment
             </h2>
-            <p className="text-sm text-verisum-grey">
+            <p className="text-sm text-muted-foreground">
               See how trust, transparency, and decision-making are experienced in
               your organisation. Free, private, and takes about 3 minutes. See
               your score instantly.
             </p>
-            <ul className="list-disc pl-6 text-sm text-verisum-grey space-y-0.5">
+            <ul className="list-disc pl-6 text-sm text-muted-foreground space-y-0.5">
               <li>No sign-up required</li>
               <li>Private self-assessment</li>
               <li>Results in ~3 minutes</li>
               <li>Sign up afterwards to save your data and run organisational surveys</li>
             </ul>
             <a
-              className="inline-block px-5 py-3 rounded bg-verisum-blue text-verisum-white font-semibold hover:bg-[#2a7bb8]"
+              className="inline-block px-5 py-3 rounded bg-brand text-white font-semibold hover:bg-brand-hover"
               href="/try"
             >
               Try Explorer free
@@ -60,12 +60,12 @@ export default function Home() {
             <h2 className="text-lg font-semibold">
               Already have an account?
             </h2>
-            <p className="text-sm text-verisum-grey">
+            <p className="text-sm text-muted-foreground">
               Sign in to access your dashboard, manage surveys, and view
               results.
             </p>
             <a
-              className="inline-block px-5 py-3 rounded border border-verisum-grey text-verisum-black font-semibold hover:bg-[#f5f5f5]"
+              className="inline-block px-5 py-3 rounded border border-border text-foreground font-semibold hover:bg-[#f5f5f5]"
               href="/auth/login"
             >
               Sign in
