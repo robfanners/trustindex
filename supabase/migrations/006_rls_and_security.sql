@@ -105,13 +105,9 @@ CREATE POLICY "profiles_select_own" ON profiles
   FOR SELECT TO authenticated
   USING (id = auth.uid());
 
--- run_admin_tokens: authenticated users can read tokens they own
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = 'run_admin_tokens') THEN
-    EXECUTE 'CREATE POLICY "run_admin_tokens_select_own" ON run_admin_tokens FOR SELECT TO authenticated USING (user_id = auth.uid())';
-  END IF;
-END $$;
+-- run_admin_tokens: service-role only (token lookup by run_id, no user_id column)
+-- RLS enabled above with no policies = anon/authenticated see zero rows.
+-- Service role bypasses RLS automatically.
 
 -- --------------------------------------------------------------------------
 -- D. Make vcc_audit_log immutable at DB level
