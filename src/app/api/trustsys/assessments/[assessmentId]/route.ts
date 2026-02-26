@@ -5,7 +5,7 @@ import { supabaseServer } from "@/lib/supabaseServer";
 type RouteContext = { params: Promise<{ assessmentId: string }> };
 
 // ---------------------------------------------------------------------------
-// Helper: authenticate + verify org ownership
+// Helper: authenticate + verify ownership via systems table
 // ---------------------------------------------------------------------------
 
 async function authenticateAndAuthorise(assessmentId: string) {
@@ -28,13 +28,14 @@ async function authenticateAndAuthorise(assessmentId: string) {
     .eq("id", user.id)
     .single();
 
-  const { data: assessment, error: assessErr } = await db
-    .from("trustsys_assessments")
+  // Get the system (assessment) from the systems table
+  const { data: system, error: sysErr } = await db
+    .from("systems")
     .select("*")
     .eq("id", assessmentId)
     .single();
 
-  if (assessErr || !assessment) {
+  if (sysErr || !system) {
     return {
       error: NextResponse.json(
         { error: "Assessment not found" },
@@ -43,17 +44,27 @@ async function authenticateAndAuthorise(assessmentId: string) {
     };
   }
 
-  if (profile?.organisation_id && assessment.organisation_id !== profile.organisation_id) {
-    return {
-      error: NextResponse.json({ error: "Not authorised" }, { status: 403 }),
-    };
+  // Verify org ownership: system.owner_id must be in the same org
+  if (profile?.organisation_id) {
+    const { data: ownerProfile } = await db
+      .from("profiles")
+      .select("organisation_id")
+      .eq("id", system.owner_id)
+      .single();
+
+    if (ownerProfile?.organisation_id !== profile.organisation_id) {
+      return {
+        error: NextResponse.json({ error: "Not authorised" }, { status: 403 }),
+      };
+    }
   }
 
-  return { user, assessment };
+  return { user, system };
 }
 
 // ---------------------------------------------------------------------------
 // GET /api/trustsys/assessments/[assessmentId] — detail + all runs
+// Uses existing `systems` + `system_runs` tables
 // ---------------------------------------------------------------------------
 
 export async function GET(_req: NextRequest, context: RouteContext) {
@@ -62,50 +73,51 @@ export async function GET(_req: NextRequest, context: RouteContext) {
     const result = await authenticateAndAuthorise(assessmentId);
     if ("error" in result) return result.error;
 
-    const { assessment } = result;
+    const { system } = result;
     const db = supabaseServer();
 
     const { data: runs, error: runsErr } = await db
-      .from("trustsys_runs")
+      .from("system_runs")
       .select(
-        "id, version_number, status, stability_status, score, dimension_scores, risk_flags, drift_from_previous, drift_flag, variance_last_3, created_by, created_at, completed_at"
+        "id, status, overall_score, dimension_scores, risk_flags, version_label, created_at, submitted_at"
       )
-      .eq("assessment_id", assessmentId)
-      .order("version_number", { ascending: false });
+      .eq("system_id", assessmentId)
+      .order("created_at", { ascending: false });
 
     if (runsErr) {
       return NextResponse.json({ error: runsErr.message }, { status: 500 });
     }
 
-    // Map DB column names to frontend-expected property names
-    const mappedRuns = (runs || []).map((r) => ({
+    // Map DB columns to frontend-expected property names
+    // Generate version_number from reverse order (latest = highest number)
+    const total = (runs || []).length;
+    const mappedRuns = (runs || []).map((r, i) => ({
       id: r.id,
-      version_number: r.version_number,
-      status: r.status,
-      stability_status: r.stability_status,
-      overall_score: r.score,
+      version_number: total - i, // Latest first, so first item gets highest number
+      status: r.status === "submitted" ? "completed" : r.status === "draft" ? "in_progress" : r.status,
+      stability_status: "provisional",
+      overall_score: r.overall_score,
       dimension_scores: r.dimension_scores,
       risk_flags: r.risk_flags,
       confidence_factor: null,
-      drift_from_previous: r.drift_from_previous,
-      drift_flag: r.drift_flag,
-      variance_last_3: r.variance_last_3,
-      assessor_id: r.created_by,
+      drift_from_previous: null,
+      drift_flag: false,
+      variance_last_3: null,
+      assessor_id: null,
       created_at: r.created_at,
-      completed_at: r.completed_at,
+      completed_at: r.submitted_at,
     }));
 
     return NextResponse.json({
       assessment: {
-        id: assessment.id,
-        name: assessment.system_name,
-        version_label: assessment.version_label,
-        type: assessment.system_type,
-        environment: assessment.environment,
-        autonomy_level: assessment.autonomy_level,
-        criticality_level: assessment.criticality_level,
-        reassessment_frequency_days: assessment.reassessment_frequency_days,
-        created_at: assessment.created_at,
+        id: system.id,
+        name: system.name,
+        version_label: system.version_label,
+        type: system.type,
+        environment: system.environment,
+        created_at: system.created_at,
+        // Bridge to legacy assess flow — the assessment IS the system
+        legacy_system_id: system.id,
       },
       runs: mappedRuns,
     });

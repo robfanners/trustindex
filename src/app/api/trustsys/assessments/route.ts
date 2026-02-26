@@ -4,6 +4,7 @@ import { supabaseServer } from "@/lib/supabaseServer";
 
 // ---------------------------------------------------------------------------
 // GET /api/trustsys/assessments — list org's TrustSys assessments with latest run
+// Uses the existing `systems` + `system_runs` tables
 // ---------------------------------------------------------------------------
 
 export async function GET() {
@@ -30,33 +31,42 @@ export async function GET() {
       return NextResponse.json({ assessments: [] });
     }
 
-    // Fetch assessments for this org
-    const { data: assessments, error: assessErr } = await db
-      .from("trustsys_assessments")
-      .select(
-        "id, system_name, version_label, system_type, environment, autonomy_level, criticality_level, reassessment_frequency_days, created_at"
-      )
-      .eq("organisation_id", profile.organisation_id)
-      .order("created_at", { ascending: false });
+    // Fetch systems (assessments) owned by users in the same org
+    // The `systems` table uses `owner_id` (user) — join through profiles to match org
+    const { data: orgUsers } = await db
+      .from("profiles")
+      .select("id")
+      .eq("organisation_id", profile.organisation_id);
 
-    if (assessErr) {
-      return NextResponse.json({ error: assessErr.message }, { status: 500 });
-    }
+    const userIds = (orgUsers || []).map((u) => u.id);
 
-    if (!assessments || assessments.length === 0) {
+    if (userIds.length === 0) {
       return NextResponse.json({ assessments: [] });
     }
 
-    // Fetch runs for all assessments to get latest score, run count, status
-    const assessmentIds = assessments.map((a) => a.id);
+    const { data: systems, error: sysErr } = await db
+      .from("systems")
+      .select("id, name, version_label, type, environment, created_at")
+      .in("owner_id", userIds)
+      .eq("archived", false)
+      .order("created_at", { ascending: false });
+
+    if (sysErr) {
+      return NextResponse.json({ error: sysErr.message }, { status: 500 });
+    }
+
+    if (!systems || systems.length === 0) {
+      return NextResponse.json({ assessments: [] });
+    }
+
+    // Fetch runs for all systems to get latest score, run count, status
+    const systemIds = systems.map((s) => s.id);
 
     const { data: runs } = await db
-      .from("trustsys_runs")
-      .select(
-        "assessment_id, status, stability_status, score, version_number, created_at"
-      )
-      .in("assessment_id", assessmentIds)
-      .order("version_number", { ascending: false });
+      .from("system_runs")
+      .select("system_id, status, overall_score, version_label, created_at, submitted_at")
+      .in("system_id", systemIds)
+      .order("created_at", { ascending: false });
 
     // Build maps
     const latestRunMap = new Map<
@@ -64,50 +74,46 @@ export async function GET() {
       {
         score: number | null;
         status: string;
-        stability_status: string;
-        version_number: number;
+        version_label: string | null;
       }
     >();
     const runCountMap = new Map<string, number>();
     const hasInProgressMap = new Map<string, boolean>();
 
     for (const r of runs || []) {
-      const aid = r.assessment_id as string;
-      runCountMap.set(aid, (runCountMap.get(aid) ?? 0) + 1);
+      const sid = r.system_id as string;
+      runCountMap.set(sid, (runCountMap.get(sid) ?? 0) + 1);
 
-      if (r.status === "in_progress") {
-        hasInProgressMap.set(aid, true);
+      // Map "draft" → in_progress
+      if (r.status === "draft") {
+        hasInProgressMap.set(sid, true);
       }
 
-      // Latest = highest version_number (already sorted desc)
-      if (!latestRunMap.has(aid) && r.status === "completed") {
-        latestRunMap.set(aid, {
-          score: r.score as number | null,
-          status: r.status as string,
-          stability_status: r.stability_status as string,
-          version_number: r.version_number as number,
+      // Latest completed = "submitted" status (already sorted desc by created_at)
+      if (!latestRunMap.has(sid) && r.status === "submitted") {
+        latestRunMap.set(sid, {
+          score: r.overall_score as number | null,
+          status: "completed",
+          version_label: r.version_label as string | null,
         });
       }
     }
 
-    const result = assessments.map((a) => {
-      const latest = latestRunMap.get(a.id as string);
+    const result = systems.map((s) => {
+      const latest = latestRunMap.get(s.id as string);
       return {
-        id: a.id,
-        name: a.system_name,
-        version_label: a.version_label,
-        type: a.system_type,
-        environment: a.environment,
-        autonomy_level: a.autonomy_level,
-        criticality_level: a.criticality_level,
-        reassessment_frequency_days: a.reassessment_frequency_days,
-        created_at: a.created_at,
+        id: s.id,
+        name: s.name,
+        version_label: s.version_label,
+        type: s.type,
+        environment: s.environment,
+        created_at: s.created_at,
         latest_score: latest?.score ?? null,
         latest_status: latest?.status ?? null,
-        stability_status: latest?.stability_status ?? "provisional",
-        latest_version: latest?.version_number ?? 0,
-        run_count: runCountMap.get(a.id as string) ?? 0,
-        has_in_progress: hasInProgressMap.get(a.id as string) ?? false,
+        stability_status: "provisional",
+        latest_version: 0,
+        run_count: runCountMap.get(s.id as string) ?? 0,
+        has_in_progress: hasInProgressMap.get(s.id as string) ?? false,
       };
     });
 
@@ -119,7 +125,7 @@ export async function GET() {
 }
 
 // ---------------------------------------------------------------------------
-// POST /api/trustsys/assessments — create a new TrustSys assessment
+// POST /api/trustsys/assessments — create a new system (assessment)
 // ---------------------------------------------------------------------------
 
 export async function POST(req: NextRequest) {
@@ -155,28 +161,24 @@ export async function POST(req: NextRequest) {
     const type = typeof body.type === "string" ? body.type.trim() : null;
     const environment =
       typeof body.environment === "string" ? body.environment.trim() : null;
-    const autonomyLevel = Number(body.autonomy_level) || 1;
-    const criticalityLevel = Number(body.criticality_level) || 1;
 
     if (!name) {
       return NextResponse.json({ error: "name is required" }, { status: 400 });
     }
 
-    const { data: assessment, error: insertErr } = await db
-      .from("trustsys_assessments")
+    const { data: system, error: insertErr } = await db
+      .from("systems")
       .insert({
-        organisation_id: profile.organisation_id,
-        system_name: name,
+        owner_id: user.id,
+        name,
         version_label: versionLabel || null,
-        system_type: type || null,
+        type: type || null,
         environment: environment || null,
-        autonomy_level: Math.min(5, Math.max(1, autonomyLevel)),
-        criticality_level: Math.min(5, Math.max(1, criticalityLevel)),
       })
-      .select("id, system_name, version_label, system_type, environment, autonomy_level, criticality_level, created_at")
+      .select("id, name, version_label, type, environment, created_at")
       .single();
 
-    if (insertErr || !assessment) {
+    if (insertErr || !system) {
       return NextResponse.json(
         { error: insertErr?.message || "Failed to create assessment" },
         { status: 500 }
@@ -185,14 +187,12 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       assessment: {
-        id: assessment.id,
-        name: assessment.system_name,
-        version_label: assessment.version_label,
-        type: assessment.system_type,
-        environment: assessment.environment,
-        autonomy_level: assessment.autonomy_level,
-        criticality_level: assessment.criticality_level,
-        created_at: assessment.created_at,
+        id: system.id,
+        name: system.name,
+        version_label: system.version_label,
+        type: system.type,
+        environment: system.environment,
+        created_at: system.created_at,
       },
     }, { status: 201 });
   } catch (e: unknown) {

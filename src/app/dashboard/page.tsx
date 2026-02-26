@@ -656,13 +656,14 @@ function TrustOrgTab() {
 
 function TrustSysTab() {
   const [loading, setLoading] = useState(true);
-  const [systems, setSystems] = useState<Array<{
+  const [assessments, setAssessments] = useState<Array<{
     id: string;
     name: string;
     version_label: string;
     latest_score: number | null;
+    stability_status: string;
     run_count: number;
-    has_draft: boolean;
+    has_in_progress: boolean;
     created_at: string;
   }>>([]);
   const [error, setError] = useState<string | null>(null);
@@ -670,13 +671,13 @@ function TrustSysTab() {
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch("/api/systems");
+        const res = await fetch("/api/trustsys/assessments");
         if (!res.ok) {
           const d = await res.json();
-          throw new Error(d.error || "Failed to load systems");
+          throw new Error(d.error || "Failed to load assessments");
         }
         const d = await res.json();
-        setSystems(d.systems || []);
+        setAssessments(d.assessments || []);
       } catch (e: unknown) {
         setError(e instanceof Error ? e.message : "Failed to load");
       } finally {
@@ -712,7 +713,7 @@ function TrustSysTab() {
 
       {error && <div className="text-sm text-destructive py-4">{error}</div>}
 
-      {!loading && !error && systems.length === 0 && (
+      {!loading && !error && assessments.length === 0 && (
         <div className="border border-border rounded-xl p-8 text-center">
           <div className="text-muted-foreground mb-2">No system assessments yet</div>
           <p className="text-sm text-muted-foreground mb-4">
@@ -727,7 +728,7 @@ function TrustSysTab() {
         </div>
       )}
 
-      {!loading && !error && systems.length > 0 && (
+      {!loading && !error && assessments.length > 0 && (
         <div className="border border-border rounded-xl overflow-hidden">
           <table className="w-full text-sm">
             <thead>
@@ -739,42 +740,52 @@ function TrustSysTab() {
               </tr>
             </thead>
             <tbody>
-              {systems.slice(0, 5).map((system) => (
-                <tr key={system.id} className="border-b border-border last:border-0 hover:bg-gray-50 transition-colors">
+              {assessments.slice(0, 5).map((a) => (
+                <tr key={a.id} className="border-b border-border last:border-0 hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3">
-                    <div className="font-medium text-foreground">{system.name}</div>
-                    {system.version_label && (
-                      <div className="text-xs text-muted-foreground mt-0.5">{system.version_label}</div>
+                    <div className="font-medium text-foreground">{a.name}</div>
+                    {a.version_label && (
+                      <div className="text-xs text-muted-foreground mt-0.5">{a.version_label}</div>
                     )}
                   </td>
                   <td className="px-4 py-3 hidden sm:table-cell">
-                    {system.latest_score !== null ? (
+                    {a.latest_score !== null ? (
                       <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-brand/10 text-brand">
-                        {system.latest_score}
+                        {a.latest_score}
                       </span>
                     ) : (
                       <span className="text-muted-foreground">&mdash;</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
-                    {system.run_count}
+                    {a.run_count}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <Link
-                      href={`/systems/${system.id}/assess`}
-                      className="text-xs px-2 py-1 rounded bg-brand text-white hover:bg-brand/90 transition-colors"
-                    >
-                      {system.has_draft ? "Continue" : "Assess"}
-                    </Link>
+                    <div className="flex items-center justify-end gap-2">
+                      {a.run_count > 0 && (
+                        <Link
+                          href="/trustsys"
+                          className="text-xs px-2 py-1 rounded border border-border text-foreground hover:bg-gray-100 transition-colors"
+                        >
+                          Results
+                        </Link>
+                      )}
+                      <Link
+                        href={`/trustsys/${a.id}/assess`}
+                        className="text-xs px-2 py-1 rounded bg-brand text-white hover:bg-brand/90 transition-colors"
+                      >
+                        {a.has_in_progress ? "Continue" : "Assess"}
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {systems.length > 5 && (
+          {assessments.length > 5 && (
             <div className="px-4 py-3 border-t border-border bg-gray-50">
               <Link href="/trustsys" className="text-sm text-brand hover:text-brand/80">
-                View all {systems.length} systems &rarr;
+                View all {assessments.length} systems &rarr;
               </Link>
             </div>
           )}
