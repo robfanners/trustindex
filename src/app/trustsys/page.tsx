@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import AuthenticatedShell from "@/components/AuthenticatedShell";
@@ -13,7 +13,7 @@ import { getStabilityBadge, type StabilityStatus } from "@/lib/assessmentLifecyc
 // Types
 // ---------------------------------------------------------------------------
 
-type System = {
+type Assessment = {
   id: string;
   name: string;
   version_label: string;
@@ -21,12 +21,23 @@ type System = {
   environment: string | null;
   created_at: string;
   latest_score: number | null;
+  stability_status: string;
   run_count: number;
-  has_draft: boolean;
+  has_in_progress: boolean;
+};
+
+type Run = {
+  id: string;
+  version_number: number;
+  status: string;
+  stability_status: string;
+  overall_score: number | null;
+  created_at: string;
+  completed_at: string | null;
 };
 
 // ---------------------------------------------------------------------------
-// TrustSys Assessments — full list page
+// TrustSys Assessments — expandable card layout
 // ---------------------------------------------------------------------------
 
 export default function TrustSysPage() {
@@ -41,9 +52,14 @@ function TrustSysContent() {
   const { profile } = useAuth();
   const limits = useMemo(() => getPlanLimits(profile?.plan), [profile?.plan]);
 
-  const [systems, setSystems] = useState<System[]>([]);
+  const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Expanded card & its run history
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [runs, setRuns] = useState<Run[]>([]);
+  const [runsLoading, setRunsLoading] = useState(false);
 
   // Create form state
   const [showForm, setShowForm] = useState(false);
@@ -54,18 +70,19 @@ function TrustSysContent() {
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
+  // Load assessments from v2 API
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch("/api/systems");
+        const res = await fetch("/api/trustsys/assessments");
         if (!res.ok) {
           const d = await res.json();
-          throw new Error(d.error || "Failed to load systems");
+          throw new Error(d.error || "Failed to load assessments");
         }
         const d = await res.json();
-        setSystems(d.systems || []);
+        setAssessments(d.assessments || []);
       } catch (e: unknown) {
-        setError(e instanceof Error ? e.message : "Failed to load systems");
+        setError(e instanceof Error ? e.message : "Failed to load assessments");
       } finally {
         setLoading(false);
       }
@@ -73,9 +90,36 @@ function TrustSysContent() {
     load();
   }, []);
 
-  const atCap = !loading && systems.length >= limits.maxSystems;
+  // Toggle expand / collapse and fetch runs
+  const toggleExpand = useCallback(
+    async (id: string) => {
+      if (expandedId === id) {
+        setExpandedId(null);
+        setRuns([]);
+        return;
+      }
+      setExpandedId(id);
+      setRunsLoading(true);
+      try {
+        const res = await fetch(`/api/trustsys/assessments/${id}`);
+        if (res.ok) {
+          const d = await res.json();
+          setRuns(d.runs || []);
+        } else {
+          setRuns([]);
+        }
+      } catch {
+        setRuns([]);
+      } finally {
+        setRunsLoading(false);
+      }
+    },
+    [expandedId]
+  );
+
+  const atCap = !loading && assessments.length >= limits.maxSystems;
   const approachingCap =
-    !loading && !atCap && isFinite(limits.maxSystems) && systems.length === limits.maxSystems - 1;
+    !loading && !atCap && isFinite(limits.maxSystems) && assessments.length === limits.maxSystems - 1;
   const blocked = limits.maxSystems === 0;
 
   async function handleCreate(e: React.FormEvent) {
@@ -84,7 +128,7 @@ function TrustSysContent() {
     setFormLoading(true);
 
     try {
-      const res = await fetch("/api/systems", {
+      const res = await fetch("/api/trustsys/assessments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -96,14 +140,20 @@ function TrustSysContent() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to create system");
+      if (!res.ok) throw new Error(data.error || "Failed to create assessment");
 
-      setSystems((prev) => [
+      setAssessments((prev) => [
         {
-          ...data.system,
+          id: data.assessment.id,
+          name: data.assessment.name,
+          version_label: data.assessment.version_label || "",
+          type: data.assessment.type ?? null,
+          environment: data.assessment.environment ?? null,
+          created_at: data.assessment.created_at,
           latest_score: null,
+          stability_status: "provisional",
           run_count: 0,
-          has_draft: false,
+          has_in_progress: false,
         },
         ...prev,
       ]);
@@ -113,7 +163,7 @@ function TrustSysContent() {
       setFormEnvironment("");
       setShowForm(false);
     } catch (err: unknown) {
-      setFormError(err instanceof Error ? err.message : "Failed to create system");
+      setFormError(err instanceof Error ? err.message : "Failed to create assessment");
     } finally {
       setFormLoading(false);
     }
@@ -219,24 +269,25 @@ function TrustSysContent() {
               </button>
               {approachingCap && (
                 <p className="text-xs text-muted-foreground mt-2">
-                  {systems.length} of {limits.maxSystems} systems used
+                  {assessments.length} of {limits.maxSystems} systems used
                 </p>
               )}
             </div>
           )}
         </div>
 
-        {/* Systems list */}
+        {/* Loading */}
         {loading && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground py-8">
             <div className="w-4 h-4 border-2 border-brand border-t-transparent rounded-full animate-spin" />
-            Loading systems...
+            Loading assessments...
           </div>
         )}
 
         {error && <div className="text-sm text-destructive py-4">{error}</div>}
 
-        {!loading && !error && systems.length === 0 && (
+        {/* Empty state */}
+        {!loading && !error && assessments.length === 0 && (
           <div className="border border-border rounded-xl p-8 text-center">
             <div className="text-muted-foreground mb-2">No systems yet</div>
             <p className="text-sm text-muted-foreground mb-4">
@@ -253,78 +304,178 @@ function TrustSysContent() {
           </div>
         )}
 
-        {!loading && !error && systems.length > 0 && (
-          <div className="border border-border rounded-xl overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-gray-50 border-b border-border text-left">
-                  <th className="px-4 py-3 font-medium text-muted-foreground">System</th>
-                  <th className="px-4 py-3 font-medium text-muted-foreground hidden sm:table-cell">Score</th>
-                  <th className="px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">Status</th>
-                  <th className="px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Runs</th>
-                  <th className="px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Created</th>
-                  <th className="px-4 py-3 font-medium text-muted-foreground text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {systems.map((system) => (
-                  <tr key={system.id} className="border-b border-border last:border-0 hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3">
-                      <div className="font-medium text-foreground">{system.name}</div>
-                      {system.version_label && (
-                        <div className="text-xs text-muted-foreground mt-0.5">{system.version_label}</div>
-                      )}
-                      <div className="text-xs text-muted-foreground sm:hidden mt-0.5">
-                        Score: {system.latest_score !== null ? system.latest_score : "\u2014"} &middot; {system.run_count} run{system.run_count !== 1 ? "s" : ""}
+        {/* Assessment cards */}
+        {!loading && !error && assessments.length > 0 && (
+          <div className="space-y-4">
+            {assessments.map((a) => {
+              const isExpanded = expandedId === a.id;
+              const tier = a.latest_score !== null ? getTierForScore(a.latest_score) : null;
+              const stability = getStabilityBadge(
+                (a.stability_status as StabilityStatus) || "provisional"
+              );
+
+              return (
+                <div
+                  key={a.id}
+                  className="border border-border rounded-xl overflow-hidden transition-shadow hover:shadow-md"
+                >
+                  {/* Card header — always visible */}
+                  <button
+                    type="button"
+                    onClick={() => toggleExpand(a.id)}
+                    className="w-full text-left px-5 py-4 flex items-center gap-4 hover:bg-gray-50/50 transition-colors"
+                  >
+                    {/* Chevron */}
+                    <svg
+                      className={`w-4 h-4 text-muted-foreground flex-shrink-0 transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+
+                    {/* System info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-foreground truncate">
+                        {a.name}
+                        {a.version_label && (
+                          <span className="text-muted-foreground font-normal ml-2 text-xs">
+                            {a.version_label}
+                          </span>
+                        )}
                       </div>
-                    </td>
-                    <td className="px-4 py-3 hidden sm:table-cell">
-                      {system.latest_score !== null ? (() => {
-                        const tier = getTierForScore(system.latest_score);
-                        return (
-                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${tier.bgClass} ${tier.colorClass}`}>
-                            {system.latest_score}
-                          </span>
-                        );
-                      })() : (
-                        <span className="text-muted-foreground">&mdash;</span>
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        {a.run_count} run{a.run_count !== 1 ? "s" : ""} · Created{" "}
+                        {new Date(a.created_at).toLocaleDateString("en-GB", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Score badge */}
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      {tier ? (
+                        <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${tier.bgClass} ${tier.colorClass}`}>
+                          {a.latest_score}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">No score</span>
                       )}
-                    </td>
-                    <td className="px-4 py-3 hidden lg:table-cell">
-                      {system.latest_score !== null ? (() => {
-                        const stability = getStabilityBadge(
-                          (system as System & { stability_status?: StabilityStatus }).stability_status || "provisional"
-                        );
-                        return (
-                          <span
-                            className={`text-xs px-2 py-0.5 rounded-full font-medium ${stability.className}`}
-                            title={stability.tooltip}
-                          >
-                            {stability.label}
-                          </span>
-                        );
-                      })() : (
-                        <span className="text-muted-foreground">&mdash;</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{system.run_count}</td>
-                    <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
-                      {new Date(system.created_at).toLocaleDateString("en-GB", {
-                        day: "numeric", month: "short", year: "numeric",
-                      })}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <Link
-                        href={`/systems/${system.id}/assess`}
-                        className="text-xs px-2 py-1 rounded bg-brand text-white hover:bg-brand/90 transition-colors"
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded-full font-medium ${stability.className}`}
+                        title={stability.tooltip}
                       >
-                        {system.has_draft ? "Continue assessment" : "Assess"}
+                        {stability.label}
+                      </span>
+                    </div>
+
+                    {/* Action buttons — stop propagation so clicks don't toggle expand */}
+                    <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                      {a.run_count > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => toggleExpand(a.id)}
+                          className="text-xs px-3 py-1.5 rounded-lg border border-border text-foreground hover:bg-gray-100 transition-colors font-medium"
+                        >
+                          {isExpanded ? "Hide runs" : "Results"}
+                        </button>
+                      )}
+                      <Link
+                        href={`/trustsys/${a.id}/assess`}
+                        className="text-xs px-3 py-1.5 rounded-lg bg-brand text-white hover:bg-brand/90 transition-colors font-medium"
+                      >
+                        {a.has_in_progress ? "Continue" : "Assess"}
                       </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  </button>
+
+                  {/* Expanded: run history */}
+                  {isExpanded && (
+                    <div className="border-t border-border bg-gray-50/50 px-5 py-4">
+                      {runsLoading ? (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                          <div className="w-3 h-3 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+                          Loading run history...
+                        </div>
+                      ) : runs.length === 0 ? (
+                        <p className="text-sm text-muted-foreground py-2">
+                          No completed runs yet. Start an assessment to generate scores.
+                        </p>
+                      ) : (
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="text-left text-xs text-muted-foreground border-b border-border/60">
+                              <th className="pb-2 font-medium">Run</th>
+                              <th className="pb-2 font-medium">Score</th>
+                              <th className="pb-2 font-medium hidden sm:table-cell">Status</th>
+                              <th className="pb-2 font-medium hidden md:table-cell">Stability</th>
+                              <th className="pb-2 font-medium hidden md:table-cell">Date</th>
+                              <th className="pb-2 font-medium text-right">View</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {runs.map((r) => {
+                              const runTier = r.overall_score !== null ? getTierForScore(r.overall_score) : null;
+                              const runStab = getStabilityBadge(
+                                (r.stability_status as StabilityStatus) || "provisional"
+                              );
+                              return (
+                                <tr key={r.id} className="border-b border-border/40 last:border-0">
+                                  <td className="py-2.5 font-medium text-foreground">
+                                    v{r.version_number}
+                                  </td>
+                                  <td className="py-2.5">
+                                    {runTier ? (
+                                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${runTier.bgClass} ${runTier.colorClass}`}>
+                                        {r.overall_score}
+                                      </span>
+                                    ) : (
+                                      <span className="text-muted-foreground">&mdash;</span>
+                                    )}
+                                  </td>
+                                  <td className="py-2.5 hidden sm:table-cell">
+                                    <span className={`text-xs capitalize ${r.status === "completed" ? "text-success" : r.status === "in_progress" ? "text-brand" : "text-muted-foreground"}`}>
+                                      {r.status.replace("_", " ")}
+                                    </span>
+                                  </td>
+                                  <td className="py-2.5 hidden md:table-cell">
+                                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${runStab.className}`}>
+                                      {runStab.label}
+                                    </span>
+                                  </td>
+                                  <td className="py-2.5 text-muted-foreground hidden md:table-cell">
+                                    {new Date(r.created_at).toLocaleDateString("en-GB", {
+                                      day: "numeric",
+                                      month: "short",
+                                      year: "numeric",
+                                    })}
+                                  </td>
+                                  <td className="py-2.5 text-right">
+                                    {r.status === "completed" ? (
+                                      <Link
+                                        href={`/trustsys/${a.id}/results/${r.id}`}
+                                        className="text-xs text-brand hover:text-brand/80 font-medium underline"
+                                      >
+                                        View results
+                                      </Link>
+                                    ) : (
+                                      <span className="text-xs text-muted-foreground">&mdash;</span>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

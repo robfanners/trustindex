@@ -53,7 +53,7 @@ export async function GET() {
     const { data: runs } = await db
       .from("trustsys_runs")
       .select(
-        "assessment_id, status, stability_status, overall_score, version_number, created_at"
+        "assessment_id, status, stability_status, score, version_number, created_at"
       )
       .in("assessment_id", assessmentIds)
       .order("version_number", { ascending: false });
@@ -82,7 +82,7 @@ export async function GET() {
       // Latest = highest version_number (already sorted desc)
       if (!latestRunMap.has(aid) && r.status === "completed") {
         latestRunMap.set(aid, {
-          score: r.overall_score as number | null,
+          score: r.score as number | null,
           status: r.status as string,
           stability_status: r.stability_status as string,
           version_number: r.version_number as number,

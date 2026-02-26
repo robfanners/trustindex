@@ -11,7 +11,7 @@ const dmSans = DM_Sans({
 
 export const metadata: Metadata = {
   title: "TrustGraph™ by Verisum",
-  description: "Measure, map and strengthen organisational trust",
+  description: "Measure, map and strengthen trust",
 };
 
 export default function RootLayout({

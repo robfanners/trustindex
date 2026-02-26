@@ -154,8 +154,9 @@ export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
             <button
               type="submit"
               disabled={loading}
-              className="px-5 py-2 bg-brand text-white font-medium rounded-lg
-                hover:bg-brand/90 transition-colors disabled:opacity-50 text-sm"
+              className="px-5 py-2.5 bg-brand text-white font-semibold rounded-full
+                shadow-lg shadow-brand/20 hover:bg-brand-hover hover:-translate-y-0.5
+                transition-all duration-300 disabled:opacity-50 text-sm"
             >
               {loading ? "Sending…" : "Send magic link"}
             </button>

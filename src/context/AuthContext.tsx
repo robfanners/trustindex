@@ -19,6 +19,7 @@ type Profile = {
   company_name: string | null;
   company_size: string | null;
   role: string | null;
+  organisation_id: string | null;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
   created_at: string;

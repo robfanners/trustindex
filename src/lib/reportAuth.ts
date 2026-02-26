@@ -4,7 +4,7 @@
 // This file is client-safe — no server-only imports.
 // Server-side auth helper lives in reportAuth.server.ts.
 
-export type TrustGraphRole = "exec" | "operator" | "risk" | "admin";
+export type TrustGraphRole = "owner" | "exec" | "operator" | "risk" | "admin";
 
 export type ReportType =
   | "board_summary"
@@ -14,11 +14,11 @@ export type ReportType =
   | "full_audit";
 
 const REPORT_ACCESS: Record<ReportType, TrustGraphRole[]> = {
-  board_summary: ["exec", "operator", "risk", "admin"],
-  assessment_history: ["risk", "admin"],
-  action_completion: ["operator", "risk", "admin"],
-  risk_escalation: ["risk", "admin"],
-  full_audit: ["risk", "admin"],
+  board_summary: ["owner", "exec", "operator", "risk", "admin"],
+  assessment_history: ["owner", "risk", "admin"],
+  action_completion: ["owner", "operator", "risk", "admin"],
+  risk_escalation: ["owner", "risk", "admin"],
+  full_audit: ["owner", "risk", "admin"],
 };
 
 export function canAccessReport(

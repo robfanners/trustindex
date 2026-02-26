@@ -224,7 +224,7 @@ export default function AppShell({ children }: AppShellProps) {
                 </span>
               </div>
               <p className="text-sm text-white/50 leading-relaxed">
-                Measure, map and strengthen organisational trust.
+                Measure, map and strengthen trust.
               </p>
             </div>
 
