@@ -53,7 +53,7 @@ export default function AppShell({ children }: AppShellProps) {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Header — glass morphism */}
-      <header className="sticky top-0 z-50 h-16 border-b border-border backdrop-blur-[20px] backdrop-saturate-[180%] bg-white/80">
+      <header className="sticky top-0 z-50 h-16 border-b border-border/60 backdrop-blur-lg bg-background/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
           <div className="flex items-center justify-between h-full">
             {/* Left: Logo + Brand */}
@@ -67,7 +67,7 @@ export default function AppShell({ children }: AppShellProps) {
                 width={28}
                 height={28}
                 className="rounded-sm"
-                style={{ filter: "hue-rotate(-30deg) saturate(0.8)" }}
+                style={{  }}
               />
               <span className="text-base font-bold text-brand">
                 TrustGraph
@@ -111,7 +111,7 @@ export default function AppShell({ children }: AppShellProps) {
                 ) : (
                   <a
                     href="/auth/login"
-                    className="ml-3 text-sm font-medium px-4 py-2 rounded-lg bg-gradient-to-br from-brand to-brand-hover text-brand-foreground shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all"
+                    className="ml-3 text-sm font-semibold px-5 py-2 rounded-full bg-brand text-brand-foreground shadow-lg shadow-brand/20 hover:bg-brand-hover hover:-translate-y-0.5 hover:shadow-brand/30 transition-all duration-300"
                   >
                     Log in
                   </a>
@@ -182,7 +182,7 @@ export default function AppShell({ children }: AppShellProps) {
                   ) : (
                     <a
                       href="/auth/login"
-                      className="text-sm font-medium px-4 py-2 mt-2 rounded-lg bg-gradient-to-br from-brand to-brand-hover text-brand-foreground text-center shadow-sm"
+                      className="text-sm font-semibold px-5 py-2 mt-2 rounded-full bg-brand text-brand-foreground text-center shadow-lg shadow-brand/20 hover:bg-brand-hover transition-all duration-300"
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       Log in
@@ -260,7 +260,7 @@ export default function AppShell({ children }: AppShellProps) {
                     rel="noopener noreferrer"
                     className="text-sm text-white/50 hover:text-white transition-colors"
                   >
-                    Verisum
+                    Verisum Ltd.
                   </a>
                 </li>
               </ul>
@@ -299,7 +299,7 @@ export default function AppShell({ children }: AppShellProps) {
           {/* Bottom bar */}
           <div className="mt-10 pt-6 border-t border-white/10 text-center">
             <p className="text-xs text-white/40">
-              © {currentYear} Verisum • TrustGraph™ • Built in the UK
+              © {currentYear} Verisum Ltd. • TrustGraph™ • Built in the UK
             </p>
           </div>
         </div>

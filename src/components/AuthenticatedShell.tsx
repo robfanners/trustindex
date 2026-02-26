@@ -111,7 +111,7 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
   return (
     <div className="min-h-screen bg-muted flex flex-col">
       {/* Top bar — glass morphism */}
-      <header className="sticky top-0 z-50 h-14 border-b border-border backdrop-blur-[20px] backdrop-saturate-[180%] bg-white/80 flex items-center px-4 sm:px-6">
+      <header className="sticky top-0 z-50 h-14 border-b border-border/60 backdrop-blur-lg bg-background/80 flex items-center px-4 sm:px-6">
         {/* Mobile sidebar toggle */}
         <button
           type="button"
@@ -139,7 +139,7 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
             width={24}
             height={24}
             className="rounded-sm"
-            style={{ filter: "hue-rotate(-30deg) saturate(0.8)" }}
+            style={{  }}
           />
           <span className="text-base font-bold text-brand">
             TrustGraph
@@ -236,7 +236,7 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
           {/* Sidebar footer */}
           <div className={`border-t border-border px-4 py-3 ${sidebarCollapsed ? "lg:hidden" : ""}`}>
             <div className="text-xs text-muted-foreground">
-              &copy; {currentYear} Verisum &middot; TrustGraph&trade;
+              &copy; {currentYear} Verisum Ltd. &middot; TrustGraph&trade;
             </div>
           </div>
         </aside>
