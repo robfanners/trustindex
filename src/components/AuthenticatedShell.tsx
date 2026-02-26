@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 
 type AuthenticatedShellProps = {
@@ -13,41 +14,49 @@ const SIDEBAR_KEY = "ti_sidebar_collapsed";
 
 const navLinks = [
   { label: "Dashboard", href: "/dashboard", icon: "home" },
-  { label: "Create Survey", href: "/dashboard/surveys/new", icon: "plus" },
-  { label: "My Surveys", href: "/dashboard#surveys", icon: "list" },
-  { label: "Systems", href: "/dashboard?tab=systems", icon: "cpu" },
+  { label: "TrustOrg Surveys", href: "/trustorg", icon: "clipboard" },
+  { label: "TrustSys Assessments", href: "/trustsys", icon: "cpu" },
+  { label: "Actions", href: "/actions", icon: "check-circle" },
+  { label: "Reports", href: "/reports", icon: "file-text" },
   { label: "Settings", href: "/dashboard/settings", icon: "settings" },
 ];
 
 function NavIcon({ icon }: { icon: string }) {
+  const cls = "w-5 h-5 shrink-0";
   switch (icon) {
     case "home":
       return (
-        <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1" />
         </svg>
       );
-    case "plus":
+    case "clipboard":
       return (
-        <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
-        </svg>
-      );
-    case "list":
-      return (
-        <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
         </svg>
       );
     case "cpu":
       return (
-        <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 3v2m6-2v2M9 19v2m6-2v2M3 9h2m-2 6h2m14-6h2m-2 6h2M7 7h10v10H7V7z" />
+        </svg>
+      );
+    case "check-circle":
+      return (
+        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      );
+    case "file-text":
+      return (
+        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
       );
     case "settings":
       return (
-        <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z" />
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
@@ -59,7 +68,6 @@ function NavIcon({ icon }: { icon: string }) {
 
 function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const { user, profile, signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -89,14 +97,16 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
 
   const activeNav = useMemo(() => {
     if (pathname.startsWith("/dashboard/settings")) return "/dashboard/settings";
-    if (pathname === "/dashboard") {
-      const tab = searchParams.get("tab");
-      if (tab === "systems") return "/dashboard?tab=systems";
-      return "/dashboard";
-    }
-    if (pathname.startsWith("/dashboard/surveys/new")) return "/dashboard/surveys/new";
+    if (pathname === "/dashboard") return "/dashboard";
+    if (pathname.startsWith("/trustorg")) return "/trustorg";
+    if (pathname.startsWith("/trustsys")) return "/trustsys";
+    if (pathname.startsWith("/actions")) return "/actions";
+    if (pathname.startsWith("/reports")) return "/reports";
+    // Legacy routes — highlight closest new nav item
+    if (pathname.startsWith("/dashboard/surveys")) return "/trustorg";
+    if (pathname.startsWith("/systems")) return "/trustsys";
     return pathname;
-  }, [pathname, searchParams]);
+  }, [pathname]);
 
   return (
     <div className="min-h-screen bg-muted flex flex-col">
@@ -119,7 +129,7 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
         </button>
 
         {/* Branding */}
-        <a
+        <Link
           href="/dashboard"
           className="flex items-center gap-2 hover:opacity-80 transition-opacity"
         >
@@ -134,7 +144,7 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
           <span className="text-base font-bold text-brand">
             TrustGraph
           </span>
-        </a>
+        </Link>
 
         {/* Right side: user info */}
         <div className="ml-auto flex items-center gap-3">
@@ -180,7 +190,7 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
             {navLinks.map((link) => {
               const isActive = activeNav === link.href;
               return (
-                <a
+                <Link
                   key={link.label}
                   href={link.href}
                   title={sidebarCollapsed ? link.label : undefined}
@@ -198,7 +208,7 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
                   <span className={sidebarCollapsed ? "lg:hidden" : ""}>
                     {link.label}
                   </span>
-                </a>
+                </Link>
               );
             })}
           </nav>
@@ -243,9 +253,5 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
 }
 
 export default function AuthenticatedShell({ children }: AuthenticatedShellProps) {
-  return (
-    <Suspense>
-      <AuthenticatedShellInner>{children}</AuthenticatedShellInner>
-    </Suspense>
-  );
+  return <AuthenticatedShellInner>{children}</AuthenticatedShellInner>;
 }

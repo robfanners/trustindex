@@ -1,0 +1,1154 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2867
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 .SFNS-Semibold;\f1\fnil\fcharset0 .SFNS-Regular;\f2\fnil\fcharset0 .SFNS-RegularItalic;
+\f3\fswiss\fcharset0 Helvetica;\f4\froman\fcharset0 TimesNewRomanPSMT;\f5\fmodern\fcharset0 Courier;
+\f6\fnil\fcharset0 .SFNS-Bold;}
+{\colortbl;\red255\green255\blue255;\red14\green14\blue14;\red0\green0\blue0;}
+{\*\expandedcolortbl;;\cssrgb\c6700\c6700\c6700;\csgray\c0;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs44 \cf2 FILE 3 \'97 TRUSTGRAPH 2.0
+\f1\b0\fs28 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs34 \cf2 Data Model & Supabase Architecture Specification
+\f1\b0\fs28 \cf2 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\i \cf2 (Persistence, Versioning, Actions Engine, Relational Roll-Up & Enterprise Controls)
+\f1\i0 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs34 \cf2 Intro Context (Paste This Above the Spec in Cursor)
+\f1\b0\fs28 \cf2 \
+\
+We are redesigning the TrustGraph backend architecture to fix critical structural flaws:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Assessments currently do not persist properly.\
+	\'95	Results are overwritten or lost.\
+	\'95	No version history.\
+	\'95	No structured Action engine.\
+	\'95	No drift detection.\
+	\'95	No stability logic.\
+	\'95	No relational TrustGraph roll-up.\
+	\'95	No enterprise audit trail.\
+\
+TrustGraph must operate as a continuous governance system with:\
+	\'95	Full persistence\
+	\'95	Versioned assessments\
+	\'95	Action tracking\
+	\'95	Drift analysis\
+	\'95	Stability heuristics\
+	\'95	Escalation flags\
+	\'95	Reassessment cadence\
+	\'95	Audit logging\
+	\'95	Future-ready HAPP integration\
+\
+This spec defines the required Supabase schema, relationships, and logic foundations.\
+\
+If existing schema conflicts with this design, this design takes precedence.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs44 \cf2 1. Core Architecture Principles
+\f1\b0\fs28 \
+\pard\tqr\tx260\tx420\li420\fi-420\sl324\slmult1\sb240\partightenfactor0
+
+\f4 \cf2 	1.	Never overwrite an assessment.\
+	2.	Every completion creates a new versioned record.\
+	3.	Recommendations must become structured Action records.\
+	4.	All state transitions must be logged.\
+	5.	TrustGraph Health must be computed relationally.\
+	6.	Data must support future multi-system expansion.\
+	7.	Audit trail must be immutable.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs44 \cf2 2. Core Entities Overview
+\f1\b0\fs28 \
+\
+Required top-level tables:
+\f3\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f5\fs28 \cf3 organisations\
+users\
+trustorg_surveys\
+trustorg_runs\
+trustsys_assessments\
+trustsys_runs\
+dimensions\
+responses\
+actions\
+action_updates\
+drift_events\
+escalations\
+reassessment_policies\
+audit_logs
+\f3\fs24 \cf0 \
+\
+\
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs44 \cf2 3. Organisations
+\f1\b0\fs28 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs30 \cf2 organisations
+\f3\b0\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f6\b\fs26 \cf2 field
+\f3\b0\fs24 \cf0 	
+\f6\b\fs26 \cf2 type
+\f3\b0\fs24 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs26 \cf2 id
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid (PK)
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 name
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 text
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 created_at
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 timestamp
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 updated_at
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 timestamp
+\f3\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf2 All data scoped to organisation.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs44 \cf2 4. Users
+\f1\b0\fs28 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs30 \cf2 users
+\f3\b0\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f6\b\fs26 \cf2 field
+\f3\b0\fs24 \cf0 	
+\f6\b\fs26 \cf2 type
+\f3\b0\fs24 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs26 \cf2 id
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid (PK)
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 organisation_id
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid (FK)
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 role
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 enum (exec, operator, risk, admin)
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 created_at
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 timestamp
+\f3\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf2 Role controls view permissions.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs44 \cf2 5. TrustOrg Structure
+\f1\b0\fs28 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs30 \cf2 trustorg_surveys
+\f1\b0\fs28 \cf2 \
+\
+Represents the survey template per organisation.
+\f3\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f6\b\fs26 \cf2 field
+\f3\b0\fs24 \cf0 	
+\f6\b\fs26 \cf2 type
+\f3\b0\fs24 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs26 \cf2 id
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid (PK)
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 organisation_id
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 status
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 enum (active, archived)
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 created_at
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 timestamp
+\f3\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs30 \cf2 trustorg_runs
+\f1\b0\fs28 \cf2 \
+\
+Each completed or in-progress survey = one run.
+\f3\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f6\b\fs26 \cf2 field
+\f3\b0\fs24 \cf0 	
+\f6\b\fs26 \cf2 type
+\f3\b0\fs24 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs26 \cf2 id
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid (PK)
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 survey_id
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid (FK)
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 version_number
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 integer
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 status
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 enum (not_started, in_progress, completed, stable, expired)
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 score
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 numeric
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 stability_status
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 enum (provisional, stable)
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 started_at
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 timestamp
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 completed_at
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 timestamp
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 created_by
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid (FK users)
+\f3\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf2 Important:\
+Never update a prior run\'92s score.\
+New run = new record.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs44 \cf2 6. TrustSys Structure
+\f1\b0\fs28 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs30 \cf2 trustsys_assessments
+\f1\b0\fs28 \cf2 \
+\
+Represents a system being assessed.
+\f3\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f6\b\fs26 \cf2 field
+\f3\b0\fs24 \cf0 	
+\f6\b\fs26 \cf2 type
+\f3\b0\fs24 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs26 \cf2 id
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid (PK)
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 organisation_id
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 system_name
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 text
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 autonomy_level
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 numeric
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 criticality_level
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 numeric
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 created_at
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 timestamp
+\f3\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf2 Allows future multiple systems per org.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs30 \cf2 trustsys_runs
+\f1\b0\fs28 \cf2 \
+\
+Each assessment version.
+\f3\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f6\b\fs26 \cf2 field
+\f3\b0\fs24 \cf0 	
+\f6\b\fs26 \cf2 type
+\f3\b0\fs24 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs26 \cf2 id
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid (PK)
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 assessment_id
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid (FK)
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 version_number
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 integer
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 status
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 enum (not_started, in_progress, completed, stable, expired)
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 score
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 numeric
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 stability_status
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 enum (provisional, stable)
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 variance_last_3
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 numeric
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 started_at
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 timestamp
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 completed_at
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 timestamp
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 created_by
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid
+\f3\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs44 \cf2 7. Dimensions Table
+\f1\b0\fs28 \
+\
+Shared across Org & Sys.\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs30 \cf2 dimensions
+\f3\b0\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f6\b\fs26 \cf2 field
+\f3\b0\fs24 \cf0 	
+\f6\b\fs26 \cf2 type
+\f3\b0\fs24 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs26 \cf2 id
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid (PK)
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 type
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 enum (org, sys)
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 name
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 text
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 weight
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 numeric
+\f3\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs44 \cf2 8. Responses Table
+\f1\b0\fs28 \
+\
+Stores raw question responses.\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs30 \cf2 responses
+\f3\b0\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f6\b\fs26 \cf2 field
+\f3\b0\fs24 \cf0 	
+\f6\b\fs26 \cf2 type
+\f3\b0\fs24 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs26 \cf2 id
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid (PK)
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 run_id
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 run_type
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 enum (org, sys)
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 dimension_id
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 value
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 numeric
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 created_at
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 timestamp
+\f3\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs44 \cf2 9. Action Engine (Critical Layer)
+\f1\b0\fs28 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs30 \cf2 actions
+\f3\b0\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f6\b\fs26 \cf2 field
+\f3\b0\fs24 \cf0 	
+\f6\b\fs26 \cf2 type
+\f3\b0\fs24 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs26 \cf2 id
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid (PK)
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 organisation_id
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 linked_run_id
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 linked_run_type
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 enum (org, sys)
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 dimension_id
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 title
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 text
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 description
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 text
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 severity
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 enum (low, medium, high, critical)
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 owner_id
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 due_date
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 timestamp
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 status
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 enum (open, in_progress, blocked, done)
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 evidence_url
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 text
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 created_at
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 timestamp
+\f3\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs30 \cf2 action_updates
+\f1\b0\fs28 \cf2 \
+\
+Tracks all changes.
+\f3\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f6\b\fs26 \cf2 field
+\f3\b0\fs24 \cf0 	
+\f6\b\fs26 \cf2 type
+\f3\b0\fs24 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs26 \cf2 id
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 action_id
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 update_type
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 text
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 previous_value
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 jsonb
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 new_value
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 jsonb
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 updated_at
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 timestamp
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 updated_by
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid
+\f3\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf2 Never delete action updates.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs44 \cf2 10. Drift Detection
+\f1\b0\fs28 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs30 \cf2 drift_events
+\f3\b0\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f6\b\fs26 \cf2 field
+\f3\b0\fs24 \cf0 	
+\f6\b\fs26 \cf2 type
+\f3\b0\fs24 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs26 \cf2 id
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 run_id
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 run_type
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 enum (org, sys)
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 delta_score
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 numeric
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 dimension_id
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 drift_flag
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 boolean
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 created_at
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 timestamp
+\f3\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf2 Drift triggered when:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Score delta > threshold\
+	\'95	Dimension category shift\
+	\'95	Autonomy increase + control drop\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs44 \cf2 11. Stability Logic
+\f1\b0\fs28 \
+\
+Computed server-side:\
+\
+For TrustSys:\
+\
+Stable if:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	COUNT(completed runs) >= 3\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\li260\sl324\slmult1\pardirnatural\partightenfactor0
+\cf2 AND\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	variance_last_3 < tolerance\
+\
+Update stability_status automatically.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs44 \cf2 12. Escalations
+\f1\b0\fs28 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs30 \cf2 escalations
+\f3\b0\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f6\b\fs26 \cf2 field
+\f3\b0\fs24 \cf0 	
+\f6\b\fs26 \cf2 type
+\f3\b0\fs24 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs26 \cf2 id
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 organisation_id
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 linked_run_id
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 reason
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 text
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 severity
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 enum
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 resolved
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 boolean
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 created_at
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 timestamp
+\f3\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf2 Triggers include:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Low score\
+	\'95	High autonomy + low governance\
+	\'95	Critical overdue actions\
+	\'95	Expired reassessment\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs44 \cf2 13. Reassessment Policies
+\f1\b0\fs28 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs30 \cf2 reassessment_policies
+\f3\b0\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f6\b\fs26 \cf2 field
+\f3\b0\fs24 \cf0 	
+\f6\b\fs26 \cf2 type
+\f3\b0\fs24 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs26 \cf2 id
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 organisation_id
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 run_type
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 enum (org, sys)
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 frequency_days
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 integer
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 last_completed
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 timestamp
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 next_due
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 timestamp
+\f3\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf2 Cron job checks for expiry.\
+\
+If overdue:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Mark latest run status = expired\
+	\'95	Trigger escalation\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs44 \cf2 14. Audit Logs (Immutable)
+\f1\b0\fs28 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs30 \cf2 audit_logs
+\f3\b0\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f6\b\fs26 \cf2 field
+\f3\b0\fs24 \cf0 	
+\f6\b\fs26 \cf2 type
+\f3\b0\fs24 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs26 \cf2 id
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 organisation_id
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 entity_type
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 text
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 entity_id
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 action_type
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 text
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 performed_by
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 uuid
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 metadata
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 jsonb
+\f3\fs24 \cf0 \
+
+\f1\fs26 \cf2 created_at
+\f3\fs24 \cf0 	
+\f1\fs26 \cf2 timestamp
+\f3\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf2 Must log:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Assessment start\
+	\'95	Completion\
+	\'95	Action creation\
+	\'95	Action update\
+	\'95	Evidence upload\
+	\'95	Escalation trigger\
+	\'95	Reassessment expiry\
+\
+No deletion allowed.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs44 \cf2 15. TrustGraph Health Calculation (Server-Side View)
+\f1\b0\fs28 \
+\
+Create materialized view:\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs30 \cf2 trustgraph_health_view
+\f1\b0\fs28 \cf2 \
+\
+Computed fields:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	org_latest_score\
+	\'95	sys_latest_score\
+	\'95	open_critical_actions\
+	\'95	overdue_actions\
+	\'95	drift_flags\
+	\'95	escalation_count\
+	\'95	expired_flags\
+	\'95	relational_risk_score\
+\
+Relational Risk Example Logic:\
+\
+If:\
+sys_autonomy_high AND org_governance_low\
+\uc0\u8594  add relational penalty\
+\
+If:\
+critical_actions_open > threshold\
+\uc0\u8594  subtract weight\
+\
+TrustGraph Health \uc0\u8800  simple average.\
+\
+Must support weighted relational model.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs44 \cf2 16. Permissions & RLS
+\f1\b0\fs28 \
+\
+Use Supabase Row Level Security:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Org isolation\
+	\'95	Role-based read/write\
+	\'95	Only admin can delete drafts\
+	\'95	No deletion of completed runs\
+	\'95	No deletion of audit_logs\
+	\'95	No deletion of drift_events\
+\
+Enterprise integrity required.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs44 \cf2 17. Future HAPP Integration Hooks
+\f1\b0\fs28 \
+\
+Prepare nullable fields:\
+\
+In trustsys_assessments:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	happ_enforced boolean\
+	\'95	happ_proof_id text\
+\
+In actions:\
+	\'95	enforcement_available boolean\
+	\'95	enforcement_type enum (policy, provenance, runtime)\
+\
+This allows upsell without schema refactor.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs44 \cf2 18. Non-Negotiables
+\f1\b0\fs28 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	No assessment overwrite.\
+	\'95	No result disappearance.\
+	\'95	No action without log.\
+	\'95	No relational health without drift.\
+	\'95	No enterprise claim without audit trail.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs44 \cf2 Final Architectural Intention
+\f1\b0\fs28 \
+\
+TrustGraph must behave like:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	A governance ledger.\
+	\'95	A living trust registry.\
+	\'95	A risk instrumentation system.\
+	\'95	A board-level control surface.\
+\
+Not:\
+	\'95	A survey storage app.\
+\
+This architecture enables:\
+	\'95	Continuous trust measurement\
+	\'95	Versioned governance posture\
+	\'95	Operational action tracking\
+	\'95	Relational trust intelligence\
+	\'95	Future HAPP enforcement layer\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+
+\f1\fs28 \cf2 \
+\
+Your move.}

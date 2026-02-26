@@ -1,0 +1,1364 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2867
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 .SFNS-Regular;\f1\fnil\fcharset0 .SFNS-RegularItalic;\f2\fnil\fcharset0 HelveticaNeue-Bold;
+\f3\fswiss\fcharset0 Helvetica;\f4\fnil\fcharset0 .SFNS-Semibold;\f5\froman\fcharset0 TimesNewRomanPSMT;
+\f6\fnil\fcharset0 .AppleSystemUIFontMonospaced-Regular;\f7\fmodern\fcharset0 Courier;}
+{\colortbl;\red255\green255\blue255;\red14\green14\blue14;\red13\green100\blue1;\red0\green0\blue0;
+\red151\green0\blue126;\red181\green0\blue19;\red20\green0\blue196;}
+{\*\expandedcolortbl;;\cssrgb\c6700\c6700\c6700;\cssrgb\c0\c45490\c0;\csgray\c0;
+\cssrgb\c66667\c5098\c56863;\cssrgb\c76863\c10196\c8627;\cssrgb\c10980\c0\c81176;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 Below is a formal, 
+\f1\i \cf2 implementable
+\f0\i0 \cf2  relational scoring model you can use as the mathematical backbone for TrustGraph 2.0. It\'92s designed to be:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f2\b \cf2 Relational
+\f0\b0 \cf2  (Org \'d7 Sys interaction matters)\
+	\'95	
+\f2\b \cf2 Action-aware
+\f0\b0 \cf2  (open/overdue work penalises)\
+	\'95	
+\f2\b \cf2 Time-aware
+\f0\b0 \cf2  (drift + expiry penalises)\
+	\'95	
+\f2\b \cf2 Confidence-aware
+\f0\b0 \cf2  (stability/provisional affects weight)\
+	\'95	
+\f2\b \cf2 Extensible
+\f0\b0 \cf2  (add more graphs/layers later)\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b\fs34 \cf2 1) Notation and Inputs
+\f0\b0\fs28 \cf2 \
+\
+Assume an organisation has:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	One 
+\f2\b \cf2 TrustOrg
+\f0\b0 \cf2  run at time 
+\f3\fs24 \cf0 t
+\f0\fs28 \cf2 : 
+\f3\fs24 \cf0 O_t \\in [0,100]
+\f0\fs28 \cf2 \
+	\'95	One or more 
+\f2\b \cf2 TrustSys
+\f0\b0 \cf2  assessments (systems indexed by 
+\f3\fs24 \cf0 s \\in S
+\f0\fs28 \cf2 ):\
+\pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Latest system score: 
+\f3\fs24 \cf0 S_\{s,t\} \\in [0,100]
+\f0\fs28 \cf2 \
+	\'95	System autonomy level: 
+\f3\fs24 \cf0 A_\{s\} \\in [0,1]
+\f0\fs28 \cf2  (0 = low autonomy, 1 = high autonomy)\
+	\'95	System criticality: 
+\f3\fs24 \cf0 C_\{s\} \\in [0,1]
+\f0\fs28 \cf2  (0 = low impact, 1 = high impact)\
+	\'95	Stability / confidence factor: 
+\f3\fs24 \cf0 \\kappa_\{s,t\} \\in (0,1]
+\f0\fs28 \cf2 \
+\pard\tqr\tx900\tx1060\li1060\fi-1060\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Provisional -> lower 
+\f3\fs24 \cf0 \\kappa
+\f0\fs28 \cf2  (e.g. 0.7)\
+	\'95	Stable -> 
+\f3\fs24 \cf0 \\kappa = 1.0
+\f0\fs28 \cf2 \
+\
+Actions and governance operations:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Total open actions count: 
+\f3\fs24 \cf0 N_\{\\text\{open\},t\}
+\f0\fs28 \cf2 \
+	\'95	Total overdue actions count: 
+\f3\fs24 \cf0 N_\{\\text\{over\},t\}
+\f0\fs28 \cf2 \
+	\'95	Total critical overdue actions count: 
+\f3\fs24 \cf0 N_\{\\text\{critOver\},t\}
+\f0\fs28 \cf2 \
+\
+Drift:\
+	\'95	Org drift magnitude: 
+\f3\fs24 \cf0 D^O_t \\in [0,1]
+\f0\fs28 \cf2 \
+	\'95	Sys drift magnitude per system: 
+\f3\fs24 \cf0 D^S_\{s,t\} \\in [0,1]
+\f0\fs28 \cf2 \
+\
+Cadence / expiry:\
+	\'95	Org expiry indicator: 
+\f3\fs24 \cf0 E^O_t \\in \\\{0,1\\\}
+\f0\fs28 \cf2 \
+	\'95	Sys expiry indicator per system: 
+\f3\fs24 \cf0 E^S_\{s,t\} \\in \\\{0,1\\\}
+\f0\fs28 \cf2 \
+\
+Optional (recommended): dimension-level vectors:\
+	\'95	TrustOrg dimension vector 
+\f3\fs24 \cf0 \\mathbf\{o\}_t = (o_\{1,t\},...,o_\{m,t\})
+\f0\fs28 \cf2 , each 
+\f3\fs24 \cf0 \\in [0,100]
+\f0\fs28 \cf2 \
+	\'95	TrustSys dimension vector 
+\f3\fs24 \cf0 \\mathbf\{s\}_\{s,t\} = (s_\{1,s,t\},...,s_\{n,s,t\})
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b\fs34 \cf2 2) Normalisation
+\f0\b0\fs28 \cf2 \
+\
+Convert raw scores to 
+\f3\fs24 \cf0 [0,1]
+\f0\fs28 \cf2 :\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \\tilde\{O\}_t = \\frac\{O_t\}\{100\}, \\quad \\tilde\{S\}_\{s,t\} = \\frac\{S_\{s,t\}\}\{100\}
+\f0\fs28 \cf2 \
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b\fs34 \cf2 3) Base Org Score
+\f0\b0\fs28 \cf2 \
+\
+Org is a single latest run with optional confidence factor:\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 B^O_t = \\tilde\{O\}_t \\cdot \\kappa^O_t
+\f0\fs28 \cf2 \
+\
+(If you want TrustOrg stability too, set 
+\f3\fs24 \cf0 \\kappa^O_t \\in (0,1]
+\f0\fs28 \cf2 , else 
+\f3\fs24 \cf0 \\kappa^O_t = 1
+\f0\fs28 \cf2 .)\
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b\fs34 \cf2 4) Base Sys Portfolio Score (weighted across systems)
+\f0\b0\fs28 \cf2 \
+\
+Define a system weight 
+\f3\fs24 \cf0 w_s
+\f0\fs28 \cf2  driven by autonomy and criticality:\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 w_s = \\frac\{\\exp(\\lambda ( \\alpha A_s + \\beta C_s ))\}\{\\sum_\{j \\in S\}\\exp(\\lambda (\\alpha A_j + \\beta C_j))\}
+\f0\fs28 \cf2 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f3\fs24 \cf0 \\alpha,\\beta \\ge 0
+\f0\fs28 \cf2  (defaults: 
+\f3\fs24 \cf0 \\alpha=1, \\beta=1
+\f0\fs28 \cf2 )\
+	\'95	
+\f3\fs24 \cf0 \\lambda
+\f0\fs28 \cf2  controls how sharply you prioritise high-risk systems (default: 
+\f3\fs24 \cf0 \\lambda=2
+\f0\fs28 \cf2 )\
+\
+Then:\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 B^S_t = \\sum_\{s \\in S\} w_s \\cdot (\\tilde\{S\}_\{s,t\} \\cdot \\kappa_\{s,t\})
+\f0\fs28 \cf2 \
+\
+So high autonomy + high criticality systems dominate the portfolio.\
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b\fs34 \cf2 5) Relational Mismatch Penalty (the \'93Graph\'94 bit)
+\f0\b0\fs28 \cf2 \
+\
+The key idea: low Org governance 
+\f1\i \cf2 amplifies
+\f0\i0 \cf2  risk of high autonomy systems even if Sys looks \'93okay\'94.\
+\
+Define mismatch per system:\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 M_\{s,t\} = A_s \\cdot C_s \\cdot \\max(0, \\tilde\{S\}_\{s,t\} - B^O_t)
+\f0\fs28 \cf2 \
+\
+Interpretation:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	If system trust is \'93higher\'94 than org governance readiness, there\'92s a governance gap.\
+	\'95	Gap matters more when autonomy and criticality are high.\
+\
+Aggregate mismatch:\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 M_t = \\sum_\{s \\in S\} w_s \\cdot M_\{s,t\}
+\f0\fs28 \cf2 \
+\
+Convert to penalty via saturating function (bounded 0..1):\
+\
+
+\f3\fs24 \cf0 P^\{\\text\{rel\}\}_t = 1 - \\exp(-\\gamma M_t)
+\f0\fs28 \cf2 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f3\fs24 \cf0 \\gamma
+\f0\fs28 \cf2  default ~ 3 to make mismatch visible quickly.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b\fs34 \cf2 6) Actions Penalty (operational reality)
+\f0\b0\fs28 \cf2 \
+\
+Use a bounded penalty that grows with overdue and critical overdue actions.\
+\
+Define weighted backlog:\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 B^\{\\text\{act\}\}_t = \\eta_1 N_\{\\text\{open\},t\} + \\eta_2 N_\{\\text\{over\},t\} + \\eta_3 N_\{\\text\{critOver\},t\}
+\f0\fs28 \cf2 \
+\
+Default weights:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f3\fs24 \cf0 \\eta_1 = 0.05
+\f0\fs28 \cf2 \
+	\'95	
+\f3\fs24 \cf0 \\eta_2 = 0.15
+\f0\fs28 \cf2 \
+	\'95	
+\f3\fs24 \cf0 \\eta_3 = 0.35
+\f0\fs28 \cf2 \
+\
+Convert to bounded penalty:\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 P^\{\\text\{act\}\}_t = 1 - \\exp(-B^\{\\text\{act\}\}_t)
+\f0\fs28 \cf2 \
+\
+This gives diminishing returns (doesn\'92t go below zero, doesn\'92t explode).\
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b\fs34 \cf2 7) Drift Penalty (trust in motion)
+\f0\b0\fs28 \cf2 \
+\
+Aggregate drift:\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 D_t = \\rho D^O_t + (1-\\rho)\\sum_\{s \\in S\} w_s D^S_\{s,t\}
+\f0\fs28 \cf2 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f3\fs24 \cf0 \\rho \\in [0,1]
+\f0\fs28 \cf2  (default 0.4: sys drift matters slightly more)\
+\
+Penalty:\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 P^\{\\text\{drift\}\}_t = D_t
+\f0\fs28 \cf2 \
+\
+(Drift is already 0..1; keep it linear.)\
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b\fs34 \cf2 8) Cadence / Expiry Penalty (trust expires)
+\f0\b0\fs28 \cf2 \
+\
+Expiry aggregation:\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 E_t = \\xi E^O_t + (1-\\xi)\\sum_\{s \\in S\} w_s E^S_\{s,t\}
+\f0\fs28 \cf2 \
+\
+Default 
+\f3\fs24 \cf0 \\xi=0.5
+\f0\fs28 \cf2 .\
+\
+Penalty:\
+\
+
+\f3\fs24 \cf0 P^\{\\text\{exp\}\}_t = E_t
+\f0\fs28 \cf2 \
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b\fs34 \cf2 9) Compose TrustGraph Health Score
+\f0\b0\fs28 \cf2 \
+\
+First define the 
+\f1\i \cf2 base health
+\f0\i0 \cf2  as a convex combination of org and sys:\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 H^\{\\text\{base\}\}_t = \\mu B^O_t + (1-\\mu)B^S_t
+\f0\fs28 \cf2 \
+\
+Default 
+\f3\fs24 \cf0 \\mu = 0.5
+\f0\fs28 \cf2  (equal weighting), but you can tune (e.g. 0.6 org if you\'92re selling governance-first).\
+\
+Then apply penalties multiplicatively (clean and intuitive):\
+\
+
+\f3\fs24 \cf0 H_t = H^\{\\text\{base\}\}_t \\cdot (1 - \\omega_1 P^\{\\text\{rel\}\}_t)\\cdot (1 - \\omega_2 P^\{\\text\{act\}\}_t)\\cdot(1 - \\omega_3 P^\{\\text\{drift\}\}_t)\\cdot(1 - \\omega_4 P^\{\\text\{exp\}\}_t)
+\f0\fs28 \cf2 \
+\
+Where 
+\f3\fs24 \cf0 \\omega_i \\in [0,1]
+\f0\fs28 \cf2  are penalty weights.\
+\
+Recommended defaults:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f3\fs24 \cf0 \\omega_1 = 0.35
+\f0\fs28 \cf2  (relational mismatch is core differentiation)\
+	\'95	
+\f3\fs24 \cf0 \\omega_2 = 0.30
+\f0\fs28 \cf2  (actions matter a lot)\
+	\'95	
+\f3\fs24 \cf0 \\omega_3 = 0.20
+\f0\fs28 \cf2  (drift important)\
+	\'95	
+\f3\fs24 \cf0 \\omega_4 = 0.25
+\f0\fs28 \cf2  (expiry is a trust-killer)\
+\
+Finally convert back to 0..100:\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \\text\{TrustGraphHealth\}_t = 100 \\cdot H_t
+\f0\fs28 \cf2 \
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b\fs34 \cf2 10) Severity Bands (for enterprise UX)
+\f0\b0\fs28 \cf2 \
+\
+Define bands:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f2\b \cf2 80\'96100
+\f0\b0 \cf2 : Healthy\
+	\'95	
+\f2\b \cf2 65\'9679
+\f0\b0 \cf2 : Watch\
+	\'95	
+\f2\b \cf2 50\'9664
+\f0\b0 \cf2 : At Risk\
+	\'95	
+\f2\b \cf2 < 50
+\f0\b0 \cf2 : Critical\
+\
+Additionally show 
+\f1\i \cf2 drivers
+\f0\i0 \cf2 :\
+	\'95	Relational mismatch driver %\
+	\'95	Action backlog driver %\
+	\'95	Drift driver %\
+	\'95	Expiry driver %\
+\
+This makes the score explainable (board-ready).\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b\fs34 \cf2 11) Escalation Rules (deterministic triggers)
+\f0\b0\fs28 \cf2 \
+\
+Escalate if any of the following:\
+\pard\tqr\tx260\tx420\li420\fi-420\sl324\slmult1\sb240\partightenfactor0
+
+\f5 \cf2 	1.	Health below threshold:\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \\text\{TrustGraphHealth\}_t < \\tau_H \\quad (\\text\{e.g. \} \\tau_H = 60)
+\f0\fs28 \cf2 \
+\pard\tqr\tx260\tx420\li420\fi-420\sl324\slmult1\sb240\partightenfactor0
+
+\f5 \cf2 	2.	Critical overdue actions:\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 N_\{\\text\{critOver\},t\} \\ge 1
+\f0\fs28 \cf2 \
+\pard\tqr\tx260\tx420\li420\fi-420\sl324\slmult1\sb240\partightenfactor0
+
+\f5 \cf2 	3.	Relational mismatch too high:\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 P^\{\\text\{rel\}\}_t > \\tau_R \\quad (\\text\{e.g. \} \\tau_R = 0.25)
+\f0\fs28 \cf2 \
+\pard\tqr\tx260\tx420\li420\fi-420\sl324\slmult1\sb240\partightenfactor0
+
+\f5 \cf2 	4.	Drift too high:\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 P^\{\\text\{drift\}\}_t > \\tau_D \\quad (\\text\{e.g. \} \\tau_D = 0.20)
+\f0\fs28 \cf2 \
+\pard\tqr\tx260\tx420\li420\fi-420\sl324\slmult1\sb240\partightenfactor0
+
+\f5 \cf2 	5.	Any expiry:\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 E^O_t=1 \\ \\text\{or\}\\ \\exists s: E^S_\{s,t\}=1
+\f0\fs28 \cf2 \
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b\fs34 \cf2 12) What \'93Drift\'94 Means (practical definition)
+\f0\b0\fs28 \cf2 \
+\
+You can compute drift per run using either:\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b\fs30 \cf2 Option A (score delta)
+\f0\b0\fs28 \cf2 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 D^S_\{s,t\} = \\min(1, \\frac\{|S_\{s,t\}-S_\{s,t-1\}|\}\{\\Delta_\{\\max\}\})
+\f0\fs28 \cf2 \
+with 
+\f3\fs24 \cf0 \\Delta_\{\\max\}
+\f0\fs28 \cf2  e.g. 20 points.\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b\fs30 \cf2 Option B (dimension vector distance \'97 better)
+\f0\b0\fs28 \cf2 \
+\
+Let normalised vectors be in 0..1:\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \\tilde\{\\mathbf\{s\}\}_\{s,t\} = \\frac\{1\}\{100\}\\mathbf\{s\}_\{s,t\}
+\f0\fs28 \cf2 \
+Then:\
+
+\f3\fs24 \cf0 D^S_\{s,t\} = \\min\\left(1, \\frac\{\\|\\tilde\{\\mathbf\{s\}\}_\{s,t\}-\\tilde\{\\mathbf\{s\}\}_\{s,t-1\}\\|_1\}\{n \\cdot \\delta\}\\right)
+\f0\fs28 \cf2 \
+Where 
+\f3\fs24 \cf0 \\delta
+\f0\fs28 \cf2  is tolerance per dimension (e.g. 0.08).\
+\
+This catches hidden changes even if overall score stays similar.\
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b\fs34 \cf2 13) Why this works (and why it\'92s defendable)
+\f0\b0\fs28 \cf2 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	It is 
+\f2\b \cf2 bounded
+\f0\b0 \cf2  (0..100 always)\
+	\'95	It is 
+\f2\b \cf2 explainable
+\f0\b0 \cf2  (base score minus clear penalties)\
+	\'95	It is 
+\f2\b \cf2 relational
+\f0\b0 \cf2  (mismatch is explicitly modelled)\
+	\'95	It is 
+\f2\b \cf2 enterprise-real
+\f0\b0 \cf2  (actions + expiry matter)\
+	\'95	It is 
+\f2\b \cf2 extensible
+\f0\b0 \cf2  (add more penalty terms / graphs later)\
+	\'95	It supports your differentiation: 
+\f2\b \cf2 governance as continuous assurance
+\f0\b0 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b\fs34 \cf2 14) Implementation Notes (fast path)
+\f0\b0\fs28 \cf2 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Compute 
+\f3\fs24 \cf0 H_t
+\f0\fs28 \cf2  nightly + on assessment completion (materialized view or server function).\
+	\'95	Store driver breakdowns for UI:\
+\pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f3\fs24 \cf0 H^\{\\text\{base\}\}_t
+\f0\fs28 \cf2 \
+	\'95	
+\f3\fs24 \cf0 P^\{\\text\{rel\}\}_t, P^\{\\text\{act\}\}_t, P^\{\\text\{drift\}\}_t, P^\{\\text\{exp\}\}_t
+\f0\fs28 \cf2 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Show top 3 contributors (largest penalty deltas).\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+Now to use as a guide for coding:\
+\pard\tqr\tx260\tx420\li420\fi-420\sl324\slmult1\sb240\partightenfactor0
+
+\f5 \cf2 	- A 
+\f2\b single SQL-friendly pseudo-implementation
+\f0\b0  of this (Supabase function + view), and\
+And 
+\f5 A 
+\f2\b calibration guide
+\f0\b0 : how to choose 
+\f3\fs24 \cf0 \\mu,\\omega,\\gamma,\\lambda
+\f0\fs28 \cf2  from early pilot data so scores \'93feel right\'94 and aren\'92t gamed.\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+\cf2 Great \'97 here are 
+\f2\b \cf2 (1) a SQL-friendly implementation blueprint for Supabase/Postgres
+\f0\b0 \cf2  and 
+\f2\b \cf2 (2) a calibration guide
+\f0\b0 \cf2  you can use with pilot data.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b\fs34 \cf2 1) SQL-friendly implementation blueprint (Supabase/Postgres)
+\f0\b0\fs28 \cf2 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b\fs30 \cf2 Assumptions (map to your schema from File 3)
+\f0\b0\fs28 \cf2 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Latest TrustOrg run per org in 
+\f6 \cf2 trustorg_runs
+\f0 \cf2  with 
+\f6 \cf2 score
+\f0 \cf2 , 
+\f6 \cf2 stability_status
+\f0 \cf2 , 
+\f6 \cf2 status
+\f0 \cf2 , 
+\f6 \cf2 completed_at
+\f0 \cf2 \
+	\'95	Latest TrustSys run per system in 
+\f6 \cf2 trustsys_runs
+\f0 \cf2  joined to 
+\f6 \cf2 trustsys_assessments
+\f0 \cf2  with 
+\f6 \cf2 autonomy_level
+\f0 \cf2 , 
+\f6 \cf2 criticality_level
+\f0 \cf2 \
+	\'95	Actions in 
+\f6 \cf2 actions
+\f0 \cf2  with 
+\f6 \cf2 severity
+\f0 \cf2 , 
+\f6 \cf2 status
+\f0 \cf2 , 
+\f6 \cf2 due_date
+\f0 \cf2 \
+	\'95	Drift in 
+\f6 \cf2 drift_events
+\f0 \cf2  with 
+\f6 \cf2 drift_flag
+\f0 \cf2  and/or 
+\f6 \cf2 delta_score
+\f0 \cf2 \
+	\'95	Expiry flags are represented by 
+\f6 \cf2 status='expired'
+\f0 \cf2  on the latest run or a 
+\f6 \cf2 reassessment_policies.next_due
+\f0 \cf2  comparison\
+\
+You can compute TrustGraph Health as a 
+\f2\b \cf2 materialized view
+\f0\b0 \cf2  (fast for dashboard) refreshed on:\
+	\'95	assessment completion\
+	\'95	action updates\
+	\'95	nightly cron\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b\fs30 \cf2 A) Helper: stability/confidence factor
+\f3\b0\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f7\fs28 \cf3 -- Provisional vs stable confidence factor\cf4 \
+\cf5 create\cf4  \cf5 or\cf4  replace \cf5 function\cf4  tg_confidence_factor(stability_status text)\
+\cf5 returns\cf4  numeric\
+\cf5 language\cf4  \cf5 sql\cf4 \
+immutable\
+\cf5 as\cf4  $$\
+  \cf5 select\cf4  \cf5 case\cf4 \
+    \cf5 when\cf4  stability_status = \cf6 'stable'\cf4  \cf5 then\cf4  \cf7 1.0\cf4 \
+    \cf5 else\cf4  \cf7 0.7\cf4 \
+  \cf5 end\cf4 ;\
+$$;
+\f3\fs24 \cf0 \
+\
+\
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b\fs30 \cf2 B) Helper: bounded penalty function (1 - exp(-x))
+\f3\b0\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f7\fs28 \cf5 create\cf4  \cf5 or\cf4  replace \cf5 function\cf4  tg_bounded_penalty(x numeric)\
+\cf5 returns\cf4  numeric\
+\cf5 language\cf4  \cf5 sql\cf4 \
+immutable\
+\cf5 as\cf4  $$\
+  \cf5 select\cf4  \cf7 1\cf4  - exp(-greatest(x,\cf7 0\cf4 ));\
+$$;
+\f3\fs24 \cf0 \
+\
+\
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b\fs30 \cf2 C) Main: compute TrustGraph Health for one organisation
+\f0\b0\fs28 \cf2 \
+\
+This returns:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	final score (0..100)\
+	\'95	base components\
+	\'95	penalty drivers for explainability
+\f3\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f7\fs28 \cf5 create\cf4  \cf5 or\cf4  replace \cf5 function\cf4  tg_compute_health(org_id uuid)\
+\cf5 returns\cf4  \cf5 table\cf4  (\
+  organisation_id uuid,\
+  health_score numeric,\
+  base_health numeric,\
+  org_base numeric,\
+  sys_base numeric,\
+  p_rel numeric,\
+  p_act numeric,\
+  p_drift numeric,\
+  p_exp numeric,\
+  open_actions int,\
+  overdue_actions int,\
+  critical_overdue_actions int\
+)\
+\cf5 language\cf4  plpgsql\
+\cf5 as\cf4  $$\
+\cf5 declare\cf4 \
+  \cf3 -- Tunables (calibrate later)\cf4 \
+  mu numeric := \cf7 0.5\cf4 ;        \cf3 -- org/sys blend\cf4 \
+  alpha numeric := \cf7 1.0\cf4 ;     \cf3 -- autonomy weight\cf4 \
+  beta numeric := \cf7 1.0\cf4 ;      \cf3 -- criticality weight\cf4 \
+  lambda numeric := \cf7 2.0\cf4 ;    \cf3 -- softmax sharpness\cf4 \
+  gamma numeric := \cf7 3.0\cf4 ;     \cf3 -- relational mismatch sensitivity\cf4 \
+\
+  \cf3 -- penalty weights\cf4 \
+  w1 numeric := \cf7 0.35\cf4 ; \cf3 -- relational\cf4 \
+  w2 numeric := \cf7 0.30\cf4 ; \cf3 -- actions\cf4 \
+  w3 numeric := \cf7 0.20\cf4 ; \cf3 -- drift\cf4 \
+  w4 numeric := \cf7 0.25\cf4 ; \cf3 -- expiry\cf4 \
+\
+  \cf3 -- action weights\cf4 \
+  eta1 numeric := \cf7 0.05\cf4 ; \cf3 -- open\cf4 \
+  eta2 numeric := \cf7 0.15\cf4 ; \cf3 -- overdue\cf4 \
+  eta3 numeric := \cf7 0.35\cf4 ; \cf3 -- critical overdue\cf4 \
+\
+  \cf3 -- drift blend\cf4 \
+  rho numeric := \cf7 0.4\cf4 ;  \cf3 -- org drift contribution\cf4 \
+\
+  \cf3 -- expiry blend\cf4 \
+  xi numeric := \cf7 0.5\cf4 ;   \cf3 -- org expiry contribution\cf4 \
+\
+  org_score numeric := \cf7 0\cf4 ;\
+  org_kappa numeric := \cf7 1.0\cf4 ;\
+  org_status text := \cf5 null\cf4 ;\
+\
+  o_drift numeric := \cf7 0\cf4 ;\
+  s_drift numeric := \cf7 0\cf4 ;\
+\
+  org_exp numeric := \cf7 0\cf4 ;\
+  sys_exp numeric := \cf7 0\cf4 ;\
+\
+  bO numeric := \cf7 0\cf4 ;\
+  bS numeric := \cf7 0\cf4 ;\
+\
+  rel_mismatch numeric := \cf7 0\cf4 ;\
+  rel_pen numeric := \cf7 0\cf4 ;\
+\
+  act_pen numeric := \cf7 0\cf4 ;\
+  drift_pen numeric := \cf7 0\cf4 ;\
+  exp_pen numeric := \cf7 0\cf4 ;\
+\
+  baseH numeric := \cf7 0\cf4 ;\
+  finalH numeric := \cf7 0\cf4 ;\
+\
+  n_open int := \cf7 0\cf4 ;\
+  n_over int := \cf7 0\cf4 ;\
+  n_crit_over int := \cf7 0\cf4 ;\
+\cf5 begin\cf4 \
+  \cf3 ---------------------------------------------------------------------------\cf4 \
+  \cf3 -- 1) Latest TrustOrg run\cf4 \
+  \cf3 ---------------------------------------------------------------------------\cf4 \
+  \cf5 select\cf4 \
+    coalesce(r.score,\cf7 0\cf4 ),\
+    tg_confidence_factor(r.stability_status),\
+    r.status\
+  \cf5 into\cf4  org_score, org_kappa, org_status\
+  \cf5 from\cf4  trustorg_runs r\
+  \cf5 join\cf4  trustorg_surveys s \cf5 on\cf4  s.id = r.survey_id\
+  \cf5 where\cf4  s.organisation_id = org_id\
+  \cf5 order\cf4  \cf5 by\cf4  r.completed_at \cf5 desc\cf4  \cf5 nulls last\cf4 , r.created_at \cf5 desc\cf4 \
+  limit \cf7 1\cf4 ;\
+\
+  bO := (org_score/\cf7 100.0\cf4 ) * org_kappa;\
+  org_exp := \cf5 case\cf4  \cf5 when\cf4  org_status = \cf6 'expired'\cf4  \cf5 then\cf4  \cf7 1\cf4  \cf5 else\cf4  \cf7 0\cf4  \cf5 end\cf4 ;\
+\
+  \cf3 ---------------------------------------------------------------------------\cf4 \
+  \cf3 -- 2) Actions counts (open/overdue/critical overdue)\cf4 \
+  \cf3 ---------------------------------------------------------------------------\cf4 \
+  \cf5 select\cf4 \
+    count(*) \cf5 filter\cf4  (\cf5 where\cf4  a.status \cf5 in\cf4  (\cf6 'open'\cf4 ,\cf6 'in_progress'\cf4 ,\cf6 'blocked'\cf4 )) \cf5 as\cf4  open_cnt,\
+    count(*) \cf5 filter\cf4  (\
+      \cf5 where\cf4  a.status \cf5 in\cf4  (\cf6 'open'\cf4 ,\cf6 'in_progress'\cf4 ,\cf6 'blocked'\cf4 )\
+        \cf5 and\cf4  a.due_date \cf5 is\cf4  \cf5 not null\cf4 \
+        \cf5 and\cf4  a.due_date < now()\
+    ) \cf5 as\cf4  overdue_cnt,\
+    count(*) \cf5 filter\cf4  (\
+      \cf5 where\cf4  a.status \cf5 in\cf4  (\cf6 'open'\cf4 ,\cf6 'in_progress'\cf4 ,\cf6 'blocked'\cf4 )\
+        \cf5 and\cf4  a.due_date \cf5 is\cf4  \cf5 not null\cf4 \
+        \cf5 and\cf4  a.due_date < now()\
+        \cf5 and\cf4  a.severity = \cf6 'critical'\cf4 \
+    ) \cf5 as\cf4  crit_over_cnt\
+  \cf5 into\cf4  n_open, n_over, n_crit_over\
+  \cf5 from\cf4  actions a\
+  \cf5 where\cf4  a.organisation_id = org_id;\
+\
+  act_pen := tg_bounded_penalty(eta1*n_open + eta2*n_over + eta3*n_crit_over);\
+\
+  \cf3 ---------------------------------------------------------------------------\cf4 \
+  \cf3 -- 3) Latest TrustSys runs per system and weights\cf4 \
+  \cf3 --    We compute:\cf4 \
+  \cf3 --      - softmax weights w_s\cf4 \
+  \cf3 --      - sys base score bS = sum(w_s * S_s * kappa_s)\cf4 \
+  \cf3 --      - relational mismatch M = sum(w_s * A_s*C_s*max(0, S_s - bO))\cf4 \
+  \cf3 --      - sys expiry portion\cf4 \
+  \cf3 ---------------------------------------------------------------------------\cf4 \
+  \cf5 with\cf4  latest_sys \cf5 as\cf4  (\
+    \cf5 select\cf4  \cf5 distinct\cf4  \cf5 on\cf4  (a.id)\
+      a.id \cf5 as\cf4  assessment_id,\
+      a.organisation_id,\
+      a.autonomy_level::numeric \cf5 as\cf4  autonomy,\
+      a.criticality_level::numeric \cf5 as\cf4  criticality,\
+      r.score::numeric \cf5 as\cf4  score,\
+      tg_confidence_factor(r.stability_status) \cf5 as\cf4  kappa,\
+      r.status \cf5 as\cf4  run_status,\
+      r.completed_at\
+    \cf5 from\cf4  trustsys_assessments a\
+    \cf5 join\cf4  trustsys_runs r \cf5 on\cf4  r.assessment_id = a.id\
+    \cf5 where\cf4  a.organisation_id = org_id\
+    \cf5 order\cf4  \cf5 by\cf4  a.id, r.completed_at \cf5 desc\cf4  \cf5 nulls last\cf4 , r.created_at \cf5 desc\cf4 \
+  ),\
+  logits \cf5 as\cf4  (\
+    \cf5 select\cf4 \
+      *,\
+      exp(lambda * (alpha*autonomy + beta*criticality)) \cf5 as\cf4  logit\
+    \cf5 from\cf4  latest_sys\
+  ),\
+  weights \cf5 as\cf4  (\
+    \cf5 select\cf4 \
+      *,\
+      \cf5 case\cf4 \
+        \cf5 when\cf4  sum(logit) \cf5 over\cf4  () = \cf7 0\cf4  \cf5 then\cf4  \cf7 0\cf4 \
+        \cf5 else\cf4  logit / sum(logit) \cf5 over\cf4  ()\
+      \cf5 end\cf4  \cf5 as\cf4  w\
+    \cf5 from\cf4  logits\
+  )\
+  \cf5 select\cf4 \
+    coalesce(sum(w * ((score/\cf7 100.0\cf4 ) * kappa)), \cf7 0\cf4 ) \cf5 as\cf4  sys_base,\
+    coalesce(sum(w * (autonomy * criticality * greatest(\cf7 0\cf4 , (score/\cf7 100.0\cf4 ) - bO))), \cf7 0\cf4 ) \cf5 as\cf4  mismatch,\
+    coalesce(sum(w * \cf5 case\cf4  \cf5 when\cf4  run_status = \cf6 'expired'\cf4  \cf5 then\cf4  \cf7 1\cf4  \cf5 else\cf4  \cf7 0\cf4  \cf5 end\cf4 ), \cf7 0\cf4 ) \cf5 as\cf4  sys_exp_weighted\
+  \cf5 into\cf4  bS, rel_mismatch, sys_exp\
+  \cf5 from\cf4  weights;\
+\
+  rel_pen := \cf7 1\cf4  - exp(-gamma * rel_mismatch);\
+  exp_pen := (xi*org_exp) + ((\cf7 1\cf4 -xi)*sys_exp);\
+\
+  \cf3 ---------------------------------------------------------------------------\cf4 \
+  \cf3 -- 4) Drift penalties (simple implementation using drift_events counts)\cf4 \
+  \cf3 --    If you have delta_score you can compute a better drift magnitude.\cf4 \
+  \cf3 ---------------------------------------------------------------------------\cf4 \
+  \cf3 -- Org drift: last N events over last 90 days\cf4 \
+  \cf5 select\cf4 \
+    coalesce(avg(\cf5 case\cf4  \cf5 when\cf4  d.drift_flag \cf5 then\cf4  \cf7 1\cf4  \cf5 else\cf4  \cf7 0\cf4  \cf5 end\cf4 ),\cf7 0\cf4 )\
+  \cf5 into\cf4  o_drift\
+  \cf5 from\cf4  drift_events d\
+  \cf5 where\cf4  d.run_type = \cf6 'org'\cf4 \
+    \cf5 and\cf4  d.created_at > now() - interval \cf6 '90 days'\cf4 \
+    \cf5 and\cf4  d.run_id \cf5 in\cf4  (\
+      \cf5 select\cf4  r.id\
+      \cf5 from\cf4  trustorg_runs r\
+      \cf5 join\cf4  trustorg_surveys s \cf5 on\cf4  s.id = r.survey_id\
+      \cf5 where\cf4  s.organisation_id = org_id\
+      \cf5 order\cf4  \cf5 by\cf4  r.completed_at \cf5 desc\cf4  \cf5 nulls last\cf4 , r.created_at \cf5 desc\cf4 \
+      limit \cf7 5\cf4 \
+    );\
+\
+  \cf3 -- Sys drift: last N events over last 90 days\cf4 \
+  \cf5 select\cf4 \
+    coalesce(avg(\cf5 case\cf4  \cf5 when\cf4  d.drift_flag \cf5 then\cf4  \cf7 1\cf4  \cf5 else\cf4  \cf7 0\cf4  \cf5 end\cf4 ),\cf7 0\cf4 )\
+  \cf5 into\cf4  s_drift\
+  \cf5 from\cf4  drift_events d\
+  \cf5 where\cf4  d.run_type = \cf6 'sys'\cf4 \
+    \cf5 and\cf4  d.created_at > now() - interval \cf6 '90 days'\cf4 \
+    \cf5 and\cf4  d.run_id \cf5 in\cf4  (\
+      \cf5 select\cf4  r.id\
+      \cf5 from\cf4  trustsys_runs r\
+      \cf5 join\cf4  trustsys_assessments a \cf5 on\cf4  a.id = r.assessment_id\
+      \cf5 where\cf4  a.organisation_id = org_id\
+      \cf5 order\cf4  \cf5 by\cf4  r.completed_at \cf5 desc\cf4  \cf5 nulls last\cf4 , r.created_at \cf5 desc\cf4 \
+      limit \cf7 10\cf4 \
+    );\
+\
+  drift_pen := (rho*o_drift) + ((\cf7 1\cf4 -rho)*s_drift);\
+\
+  \cf3 ---------------------------------------------------------------------------\cf4 \
+  \cf3 -- 5) Compose health\cf4 \
+  \cf3 ---------------------------------------------------------------------------\cf4 \
+  baseH := (mu*bO) + ((\cf7 1\cf4 -mu)*bS);\
+\
+  finalH :=\
+    baseH\
+    * (\cf7 1\cf4  - w1*rel_pen)\
+    * (\cf7 1\cf4  - w2*act_pen)\
+    * (\cf7 1\cf4  - w3*drift_pen)\
+    * (\cf7 1\cf4  - w4*exp_pen);\
+\
+  finalH := greatest(\cf7 0\cf4 , least(\cf7 1\cf4 , finalH));\
+\
+  organisation_id := org_id;\
+  health_score := \cf7 100.0\cf4  * finalH;\
+  base_health := \cf7 100.0\cf4  * baseH;\
+  org_base := \cf7 100.0\cf4  * bO;\
+  sys_base := \cf7 100.0\cf4  * bS;\
+  p_rel := rel_pen;\
+  p_act := act_pen;\
+  p_drift := drift_pen;\
+  p_exp := exp_pen;\
+  open_actions := n_open;\
+  overdue_actions := n_over;\
+  critical_overdue_actions := n_crit_over;\
+\
+  \cf5 return\cf4  next;\
+\cf5 end\cf4 ;\
+$$;
+\f3\fs24 \cf0 \
+\
+\
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b\fs30 \cf2 D) View / Materialized View for dashboard
+\f0\b0\fs28 \cf2 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\b \cf2 Option 1: View
+\f0\b0 \cf2  (always current, potentially heavier)
+\f3\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f7\fs28 \cf5 create\cf4  \cf5 or\cf4  replace \cf5 view\cf4  trustgraph_health_view \cf5 as\cf4 \
+\cf5 select\cf4  o.id \cf5 as\cf4  organisation_id,\
+       (tg_compute_health(o.id)).*\
+\cf5 from\cf4  organisations o;
+\f3\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\b\fs28 \cf2 Option 2: Materialized view
+\f0\b0 \cf2  (fast, refresh on triggers/cron)
+\f3\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f7\fs28 \cf5 create\cf4  materialized \cf5 view\cf4  trustgraph_health_mv \cf5 as\cf4 \
+\cf5 select\cf4  o.id \cf5 as\cf4  organisation_id,\
+       (tg_compute_health(o.id)).*\
+\cf5 from\cf4  organisations o;\
+\
+\cf3 -- refresh strategy (cron or trigger-driven)\cf4 \
+\cf3 -- refresh materialized view concurrently trustgraph_health_mv;
+\f3\fs24 \cf0 \
+\
+\
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b\fs30 \cf2 E) Trigger refresh (simple pattern)
+\f0\b0\fs28 \cf2 \
+\
+Supabase doesn\'92t love heavy refresh on every row update. Practical approach:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Refresh on:\
+\pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	assessment completion\
+	\'95	action status change\
+	\'95	nightly schedule\
+\
+If you do want a trigger pattern, use a lightweight queue table:
+\f3\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f7\fs28 \cf5 create table\cf4  if \cf5 not\cf4  \cf5 exists\cf4  trustgraph_recalc_queue (\
+  organisation_id uuid \cf5 primary key\cf4 ,\
+  requested_at timestamp \cf5 default\cf4  now()\
+);\
+\
+\cf5 create\cf4  \cf5 or\cf4  replace \cf5 function\cf4  tg_queue_recalc()\
+\cf5 returns\cf4  \cf5 trigger\cf4  \cf5 language\cf4  plpgsql \cf5 as\cf4  $$\
+\cf5 begin\cf4 \
+  \cf5 insert into\cf4  trustgraph_recalc_queue(organisation_id)\
+  \cf5 values\cf4  (new.organisation_id)\
+  \cf5 on\cf4  conflict (organisation_id) do \cf5 update\cf4  \cf5 set\cf4  requested_at = now();\
+  \cf5 return\cf4  \cf5 new\cf4 ;\
+\cf5 end\cf4 ;\
+$$;\
+\
+\cf3 -- Example: queue recalcs on action change\cf4 \
+\cf5 create\cf4  \cf5 trigger\cf4  trg_actions_queue_recalc\
+after \cf5 insert\cf4  \cf5 or\cf4  \cf5 update\cf4  \cf5 of\cf4  status, due_date, severity \cf5 on\cf4  actions\
+\cf5 for\cf4  \cf5 each\cf4  row \cf5 execute\cf4  \cf5 function\cf4  tg_queue_recalc();
+\f3\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 Then a scheduled job processes the queue and refreshes MV (or writes results to a cached table).\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b\fs34 \cf2 2) Calibration guide (so the score \'93feels right\'94 and can\'92t be gamed)
+\f0\b0\fs28 \cf2 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b\fs30 \cf2 Step 0 \'97 Decide what \'93good\'94 looks like
+\f0\b0\fs28 \cf2 \
+\
+Pick a target mapping for early pilots:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Healthy organisations should land 
+\f2\b \cf2 80\'9690
+\f0\b0 \cf2 \
+	\'95	\'93We\'92re okay but messy\'94 should land 
+\f2\b \cf2 65\'9675
+\f0\b0 \cf2 \
+	\'95	Real risk should land 
+\f2\b \cf2 50\'9664
+\f0\b0 \cf2 \
+	\'95	Critical governance failure should land 
+\f2\b \cf2 <50
+\f0\b0 \cf2 \
+\
+Don\'92t tune by vibes\'97tune to those bands.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b\fs30 \cf2 Step 1 \'97 Calibrate base blend 
+\f3\b0\fs24 \cf0 \\mu
+\f4\b\fs30 \cf2  (Org vs Sys)
+\f0\b0\fs28 \cf2 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	If you\'92re positioning as governance-first: set 
+\f3\fs24 \cf0 \\mu = 0.6
+\f0\fs28 \cf2 \
+	\'95	If you\'92re positioning as engineering-first: set 
+\f3\fs24 \cf0 \\mu = 0.4
+\f0\fs28 \cf2 \
+	\'95	Default 
+\f3\fs24 \cf0 \\mu = 0.5
+\f0\fs28 \cf2 \
+\
+Rule of thumb:\
+	\'95	If org governance is weak, you 
+\f1\i \cf2 want
+\f0\i0 \cf2  the whole score to feel constrained even if sys is high \uc0\u8594  increase 
+\f3\fs24 \cf0 \\mu
+\f0\fs28 \cf2 .\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b\fs30 \cf2 Step 2 \'97 Calibrate system weighting (softmax)
+\f0\b0\fs28 \cf2 \
+\
+Parameters: 
+\f3\fs24 \cf0 \\lambda, \\alpha, \\beta
+\f0\fs28 \cf2 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Start with 
+\f3\fs24 \cf0 \\alpha=\\beta=1
+\f0\fs28 \cf2 \
+	\'95	Set 
+\f3\fs24 \cf0 \\lambda
+\f0\fs28 \cf2  based on how hard you want to prioritise high-risk systems:\
+\pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f3\fs24 \cf0 \\lambda=1
+\f0\fs28 \cf2 : gentle weighting\
+	\'95	
+\f3\fs24 \cf0 \\lambda=2
+\f0\fs28 \cf2 : clear prioritisation (recommended)\
+	\'95	
+\f3\fs24 \cf0 \\lambda=3
+\f0\fs28 \cf2 : \'93one risky system dominates\'94\
+\
+Sanity check:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	If the highest autonomy+criticality system should represent ~40\'9660% of portfolio weight, 
+\f3\fs24 \cf0 \\lambda \\approx 2
+\f0\fs28 \cf2  often lands well.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b\fs30 \cf2 Step 3 \'97 Calibrate relational mismatch sensitivity 
+\f3\b0\fs24 \cf0 \\gamma
+\f0\fs28 \cf2 \
+\
+This is your differentiation.\
+\
+You want:\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\b \cf2 High autonomy & critical systems punished if Org readiness lags
+\f0\b0 \cf2 .\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Start 
+\f3\fs24 \cf0 \\gamma = 3
+\f0\fs28 \cf2 \
+	\'95	Test scenario:\
+\pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f3\fs24 \cf0 B^O = 0.55
+\f0\fs28 \cf2  (Org 55)\
+	\'95	System 
+\f3\fs24 \cf0 \\tilde\{S\}=0.75
+\f0\fs28 \cf2 , 
+\f3\fs24 \cf0 A=0.9
+\f0\fs28 \cf2 , 
+\f3\fs24 \cf0 C=0.9
+\f0\fs28 \cf2 \
+\
+Mismatch term:\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 M \\approx 0.9\\cdot0.9\\cdot(0.75-0.55)=0.162
+\f0\fs28 \cf2 \
+Penalty:\
+
+\f3\fs24 \cf0 P^\{rel\}=1-e^\{-3\\cdot0.162\}\\approx 0.38
+\f0\fs28 \cf2 \
+\
+Then with 
+\f3\fs24 \cf0 \\omega_1=0.35
+\f0\fs28 \cf2 , relational factor becomes 
+\f3\fs24 \cf0 (1 - 0.35*0.38)\\approx 0.867
+\f0\fs28 \cf2  \uc0\u8594  ~13% reduction.\
+That\'92s noticeable but not catastrophic. If you want stronger, raise 
+\f3\fs24 \cf0 \\gamma
+\f0\fs28 \cf2  or 
+\f3\fs24 \cf0 \\omega_1
+\f0\fs28 \cf2 .\
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b\fs30 \cf2 Step 4 \'97 Calibrate action penalties (\uc0\u951  weights + \u969 \u8322 )
+\f0\b0\fs28 \cf2 \
+\
+Goal: open actions don\'92t nuke the score, but 
+\f2\b \cf2 overdue critical actions absolutely do
+\f0\b0 \cf2 .\
+\
+Start:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f3\fs24 \cf0 \\eta_1=0.05, \\eta_2=0.15, \\eta_3=0.35
+\f0\fs28 \cf2 \
+	\'95	
+\f3\fs24 \cf0 \\omega_2=0.30
+\f0\fs28 \cf2 \
+\
+Check these two tests:\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\b \cf2 Test A: 10 open, none overdue
+\f0\b0 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 B^\{act\}=0.05\\cdot10=0.5 \\Rightarrow P^\{act\}=1-e^\{-0.5\}=0.39
+\f0\fs28 \cf2 \
+Factor: 
+\f3\fs24 \cf0 1-0.30*0.39=0.883
+\f0\fs28 \cf2  (~12% hit). OK.\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\b \cf2 Test B: 1 critical overdue
+\f0\b0 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 B^\{act\}=0.35\\cdot1=0.35 \\Rightarrow P^\{act\}=0.30
+\f0\fs28 \cf2 \
+Factor: 
+\f3\fs24 \cf0 1-0.30*0.30=0.91
+\f0\fs28 \cf2  (~9% hit)\
+If you want this to hit harder (often you do), either:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	increase 
+\f3\fs24 \cf0 \\eta_3
+\f0\fs28 \cf2  to 0.6, or\
+	\'95	add a hard escalation rule: if any critical overdue exists, cap health at 65 until cleared.\
+\
+That hard rule is very enterprise-friendly.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b\fs30 \cf2 Step 5 \'97 Calibrate drift (\uc0\u969 \u8323 ) and expiry (\u969 \u8324 )
+\f0\b0\fs28 \cf2 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Drift should be a \'93something changed\'94 warning, not constant punishment:\
+\pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f3\fs24 \cf0 \\omega_3=0.15
+\f0\fs28 \cf2  to 
+\f3\fs24 \cf0 0.25
+\f0\fs28 \cf2 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Expiry should be 
+\f1\i \cf2 sharp
+\f0\i0 \cf2  (trust status isn\'92t current):\
+\pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Keep 
+\f3\fs24 \cf0 \\omega_4=0.25
+\f0\fs28 \cf2  and consider:\
+\pard\tqr\tx900\tx1060\li1060\fi-1060\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	if expired, cap health at 70 until reassessed\
+\
+Again: hard caps are sometimes more intuitive than continuous penalties.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b\fs30 \cf2 Step 6 \'97 Confidence factor \uc0\u954  (provisional vs stable)
+\f0\b0\fs28 \cf2 \
+\
+Start:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Provisional 
+\f3\fs24 \cf0 \\kappa=0.7
+\f0\fs28 \cf2 \
+	\'95	Stable 
+\f3\fs24 \cf0 \\kappa=1.0
+\f0\fs28 \cf2 \
+\
+If early users complain \'93we\'92re punished for being early\'94:\
+	\'95	raise provisional to 0.8\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\li260\sl324\slmult1\pardirnatural\partightenfactor0
+\cf2 If you want stronger incentive to re-run:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	drop provisional to 0.6\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b\fs30 \cf2 Step 7 \'97 Anti-gaming protections
+\f0\b0\fs28 \cf2 \
+\
+Common gaming pattern: \'93close actions without doing work.\'94\
+\
+Counter:\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Require evidence for closing \'93High/Critical\'94 actions\
+	\'95	Keep action audit log immutable\
+	\'95	Add \'93reopened action rate\'94 metric\
+	\'95	Include \'93unverified closures\'94 in penalty\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs24 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4\b\fs34 \cf2 If you want, I can also produce:
+\f0\b0\fs28 \cf2 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	A 
+\f2\b \cf2 single cached table
+\f0\b0 \cf2  approach (instead of MV) with 
+\f6 \cf2 trustgraph_health_cache
+\f0 \cf2  updated by your worker\
+	\'95	A 
+\f2\b \cf2 better drift computation
+\f0\b0 \cf2  using dimension vectors and L1 distance (more accurate than 
+\f6 \cf2 drift_flag
+\f0 \cf2  averages)\
+	\'95	A 
+\f2\b \cf2 worked example
+\f0\b0 \cf2  with real numbers so you can sanity-check outputs in the UI}

@@ -1,37 +1,22 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import AuthenticatedShell from "@/components/AuthenticatedShell";
 import RequireAuth from "@/components/RequireAuth";
-import { getPlanLimits } from "@/lib/entitlements";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-type Survey = {
-  id: string;
-  title: string;
-  mode: "explorer" | "org";
-  status: string;
-  created_at: string;
-  respondents: number;
-  answers: number;
-};
+type DashboardTab = "overview" | "trustorg" | "trustsys";
 
-type System = {
-  id: string;
-  name: string;
-  version_label: string;
-  type: string | null;
-  environment: string | null;
-  created_at: string;
-  latest_score: number | null;
-  run_count: number;
-  has_draft: boolean;
-};
+const TABS: { id: DashboardTab; label: string }[] = [
+  { id: "overview", label: "Overview" },
+  { id: "trustorg", label: "TrustOrg" },
+  { id: "trustsys", label: "TrustSys" },
+];
 
 // ---------------------------------------------------------------------------
 // Root page
@@ -40,177 +25,535 @@ type System = {
 export default function DashboardHome() {
   return (
     <RequireAuth>
-      <Suspense>
-        <DashboardContent />
-      </Suspense>
+      <DashboardContent />
     </RequireAuth>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Dashboard with tabs
+// Hash-based tab state
+// ---------------------------------------------------------------------------
+
+function useHashTab(): [DashboardTab, (tab: DashboardTab) => void] {
+  const [tab, setTabState] = useState<DashboardTab>("overview");
+
+  useEffect(() => {
+    function readHash() {
+      const hash = window.location.hash.replace("#", "") as DashboardTab;
+      if (TABS.some((t) => t.id === hash)) {
+        setTabState(hash);
+      }
+    }
+    readHash();
+    window.addEventListener("hashchange", readHash);
+    return () => window.removeEventListener("hashchange", readHash);
+  }, []);
+
+  const setTab = useCallback((next: DashboardTab) => {
+    setTabState(next);
+    window.history.replaceState(null, "", `#${next}`);
+  }, []);
+
+  return [tab, setTab];
+}
+
+// ---------------------------------------------------------------------------
+// Dashboard Control Tower
 // ---------------------------------------------------------------------------
 
 function DashboardContent() {
-  const { user, profile } = useAuth();
-  const searchParams = useSearchParams();
-
-  const limits = useMemo(() => getPlanLimits(profile?.plan), [profile?.plan]);
-  const activeTab = searchParams.get("tab") === "systems" ? "systems" : "organisation";
-  const systemsDisabled = limits.maxSystems === 0;
-
-  function setTab(tab: string) {
-    if (tab === "systems" && systemsDisabled) return;
-    const url = tab === "systems" ? "/dashboard?tab=systems" : "/dashboard";
-    window.location.href = url;
-  }
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useHashTab();
 
   return (
     <AuthenticatedShell>
       <div>
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="text-2xl font-semibold text-foreground">
-            Welcome{user?.email ? `, ${user.email.split("@")[0]}` : ""}
+            TrustGraph Dashboard
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Your TrustGraph dashboard
+            {user?.email
+              ? `Welcome, ${user.email.split("@")[0]}`
+              : "Your trust governance control tower"}
           </p>
         </div>
 
-        {/* Plan badge */}
-        {profile && (
-          <div className="mb-6 inline-flex items-center gap-2 bg-brand/10 text-brand px-3 py-1.5 rounded-full text-sm font-medium capitalize">
-            {profile.plan} plan
-          </div>
-        )}
-
-        {/* Tab bar */}
+        {/* Tab bar — lens switcher */}
         <div className="border-b border-border mb-8">
           <nav className="flex gap-6" aria-label="Dashboard tabs">
-            <button
-              type="button"
-              onClick={() => setTab("organisation")}
-              className={`pb-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
-                activeTab === "organisation"
-                  ? "border-brand text-brand"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              TrustOrg
-            </button>
-            <button
-              type="button"
-              onClick={() => setTab("systems")}
-              disabled={systemsDisabled}
-              title={systemsDisabled ? "TrustSys available on Org plan and above." : undefined}
-              className={`pb-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
-                systemsDisabled
-                  ? "border-transparent text-muted-foreground opacity-50 cursor-not-allowed"
-                  : activeTab === "systems"
+            {TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`pb-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
+                  activeTab === tab.id
                     ? "border-brand text-brand"
                     : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              TrustSys
-            </button>
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </nav>
         </div>
 
-        {/* Tab content */}
-        {activeTab === "organisation" ? (
-          <OrganisationTab limits={limits} />
-        ) : (
-          <SystemsTab limits={limits} />
-        )}
+        {/* Tab content — client-side switching, no navigation */}
+        {activeTab === "overview" && <OverviewTab />}
+        {activeTab === "trustorg" && <TrustOrgTab />}
+        {activeTab === "trustsys" && <TrustSysTab />}
       </div>
     </AuthenticatedShell>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Organisation tab (existing surveys UI)
+// Health data type
 // ---------------------------------------------------------------------------
 
-function OrganisationTab({ limits }: { limits: ReturnType<typeof getPlanLimits> }) {
-  const [surveys, setSurveys] = useState<Survey[]>([]);
+type HealthData = {
+  health_score: number;
+  base_health: number;
+  org_base: number;
+  sys_base: number;
+  p_rel: number;
+  p_act: number;
+  p_drift: number;
+  p_exp: number;
+  open_actions: number;
+  overdue_actions: number;
+  critical_overdue_actions: number;
+  computed_at?: string;
+};
+
+function getHealthBand(score: number): { label: string; color: string; bgColor: string } {
+  if (score >= 80) return { label: "Healthy", color: "text-success", bgColor: "bg-success/10" };
+  if (score >= 65) return { label: "Watch", color: "text-warning", bgColor: "bg-warning/10" };
+  if (score >= 50) return { label: "At Risk", color: "text-orange-600", bgColor: "bg-orange-50" };
+  return { label: "Critical", color: "text-destructive", bgColor: "bg-destructive/10" };
+}
+
+// ---------------------------------------------------------------------------
+// Overview tab — Control Tower summary (live data)
+// ---------------------------------------------------------------------------
+
+type Escalation = {
+  id: string;
+  severity: "low" | "medium" | "high" | "critical";
+  reason: string;
+  entity_type: string;
+  entity_id: string;
+  resolved: boolean;
+  created_at: string;
+};
+
+type ReassessmentPolicy = {
+  id: string;
+  target_id: string;
+  run_type: "org" | "sys";
+  frequency_days: number;
+  next_due: string | null;
+  last_completed: string | null;
+  is_overdue: boolean;
+  days_until_due: number | null;
+};
+
+const SEVERITY_STYLES: Record<string, { bg: string; text: string }> = {
+  critical: { bg: "bg-destructive/10", text: "text-destructive" },
+  high: { bg: "bg-orange-50", text: "text-orange-600" },
+  medium: { bg: "bg-warning/10", text: "text-warning" },
+  low: { bg: "bg-muted", text: "text-muted-foreground" },
+};
+
+function OverviewTab() {
+  const [health, setHealth] = useState<HealthData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [escalations, setEscalations] = useState<Escalation[]>([]);
+  const [escalationCount, setEscalationCount] = useState(0);
+  const [policies, setPolicies] = useState<ReassessmentPolicy[]>([]);
+  const [resolvingId, setResolvingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [healthRes, escRes, polRes] = await Promise.allSettled([
+          fetch("/api/trustgraph/health"),
+          fetch("/api/trustgraph/escalations?resolved=false&per_page=10"),
+          fetch("/api/trustgraph/reassessment-policies"),
+        ]);
+
+        if (healthRes.status === "fulfilled" && healthRes.value.ok) {
+          const data = await healthRes.value.json();
+          setHealth(data.health || null);
+        }
+
+        if (escRes.status === "fulfilled" && escRes.value.ok) {
+          const data = await escRes.value.json();
+          setEscalations(data.escalations || []);
+          setEscalationCount(data.total ?? 0);
+        }
+
+        if (polRes.status === "fulfilled" && polRes.value.ok) {
+          const data = await polRes.value.json();
+          setPolicies(data.policies || []);
+        }
+      } catch {
+        // silent — will show placeholder state
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const resolveEscalation = async (id: string) => {
+    setResolvingId(id);
+    try {
+      const res = await fetch("/api/trustgraph/escalations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ escalation_id: id }),
+      });
+      if (res.ok) {
+        setEscalations((prev) => prev.filter((e) => e.id !== id));
+        setEscalationCount((prev) => Math.max(0, prev - 1));
+      }
+    } catch {
+      // silent
+    } finally {
+      setResolvingId(null);
+    }
+  };
+
+  const overduePolicies = policies.filter((p) => p.is_overdue);
+  const upcomingPolicies = policies
+    .filter((p) => !p.is_overdue && p.days_until_due !== null && p.days_until_due <= 30)
+    .sort((a, b) => (a.days_until_due ?? 999) - (b.days_until_due ?? 999));
+
+  const band = health ? getHealthBand(health.health_score) : null;
+
+  // Determine top penalty drivers (for explainability)
+  const drivers = health
+    ? [
+        { label: "Relational mismatch", value: health.p_rel, weight: 0.35 },
+        { label: "Action backlog", value: health.p_act, weight: 0.30 },
+        { label: "Drift", value: health.p_drift, weight: 0.20 },
+        { label: "Expiry", value: health.p_exp, weight: 0.25 },
+      ]
+        .filter((d) => d.value > 0)
+        .sort((a, b) => b.value * b.weight - a.value * a.weight)
+    : [];
+
+  return (
+    <div className="space-y-6">
+      {/* TrustGraph Health Score cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <HealthScoreCard
+          title="TrustGraph Health"
+          description="Composite relational score"
+          score={health?.health_score ?? null}
+          band={band}
+          loading={loading}
+        />
+        <HealthScoreCard
+          title="TrustOrg Health"
+          description="Organisational trust readiness"
+          score={health?.org_base ?? null}
+          loading={loading}
+        />
+        <HealthScoreCard
+          title="TrustSys Health"
+          description="System trust stability"
+          score={health?.sys_base ?? null}
+          loading={loading}
+        />
+      </div>
+
+      {/* Penalty drivers (visible when health is loaded and has penalties) */}
+      {health && drivers.length > 0 && (
+        <div className="border border-border rounded-xl p-6">
+          <h3 className="text-sm font-medium text-foreground mb-3">
+            Health Score Drivers
+          </h3>
+          <p className="text-xs text-muted-foreground mb-4">
+            Factors reducing the composite score from the base of{" "}
+            <span className="font-medium">{health.base_health.toFixed(1)}</span>
+          </p>
+          <div className="space-y-3">
+            {drivers.map((d) => {
+              const impact = Math.round(d.value * d.weight * 100);
+              return (
+                <div key={d.label}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm text-foreground">{d.label}</span>
+                    <span className="text-xs text-muted-foreground">
+                      -{impact}% impact
+                    </span>
+                  </div>
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-destructive/60 rounded-full transition-all"
+                      style={{ width: `${Math.min(100, d.value * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Alerts & flags */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        <AlertCard
+          title="Open Actions"
+          count={health?.open_actions ?? 0}
+        />
+        <AlertCard
+          title="Overdue Actions"
+          count={health?.overdue_actions ?? 0}
+        />
+        <AlertCard
+          title="Critical Overdue"
+          count={health?.critical_overdue_actions ?? 0}
+        />
+        <AlertCard
+          title="Escalations"
+          count={escalationCount}
+        />
+        <AlertCard
+          title="Overdue Reassess."
+          count={overduePolicies.length}
+        />
+        <AlertCard
+          title="Relational Risk"
+          count={health && health.p_rel > 0.25 ? 1 : 0}
+        />
+      </div>
+
+      {/* Escalation Flags */}
+      {escalations.length > 0 && (
+        <div className="border border-destructive/30 rounded-xl p-6">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium text-foreground">
+              Escalation Flags
+              <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-destructive/10 text-destructive font-medium">
+                {escalationCount}
+              </span>
+            </h3>
+          </div>
+          <div className="space-y-2">
+            {escalations.map((esc) => {
+              const style = SEVERITY_STYLES[esc.severity] || SEVERITY_STYLES.low;
+              return (
+                <div
+                  key={esc.id}
+                  className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-muted/50"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span
+                      className={`text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded ${style.bg} ${style.text}`}
+                    >
+                      {esc.severity}
+                    </span>
+                    <span className="text-sm text-foreground truncate">
+                      {esc.reason}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                      {new Date(esc.created_at).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                      })}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => resolveEscalation(esc.id)}
+                    disabled={resolvingId === esc.id}
+                    className="text-[10px] px-2 py-1 rounded border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors whitespace-nowrap disabled:opacity-50"
+                  >
+                    {resolvingId === esc.id ? "..." : "Resolve"}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+          {escalationCount > escalations.length && (
+            <p className="text-xs text-muted-foreground mt-3">
+              Showing {escalations.length} of {escalationCount} unresolved escalations
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Reassessment Due Alerts */}
+      {(overduePolicies.length > 0 || upcomingPolicies.length > 0) && (
+        <div className={`border rounded-xl p-6 ${
+          overduePolicies.length > 0 ? "border-warning/50" : "border-border"
+        }`}>
+          <h3 className="text-sm font-medium text-foreground mb-3">
+            Reassessment Schedule
+          </h3>
+
+          {overduePolicies.length > 0 && (
+            <div className="mb-4">
+              <p className="text-xs font-medium text-destructive mb-2">Overdue</p>
+              <div className="space-y-1.5">
+                {overduePolicies.map((p) => (
+                  <div
+                    key={p.id}
+                    className="flex items-center justify-between px-3 py-2 rounded-lg bg-destructive/5"
+                  >
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className={`text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded ${
+                        p.run_type === "sys"
+                          ? "bg-brand/10 text-brand"
+                          : "bg-success/10 text-success"
+                      }`}>
+                        {p.run_type === "sys" ? "SYS" : "ORG"}
+                      </span>
+                      <span className="text-foreground">
+                        {Math.abs(p.days_until_due ?? 0)} days overdue
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">
+                      Due {p.next_due
+                        ? new Date(p.next_due).toLocaleDateString("en-GB", {
+                            day: "numeric",
+                            month: "short",
+                          })
+                        : "—"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {upcomingPolicies.length > 0 && (
+            <div>
+              <p className="text-xs font-medium text-muted-foreground mb-2">
+                Due within 30 days
+              </p>
+              <div className="space-y-1.5">
+                {upcomingPolicies.slice(0, 5).map((p) => (
+                  <div
+                    key={p.id}
+                    className="flex items-center justify-between px-3 py-2 rounded-lg bg-muted/50"
+                  >
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className={`text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded ${
+                        p.run_type === "sys"
+                          ? "bg-brand/10 text-brand"
+                          : "bg-success/10 text-success"
+                      }`}>
+                        {p.run_type === "sys" ? "SYS" : "ORG"}
+                      </span>
+                      <span className="text-foreground">
+                        {p.days_until_due} day{p.days_until_due !== 1 ? "s" : ""} remaining
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">
+                      Due {p.next_due
+                        ? new Date(p.next_due).toLocaleDateString("en-GB", {
+                            day: "numeric",
+                            month: "short",
+                          })
+                        : "—"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Quick links */}
+      <div className="border border-border rounded-xl p-6">
+        <h3 className="text-sm font-medium text-foreground mb-3">Quick actions</h3>
+        <div className="flex flex-wrap gap-3">
+          <Link
+            href="/trustorg/new"
+            className="text-xs px-3 py-1.5 rounded-lg bg-brand text-white hover:bg-brand/90 transition-colors"
+          >
+            New TrustOrg Survey
+          </Link>
+          <Link
+            href="/trustsys"
+            className="text-xs px-3 py-1.5 rounded-lg border border-border text-foreground hover:bg-muted transition-colors"
+          >
+            View TrustSys Assessments
+          </Link>
+          <Link
+            href="/actions"
+            className="text-xs px-3 py-1.5 rounded-lg border border-border text-foreground hover:bg-muted transition-colors"
+          >
+            View Actions
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// TrustOrg tab — org survey summary within dashboard
+// ---------------------------------------------------------------------------
+
+function TrustOrgTab() {
+  const [loading, setLoading] = useState(true);
+  const [surveys, setSurveys] = useState<Array<{
+    id: string;
+    title: string;
+    mode: string;
+    status: string;
+    created_at: string;
+    respondents: number;
+  }>>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchSurveys() {
+    async function load() {
       try {
         const res = await fetch("/api/my-surveys");
         if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error || "Failed to load surveys");
+          const d = await res.json();
+          throw new Error(d.error || "Failed to load surveys");
         }
-        const data = await res.json();
-        setSurveys(data.surveys || []);
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "Failed to load surveys";
-        setError(message);
+        const d = await res.json();
+        setSurveys(d.surveys || []);
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : "Failed to load");
       } finally {
         setLoading(false);
       }
     }
-    fetchSurveys();
+    load();
   }, []);
-
-  const atCap = !loading && surveys.length >= limits.maxSurveys;
-  const approachingCap =
-    !loading && !atCap && isFinite(limits.maxSurveys) && surveys.length === limits.maxSurveys - 1;
 
   return (
     <div>
-      {/* Create survey button */}
-      <div className="mb-8">
-        {atCap ? (
-          <div>
-            <span
-              className="inline-flex items-center gap-2 px-4 py-2 bg-gray-300 text-gray-500 font-medium rounded-lg cursor-not-allowed text-sm"
-              aria-disabled="true"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Create a new survey
-            </span>
-            <p className="text-sm text-destructive mt-2">
-              You&apos;ve reached your plan limit of {limits.maxSurveys} survey{limits.maxSurveys !== 1 ? "s" : ""}.{" "}
-              <a href="/upgrade" className="underline hover:text-foreground transition-colors">
-                Upgrade to continue
-              </a>
-              .
-            </p>
-          </div>
-        ) : (
-          <div>
-            <a
-              href="/dashboard/surveys/new"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-brand text-white font-medium rounded-lg hover:bg-brand/90 transition-colors text-sm"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Create a new survey
-            </a>
-            {approachingCap && (
-              <p className="text-xs text-muted-foreground mt-2">
-                {surveys.length} of {limits.maxSurveys} surveys used
-              </p>
-            )}
-          </div>
-        )}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">TrustOrg Surveys</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Organisational trust readiness assessments
+          </p>
+        </div>
+        <Link
+          href="/trustorg"
+          className="text-sm text-brand hover:text-brand/80 transition-colors"
+        >
+          View all &rarr;
+        </Link>
       </div>
-
-      {/* Surveys list */}
-      <h2 className="text-lg font-semibold text-foreground mb-4">My surveys</h2>
 
       {loading && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground py-8">
           <div className="w-4 h-4 border-2 border-brand border-t-transparent rounded-full animate-spin" />
-          Loading surveys…
+          Loading surveys...
         </div>
       )}
 
@@ -219,23 +562,15 @@ function OrganisationTab({ limits }: { limits: ReturnType<typeof getPlanLimits> 
       {!loading && !error && surveys.length === 0 && (
         <div className="border border-border rounded-xl p-8 text-center">
           <div className="text-muted-foreground mb-2">No surveys yet</div>
-          <p className="text-sm text-muted-foreground mb-4">Create your first survey to get started.</p>
-          {atCap ? (
-            <p className="text-sm text-destructive">
-              You&apos;ve reached your plan limit.{" "}
-              <a href="/upgrade" className="underline hover:text-foreground transition-colors">
-                Upgrade to continue
-              </a>
-              .
-            </p>
-          ) : (
-            <a
-              href="/dashboard/surveys/new"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-brand text-white font-medium rounded-lg hover:bg-brand/90 transition-colors text-sm"
-            >
-              Create survey
-            </a>
-          )}
+          <p className="text-sm text-muted-foreground mb-4">
+            Create your first TrustOrg survey to start measuring organisational trust.
+          </p>
+          <Link
+            href="/trustorg/new"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-brand text-white font-medium rounded-lg hover:bg-brand/90 transition-colors text-sm"
+          >
+            Create survey
+          </Link>
         </div>
       )}
 
@@ -252,300 +587,126 @@ function OrganisationTab({ limits }: { limits: ReturnType<typeof getPlanLimits> 
               </tr>
             </thead>
             <tbody>
-              {surveys.map((survey) => (
+              {surveys.slice(0, 5).map((survey) => (
                 <tr key={survey.id} className="border-b border-border last:border-0 hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3">
                     <div className="font-medium text-foreground">{survey.title}</div>
-                    <div className="text-xs text-muted-foreground sm:hidden mt-0.5">
-                      {survey.mode === "explorer" ? "Explorer" : "Org"} · {survey.respondents} respondent{survey.respondents !== 1 ? "s" : ""}
-                    </div>
                   </td>
                   <td className="px-4 py-3 hidden sm:table-cell">
-                    <span
-                      className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                        survey.mode === "explorer"
-                          ? "bg-brand/10 text-brand"
-                          : "bg-success/10 text-success"
-                      }`}
-                    >
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                      survey.mode === "explorer"
+                        ? "bg-brand/10 text-brand"
+                        : "bg-success/10 text-success"
+                    }`}>
                       {survey.mode === "explorer" ? "Explorer" : "Org"}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{survey.respondents}</td>
+                  <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
+                    {survey.respondents}
+                  </td>
                   <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
                     {new Date(survey.created_at).toLocaleDateString("en-GB", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
+                      day: "numeric", month: "short", year: "numeric",
                     })}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <a
-                        href={`/dashboard/surveys/${survey.id}`}
-                        className="text-xs px-2 py-1 rounded border border-border text-muted-foreground hover:text-foreground hover:border-foreground transition-colors"
-                      >
-                        Manage
-                      </a>
-                      <a
-                        href={`/dashboard/surveys/${survey.id}/results`}
-                        className="text-xs px-2 py-1 rounded bg-brand text-white hover:bg-brand/90 transition-colors"
-                      >
-                        Results
-                      </a>
-                    </div>
+                    <Link
+                      href={`/dashboard/surveys/${survey.id}/results`}
+                      className="text-xs px-2 py-1 rounded bg-brand text-white hover:bg-brand/90 transition-colors"
+                    >
+                      Results
+                    </Link>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          {surveys.length > 5 && (
+            <div className="px-4 py-3 border-t border-border bg-gray-50">
+              <Link href="/trustorg" className="text-sm text-brand hover:text-brand/80">
+                View all {surveys.length} surveys &rarr;
+              </Link>
+            </div>
+          )}
         </div>
       )}
+
+      {/* Trend placeholders */}
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="border border-border rounded-xl p-6">
+          <h3 className="text-sm font-medium text-muted-foreground mb-2">Score Trend</h3>
+          <div className="h-32 flex items-center justify-center text-xs text-muted-foreground">
+            Trend chart available after multiple assessments
+          </div>
+        </div>
+        <div className="border border-border rounded-xl p-6">
+          <h3 className="text-sm font-medium text-muted-foreground mb-2">Participation Analytics</h3>
+          <div className="h-32 flex items-center justify-center text-xs text-muted-foreground">
+            Participation data available after survey completion
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Systems tab
+// TrustSys tab — system assessment summary within dashboard
 // ---------------------------------------------------------------------------
 
-function SystemsTab({ limits }: { limits: ReturnType<typeof getPlanLimits> }) {
-  const [systems, setSystems] = useState<System[]>([]);
+function TrustSysTab() {
   const [loading, setLoading] = useState(true);
+  const [systems, setSystems] = useState<Array<{
+    id: string;
+    name: string;
+    version_label: string;
+    latest_score: number | null;
+    run_count: number;
+    has_draft: boolean;
+    created_at: string;
+  }>>([]);
   const [error, setError] = useState<string | null>(null);
 
-  // Create form state
-  const [showForm, setShowForm] = useState(false);
-  const [formName, setFormName] = useState("");
-  const [formVersion, setFormVersion] = useState("");
-  const [formType, setFormType] = useState("");
-  const [formEnvironment, setFormEnvironment] = useState("");
-  const [formLoading, setFormLoading] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-
   useEffect(() => {
-    async function fetchSystems() {
+    async function load() {
       try {
         const res = await fetch("/api/systems");
         if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error || "Failed to load systems");
+          const d = await res.json();
+          throw new Error(d.error || "Failed to load systems");
         }
-        const data = await res.json();
-        setSystems(data.systems || []);
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "Failed to load systems";
-        setError(message);
+        const d = await res.json();
+        setSystems(d.systems || []);
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : "Failed to load");
       } finally {
         setLoading(false);
       }
     }
-    fetchSystems();
+    load();
   }, []);
-
-  const atCap = !loading && systems.length >= limits.maxSystems;
-  const approachingCap =
-    !loading && !atCap && isFinite(limits.maxSystems) && systems.length === limits.maxSystems - 1;
-  const blocked = limits.maxSystems === 0;
-
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault();
-    setFormError(null);
-    setFormLoading(true);
-
-    try {
-      const res = await fetch("/api/systems", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: formName.trim(),
-          version_label: formVersion.trim(),
-          type: formType || null,
-          environment: formEnvironment || null,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to create system");
-
-      // Add to local state and close form
-      setSystems((prev) => [
-        {
-          ...data.system,
-          latest_score: null,
-          run_count: 0,
-          has_draft: false,
-        },
-        ...prev,
-      ]);
-      setFormName("");
-      setFormVersion("");
-      setFormType("");
-      setFormEnvironment("");
-      setShowForm(false);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to create system";
-      setFormError(message);
-    } finally {
-      setFormLoading(false);
-    }
-  }
 
   return (
     <div>
-      {/* Create system button / form */}
-      <div className="mb-8">
-        {blocked ? (
-          <div>
-            <span
-              className="inline-flex items-center gap-2 px-4 py-2 bg-gray-300 text-gray-500 font-medium rounded-lg cursor-not-allowed text-sm"
-              aria-disabled="true"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Create system assessment
-            </span>
-            <p className="text-sm text-muted-foreground mt-2">
-              Systems assessment is available on Pro plans.{" "}
-              <a href="/upgrade" className="text-brand underline hover:text-foreground transition-colors">
-                Upgrade
-              </a>
-            </p>
-          </div>
-        ) : atCap ? (
-          <div>
-            <span
-              className="inline-flex items-center gap-2 px-4 py-2 bg-gray-300 text-gray-500 font-medium rounded-lg cursor-not-allowed text-sm"
-              aria-disabled="true"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Create system assessment
-            </span>
-            <p className="text-sm text-destructive mt-2">
-              You&apos;ve reached your plan limit of {limits.maxSystems} system{limits.maxSystems !== 1 ? "s" : ""}.{" "}
-              <a href="/upgrade" className="underline hover:text-foreground transition-colors">
-                Upgrade to continue
-              </a>
-              .
-            </p>
-          </div>
-        ) : showForm ? (
-          <form onSubmit={handleCreate} className="border border-border rounded-xl p-4 max-w-md space-y-3">
-            <div>
-              <label htmlFor="sys-name" className="block text-sm font-medium text-foreground mb-1">
-                System name
-              </label>
-              <input
-                id="sys-name"
-                type="text"
-                required
-                value={formName}
-                onChange={(e) => setFormName(e.target.value)}
-                placeholder="e.g. Customer AI Chatbot"
-                className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent placeholder:text-muted-foreground/60"
-              />
-            </div>
-            <div>
-              <label htmlFor="sys-version" className="block text-sm font-medium text-foreground mb-1">
-                Version label <span className="text-muted-foreground font-normal">(optional)</span>
-              </label>
-              <input
-                id="sys-version"
-                type="text"
-                value={formVersion}
-                onChange={(e) => setFormVersion(e.target.value)}
-                placeholder="e.g. v1.0"
-                className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent placeholder:text-muted-foreground/60"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label htmlFor="sys-type" className="block text-sm font-medium text-foreground mb-1">
-                  Type <span className="text-muted-foreground font-normal">(optional)</span>
-                </label>
-                <select
-                  id="sys-type"
-                  value={formType}
-                  onChange={(e) => setFormType(e.target.value)}
-                  className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent bg-white"
-                >
-                  <option value="">Select type</option>
-                  <option value="rag_app">RAG app</option>
-                  <option value="agent">Agent</option>
-                  <option value="classifier">Classifier</option>
-                  <option value="workflow">Workflow</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-              <div>
-                <label htmlFor="sys-env" className="block text-sm font-medium text-foreground mb-1">
-                  Environment <span className="text-muted-foreground font-normal">(optional)</span>
-                </label>
-                <select
-                  id="sys-env"
-                  value={formEnvironment}
-                  onChange={(e) => setFormEnvironment(e.target.value)}
-                  className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent bg-white"
-                >
-                  <option value="">Select environment</option>
-                  <option value="prod">Production</option>
-                  <option value="staging">Staging</option>
-                  <option value="pilot">Pilot</option>
-                </select>
-              </div>
-            </div>
-            {formError && <p className="text-sm text-destructive">{formError}</p>}
-            <div className="flex items-center gap-2">
-              <button
-                type="submit"
-                disabled={formLoading}
-                className="px-4 py-2 bg-brand text-white font-medium rounded-lg hover:bg-brand/90 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {formLoading ? "Creating…" : "Create"}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowForm(false);
-                  setFormError(null);
-                }}
-                className="px-4 py-2 text-muted-foreground hover:text-foreground transition-colors text-sm"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        ) : (
-          <div>
-            <button
-              type="button"
-              onClick={() => setShowForm(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-brand text-white font-medium rounded-lg hover:bg-brand/90 transition-colors text-sm"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Create system assessment
-            </button>
-            {approachingCap && (
-              <p className="text-xs text-muted-foreground mt-2">
-                {systems.length} of {limits.maxSystems} systems used
-              </p>
-            )}
-          </div>
-        )}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">TrustSys Assessments</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            AI/system trust stability assessments
+          </p>
+        </div>
+        <Link
+          href="/trustsys"
+          className="text-sm text-brand hover:text-brand/80 transition-colors"
+        >
+          View all &rarr;
+        </Link>
       </div>
-
-      {/* Systems list */}
-      <h2 className="text-lg font-semibold text-foreground mb-4">My systems</h2>
 
       {loading && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground py-8">
           <div className="w-4 h-4 border-2 border-brand border-t-transparent rounded-full animate-spin" />
-          Loading systems…
+          Loading assessments...
         </div>
       )}
 
@@ -553,21 +714,16 @@ function SystemsTab({ limits }: { limits: ReturnType<typeof getPlanLimits> }) {
 
       {!loading && !error && systems.length === 0 && (
         <div className="border border-border rounded-xl p-8 text-center">
-          <div className="text-muted-foreground mb-2">No systems yet</div>
+          <div className="text-muted-foreground mb-2">No system assessments yet</div>
           <p className="text-sm text-muted-foreground mb-4">
-            {blocked
-              ? "Systems assessment is available on Pro plans."
-              : "Create your first system assessment to get started."}
+            Register a system and run your first TrustSys assessment.
           </p>
-          {!blocked && !atCap && (
-            <button
-              type="button"
-              onClick={() => setShowForm(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-brand text-white font-medium rounded-lg hover:bg-brand/90 transition-colors text-sm"
-            >
-              Create system assessment
-            </button>
-          )}
+          <Link
+            href="/trustsys"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-brand text-white font-medium rounded-lg hover:bg-brand/90 transition-colors text-sm"
+          >
+            Go to TrustSys
+          </Link>
         </div>
       )}
 
@@ -579,21 +735,17 @@ function SystemsTab({ limits }: { limits: ReturnType<typeof getPlanLimits> }) {
                 <th className="px-4 py-3 font-medium text-muted-foreground">System</th>
                 <th className="px-4 py-3 font-medium text-muted-foreground hidden sm:table-cell">Score</th>
                 <th className="px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Runs</th>
-                <th className="px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Created</th>
                 <th className="px-4 py-3 font-medium text-muted-foreground text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {systems.map((system) => (
+              {systems.slice(0, 5).map((system) => (
                 <tr key={system.id} className="border-b border-border last:border-0 hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3">
                     <div className="font-medium text-foreground">{system.name}</div>
                     {system.version_label && (
                       <div className="text-xs text-muted-foreground mt-0.5">{system.version_label}</div>
                     )}
-                    <div className="text-xs text-muted-foreground sm:hidden mt-0.5">
-                      Score: {system.latest_score !== null ? system.latest_score : "—"} · {system.run_count} run{system.run_count !== 1 ? "s" : ""}
-                    </div>
                   </td>
                   <td className="px-4 py-3 hidden sm:table-cell">
                     {system.latest_score !== null ? (
@@ -601,33 +753,108 @@ function SystemsTab({ limits }: { limits: ReturnType<typeof getPlanLimits> }) {
                         {system.latest_score}
                       </span>
                     ) : (
-                      <span className="text-muted-foreground">—</span>
+                      <span className="text-muted-foreground">&mdash;</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
                     {system.run_count}
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
-                    {new Date(system.created_at).toLocaleDateString("en-GB", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </td>
                   <td className="px-4 py-3 text-right">
-                    <a
+                    <Link
                       href={`/systems/${system.id}/assess`}
                       className="text-xs px-2 py-1 rounded bg-brand text-white hover:bg-brand/90 transition-colors"
                     >
-                      {system.has_draft ? "Continue assessment" : "Assess"}
-                    </a>
+                      {system.has_draft ? "Continue" : "Assess"}
+                    </Link>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          {systems.length > 5 && (
+            <div className="px-4 py-3 border-t border-border bg-gray-50">
+              <Link href="/trustsys" className="text-sm text-brand hover:text-brand/80">
+                View all {systems.length} systems &rarr;
+              </Link>
+            </div>
+          )}
         </div>
       )}
+
+      {/* Stability & drift placeholders */}
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="border border-border rounded-xl p-6">
+          <h3 className="text-sm font-medium text-muted-foreground mb-2">Stability Tracking</h3>
+          <div className="h-32 flex items-center justify-center text-xs text-muted-foreground">
+            Stability data available after 3+ assessments per system
+          </div>
+        </div>
+        <div className="border border-border rounded-xl p-6">
+          <h3 className="text-sm font-medium text-muted-foreground mb-2">Cross-System Comparison</h3>
+          <div className="h-32 flex items-center justify-center text-xs text-muted-foreground">
+            Comparison available with 2+ assessed systems
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Shared card components
+// ---------------------------------------------------------------------------
+
+function HealthScoreCard({
+  title,
+  description,
+  score,
+  band,
+  loading,
+}: {
+  title: string;
+  description: string;
+  score: number | null;
+  band?: { label: string; color: string; bgColor: string } | null;
+  loading?: boolean;
+}) {
+  const displayScore = score !== null ? score.toFixed(1) : null;
+  const scoreBand = band || (score !== null ? getHealthBand(score) : null);
+
+  return (
+    <div className="border border-border rounded-xl p-6">
+      <div className="text-sm font-medium text-muted-foreground">{title}</div>
+      <div className="mt-2 flex items-end gap-2">
+        {loading ? (
+          <div className="w-5 h-5 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+        ) : displayScore !== null ? (
+          <>
+            <div className="text-3xl font-bold text-foreground">{displayScore}</div>
+            {scoreBand && (
+              <span
+                className={`text-xs px-2 py-0.5 rounded-full font-medium mb-1 ${scoreBand.bgColor} ${scoreBand.color}`}
+              >
+                {scoreBand.label}
+              </span>
+            )}
+          </>
+        ) : (
+          <div className="text-3xl font-bold text-muted-foreground/30">&mdash;</div>
+        )}
+      </div>
+      <div className="text-xs text-muted-foreground mt-1">{description}</div>
+    </div>
+  );
+}
+
+function AlertCard({ title, count }: { title: string; count: number }) {
+  return (
+    <div className="border border-border rounded-xl p-4">
+      <div className="text-xs font-medium text-muted-foreground">{title}</div>
+      <div className={`text-2xl font-bold mt-1 ${
+        count > 0 ? "text-destructive" : "text-muted-foreground/30"
+      }`}>
+        {count}
+      </div>
     </div>
   );
 }

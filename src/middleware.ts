@@ -56,10 +56,22 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // --- /dashboard/*, /systems/*, /verisum-admin/* protection — requires auth ---
+  // --- Redirect old /dashboard?tab=systems → /dashboard#trustsys ---
+  if (pathname === "/dashboard" && request.nextUrl.searchParams.get("tab") === "systems") {
+    const url = request.nextUrl.clone();
+    url.searchParams.delete("tab");
+    url.hash = "trustsys";
+    return NextResponse.redirect(url);
+  }
+
+  // --- Auth protection for all authenticated routes ---
   if (
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/systems") ||
+    pathname.startsWith("/trustorg") ||
+    pathname.startsWith("/trustsys") ||
+    pathname.startsWith("/actions") ||
+    pathname.startsWith("/reports") ||
     pathname.startsWith("/verisum-admin")
   ) {
     if (!user) {
@@ -74,5 +86,14 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/dashboard/:path*", "/systems/:path*", "/verisum-admin/:path*"],
+  matcher: [
+    "/admin/:path*",
+    "/dashboard/:path*",
+    "/systems/:path*",
+    "/trustorg/:path*",
+    "/trustsys/:path*",
+    "/actions/:path*",
+    "/reports/:path*",
+    "/verisum-admin/:path*",
+  ],
 };
