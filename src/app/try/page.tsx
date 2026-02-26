@@ -35,6 +35,19 @@ type TrustRow = {
 // Helpers
 // ---------------------------------------------------------------------------
 
+/** Race a promise/thenable against a timeout — rejects if the timeout fires first. */
+function withTimeout<T>(
+  promise: Promise<T> | PromiseLike<T>,
+  ms: number
+): Promise<T> {
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Request timed out")), ms)
+    ),
+  ]);
+}
+
 function bandFor(score: number) {
   if (score < 40)
     return {
@@ -102,8 +115,12 @@ export default function TryExplorerPage() {
     let cancelled = false;
 
     async function init() {
+      const QUERY_TIMEOUT = 8000; // 8 s — generous but won't hang forever
+
       try {
-        // Check if there's already a pending Explorer in localStorage
+        // ------------------------------------------------------------------
+        // A. Try to resume a pending Explorer from localStorage
+        // ------------------------------------------------------------------
         const pending = localStorage.getItem("ti_explorer_pending");
         let existingRunId: string | null = null;
         let existingToken: string | null = null;
@@ -111,44 +128,59 @@ export default function TryExplorerPage() {
         if (pending) {
           try {
             const parsed = JSON.parse(pending);
-            existingRunId = parsed.runId;
-            existingToken = parsed.token;
+            existingRunId = parsed.runId ?? null;
+            existingToken = parsed.token ?? null;
           } catch {
             localStorage.removeItem("ti_explorer_pending");
           }
         }
 
-        // If we have a pending run, check if it's still valid (not already submitted)
         if (existingRunId && existingToken) {
-          const { data: invite } = await supabase
-            .from("invites")
-            .select("run_id, used_at")
-            .eq("token", existingToken)
-            .single();
+          try {
+            const { data: invite } = await withTimeout(
+              supabase
+                .from("invites")
+                .select("run_id, used_at")
+                .eq("token", existingToken)
+                .single(),
+              QUERY_TIMEOUT
+            );
 
-          if (invite && !invite.used_at) {
-            // Resume the existing run
-            setRunId(existingRunId);
-            setToken(existingToken);
+            if (invite && !invite.used_at) {
+              // Resume: load questions with the same timeout guard
+              const { data: qs } = await withTimeout(
+                supabase
+                  .from("questions")
+                  .select("id, dimension, prompt, sort_order")
+                  .order("sort_order", { ascending: true }),
+                QUERY_TIMEOUT
+              );
 
-            const { data: qs } = await supabase
-              .from("questions")
-              .select("id, dimension, prompt, sort_order")
-              .order("sort_order", { ascending: true });
-
-            if (!cancelled && qs) {
-              setQuestions(qs as Question[]);
-              setPhase("survey");
+              if (!cancelled && qs && qs.length > 0) {
+                setRunId(existingRunId);
+                setToken(existingToken);
+                setQuestions(qs as Question[]);
+                setPhase("survey");
+                return;
+              }
+              // If questions failed to load, fall through and create fresh
             }
-            return;
-          } else {
-            // Token was used or invalid — clear and create fresh
-            localStorage.removeItem("ti_explorer_pending");
+          } catch {
+            // Timeout or query error — stale token, RLS issue, etc.
+            // Fall through to create a fresh run.
           }
+
+          // Either invite was used, invalid, or the query failed — clear it.
+          localStorage.removeItem("ti_explorer_pending");
         }
 
-        // Create a new Explorer run
-        const res = await fetch("/api/try-explorer", { method: "POST" });
+        // ------------------------------------------------------------------
+        // B. Create a brand-new Explorer run via the API
+        // ------------------------------------------------------------------
+        const res = await withTimeout(
+          fetch("/api/try-explorer", { method: "POST" }),
+          QUERY_TIMEOUT
+        );
         const json = await res.json();
 
         if (!res.ok || !json.runId) {
@@ -156,7 +188,7 @@ export default function TryExplorerPage() {
           return;
         }
 
-        // Store in localStorage for claim after signup
+        // Persist so the user can resume or claim after signup
         localStorage.setItem(
           "ti_explorer_pending",
           JSON.stringify({ runId: json.runId, token: json.token })
@@ -167,13 +199,18 @@ export default function TryExplorerPage() {
           setToken(json.token);
         }
 
-        // Load questions
-        const { data: qs, error: qErr } = await supabase
-          .from("questions")
-          .select("id, dimension, prompt, sort_order")
-          .order("sort_order", { ascending: true });
+        // ------------------------------------------------------------------
+        // C. Load questions
+        // ------------------------------------------------------------------
+        const { data: qs, error: qErr } = await withTimeout(
+          supabase
+            .from("questions")
+            .select("id, dimension, prompt, sort_order")
+            .order("sort_order", { ascending: true }),
+          QUERY_TIMEOUT
+        );
 
-        if (qErr || !qs) {
+        if (qErr || !qs || qs.length === 0) {
           if (!cancelled) setError("Could not load questions.");
           return;
         }
@@ -184,7 +221,9 @@ export default function TryExplorerPage() {
         }
       } catch (e: unknown) {
         if (!cancelled) {
-          setError(e instanceof Error ? e.message : "Failed to initialise.");
+          setError(
+            e instanceof Error ? e.message : "Failed to initialise survey."
+          );
         }
       }
     }
@@ -301,7 +340,23 @@ export default function TryExplorerPage() {
       <AppShell>
         <div className="max-w-3xl mx-auto p-4 md:p-6 lg:p-10">
           {error ? (
-            <div className="text-destructive">{error}</div>
+            <div className="space-y-4">
+              <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-5 text-sm text-destructive">
+                {error}
+              </div>
+              <button
+                onClick={() => {
+                  localStorage.removeItem("ti_explorer_pending");
+                  setError(null);
+                  window.location.reload();
+                }}
+                className="px-5 py-2.5 bg-brand text-white font-semibold rounded-full
+                  shadow-lg shadow-brand/20 hover:bg-brand-hover hover:-translate-y-0.5
+                  transition-all duration-300 text-sm"
+              >
+                Try again
+              </button>
+            </div>
           ) : (
             <div className="flex items-center gap-3 text-sm text-muted-foreground">
               <div className="w-5 h-5 border-2 border-brand border-t-transparent rounded-full animate-spin" />
