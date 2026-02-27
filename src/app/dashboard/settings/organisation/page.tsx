@@ -37,6 +37,7 @@ export default function OrganisationSettingsPage() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hrisConnected, setHrisConnected] = useState(false);
 
   // Inline form state
   const [addingSub, setAddingSub] = useState(false);
@@ -54,22 +55,26 @@ export default function OrganisationSettingsPage() {
     setLoading(true);
     setError(null);
     try {
-      const [subsRes, fnsRes, teamsRes] = await Promise.all([
+      const [subsRes, fnsRes, teamsRes, hrisRes] = await Promise.all([
         fetch("/api/org/subsidiaries"),
         fetch("/api/org/functions"),
         fetch("/api/org/teams"),
+        fetch("/api/integrations/hibob/status").catch(() => null),
       ]);
-      if (!subsRes.ok || !fnsRes.ok || !teamsRes.ok) throw new Error("Failed to load data");
+      if (!subsRes.ok || !fnsRes.ok || !teamsRes.ok) throw new Error("fetch_failed");
       const [subsData, fnsData, teamsData] = await Promise.all([
         subsRes.json(),
         fnsRes.json(),
         teamsRes.json(),
       ]);
+      const hrisData = hrisRes && hrisRes.ok ? await hrisRes.json() : null;
       setSubsidiaries(subsData.subsidiaries ?? []);
       setFunctions(fnsData.functions ?? []);
       setTeams(teamsData.teams ?? []);
+      setHrisConnected(!!hrisData?.connected);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      const code = err instanceof Error ? err.message : "unknown";
+      setError(code);
     } finally {
       setLoading(false);
     }
@@ -189,14 +194,33 @@ export default function OrganisationSettingsPage() {
   return (
     <div className="space-y-8">
       {error && (
-        <div className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300">
-          {error}
-          <button
-            onClick={() => setError(null)}
-            className="ml-2 underline hover:no-underline"
-          >
-            Dismiss
-          </button>
+        <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300">
+          {error === "fetch_failed" && hrisConnected ? (
+            <>
+              We couldn&apos;t load data from your HRIS. Check your connection on the{" "}
+              <a href="/dashboard/settings/integrations" className="underline font-medium">Integrations page</a>{" "}
+              or add structure manually below.
+            </>
+          ) : error === "fetch_failed" ? (
+            <>
+              Unable to load organisation structure. Please try again or contact support.
+            </>
+          ) : (
+            <>
+              {error}
+              <button onClick={() => setError(null)} className="ml-2 underline hover:no-underline">Dismiss</button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Empty state guidance */}
+      {!error && !loading && subsidiaries.length === 0 && functions.length === 0 && teams.length === 0 && (
+        <div className="rounded-lg border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
+          No organisation structure yet. Add subsidiaries, functions and teams below
+          {!hrisConnected && (
+            <>, or <a href="/dashboard/settings/integrations" className="text-brand underline">connect an HRIS</a> on the Integrations page to import automatically</>
+          )}.
         </div>
       )}
 
@@ -216,7 +240,10 @@ export default function OrganisationSettingsPage() {
 
         {subsidiaries.length === 0 && !addingSub && (
           <p className="text-sm text-muted-foreground">
-            No subsidiaries defined. Add one if your organisation has multiple legal entities.
+            No subsidiaries defined yet.{" "}
+            {isOwner && (
+              <button onClick={() => setAddingSub(true)} className="text-brand underline">Add your first subsidiary</button>
+            )}
           </p>
         )}
 
@@ -290,7 +317,12 @@ export default function OrganisationSettingsPage() {
         </div>
 
         {functions.length === 0 && !addingFn && (
-          <p className="text-sm text-muted-foreground">No functions defined yet.</p>
+          <p className="text-sm text-muted-foreground">
+            No functions defined yet.{" "}
+            {isOwner && (
+              <button onClick={() => setAddingFn(true)} className="text-brand underline">Add your first function</button>
+            )}
+          </p>
         )}
 
         {functions.length > 0 && (
@@ -384,7 +416,12 @@ export default function OrganisationSettingsPage() {
         </div>
 
         {teams.length === 0 && !addingTeam && (
-          <p className="text-sm text-muted-foreground">No teams defined yet.</p>
+          <p className="text-sm text-muted-foreground">
+            No teams defined yet.{" "}
+            {isOwner && (
+              <button onClick={() => setAddingTeam(true)} className="text-brand underline">Add your first team</button>
+            )}
+          </p>
         )}
 
         {teams.length > 0 && (
