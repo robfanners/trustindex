@@ -8,6 +8,26 @@ import { getPlanLimits, hasBillingAccess } from "@/lib/entitlements";
 // /dashboard/settings — Account Overview
 // ---------------------------------------------------------------------------
 
+const ORG_SIZE_OPTIONS = [
+  "1–10",
+  "11–50",
+  "51–200",
+  "201–500",
+  "501–1,000",
+  "1,001–5,000",
+  "5,001–10,000",
+  "10,001–50,000",
+  "50,000+",
+];
+
+const ROLE_OPTIONS = [
+  { value: "owner", label: "Owner" },
+  { value: "admin", label: "Admin" },
+  { value: "exec", label: "Executive" },
+  { value: "operator", label: "Operator" },
+  { value: "risk", label: "Risk" },
+];
+
 export default function AccountSettingsPage() {
   const { user, profile, refreshProfile } = useAuth();
   const limits = getPlanLimits(profile?.plan);
@@ -119,30 +139,45 @@ export default function AccountSettingsPage() {
             </div>
             <div className="space-y-1">
               <label className="text-sm font-medium text-muted-foreground">Organisation name</label>
-              <input
-                className="w-full border border-border rounded px-3 py-2 text-sm"
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                placeholder="Your company or organisation"
-              />
+              {profile?.role === "owner" ? (
+                <input
+                  className="w-full border border-border rounded px-3 py-2 text-sm"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  placeholder="Your company or organisation"
+                />
+              ) : (
+                <div className="text-sm text-muted-foreground px-3 py-2 border border-border rounded bg-muted/50">
+                  {companyName || "Not set"}
+                  <span className="text-xs ml-2 text-muted-foreground/60">(Only the account owner can change this)</span>
+                </div>
+              )}
             </div>
             <div className="space-y-1">
               <label className="text-sm font-medium text-muted-foreground">Organisation size</label>
-              <input
-                className="w-full border border-border rounded px-3 py-2 text-sm"
+              <select
+                className="w-full border border-border rounded px-3 py-2 text-sm bg-background"
                 value={companySize}
                 onChange={(e) => setCompanySize(e.target.value)}
-                placeholder="e.g. 1-10, 11-50, 51-200, 200+"
-              />
+              >
+                <option value="">Select size...</option>
+                {ORG_SIZE_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
             </div>
             <div className="space-y-1">
               <label className="text-sm font-medium text-muted-foreground">Role</label>
-              <input
-                className="w-full border border-border rounded px-3 py-2 text-sm"
+              <select
+                className="w-full border border-border rounded px-3 py-2 text-sm bg-background"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
-                placeholder="e.g. CTO, Head of Trust, GRC Lead"
-              />
+              >
+                <option value="">Select role...</option>
+                {ROLE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
             </div>
             <div className="flex items-center gap-3">
               <button
