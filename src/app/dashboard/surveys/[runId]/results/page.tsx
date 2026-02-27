@@ -521,7 +521,7 @@ function SurveyResultsContent() {
           <div className="rounded-xl border border-border p-6 shadow-sm space-y-3 mt-4">
             <h2 className="text-lg font-semibold">Survey links</h2>
             <div className="text-sm text-muted-foreground">
-              Completed: {invites.filter((i) => i.used_at).length} \u00b7
+              Completed: {invites.filter((i) => i.used_at).length} {"\u00b7"}
               Pending: {invites.filter((i) => !i.used_at).length}
             </div>
 
@@ -593,7 +593,7 @@ function SurveyResultsContent() {
         <div className="rounded-xl border border-border p-6 shadow-sm space-y-3">
           <h2 className="text-lg font-semibold">Survey links</h2>
           <div className="text-sm text-muted-foreground">
-            Completed: {invites.filter((i) => i.used_at).length} \u00b7
+            Completed: {invites.filter((i) => i.used_at).length} {"\u00b7"}
             Pending: {invites.filter((i) => !i.used_at).length}
           </div>
           {!isExplorer && (
@@ -653,7 +653,7 @@ function SurveyResultsContent() {
         </p>
         <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
           <div>
-            Mode: {run?.mode ?? "\u2014"} \u00b7 Respondents:{" "}
+            Mode: {run?.mode ?? "\u2014"} {"\u00b7"} Respondents:{" "}
             {counts?.respondents ?? 0}
           </div>
           <a
@@ -747,7 +747,7 @@ function SurveyResultsContent() {
           {isExplorer ? "Your completion" : "Survey completion"}
         </h2>
         <div className="text-sm text-muted-foreground">
-          Completed: {invites.filter((i) => i.used_at).length} \u00b7
+          Completed: {invites.filter((i) => i.used_at).length} {"\u00b7"}
           Pending: {invites.filter((i) => !i.used_at).length}
         </div>
 

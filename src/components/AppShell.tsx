@@ -24,9 +24,7 @@ export default function AppShell({ children }: AppShellProps) {
   const isAdminOrDashboard = pathname.startsWith("/admin") || pathname.startsWith("/dashboard");
 
   const navItems = useMemo(() => {
-    const items: Array<{ label: string; href: string; isActive?: boolean; isExternal?: boolean }> = [
-      { label: "Create survey", href: "/admin/new-run" },
-    ];
+    const items: Array<{ label: string; href: string; isActive?: boolean; isExternal?: boolean }> = [];
 
     if (isAdminOrDashboard) {
       items.push(
