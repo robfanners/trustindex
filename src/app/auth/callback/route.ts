@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { safeRedirectPath } from "@/lib/url";
+import { getServerOrigin, safeRedirectPath } from "@/lib/url";
 
 // ---------------------------------------------------------------------------
 // GET /auth/callback — Server-side PKCE code exchange
@@ -9,13 +9,18 @@ import { safeRedirectPath } from "@/lib/url";
 // Supabase's @supabase/ssr stores the PKCE code verifier in an httpOnly
 // cookie. The code exchange MUST happen server-side so we can read that
 // cookie. A client-side page.tsx cannot access httpOnly cookies.
+//
+// IMPORTANT: We use getServerOrigin(request) instead of request.nextUrl.origin
+// because behind a reverse proxy (e.g. Hostinger), nextUrl.origin returns
+// the internal server address (0.0.0.0:3000) rather than the public domain.
 // ---------------------------------------------------------------------------
 
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = request.nextUrl;
+  const { searchParams } = request.nextUrl;
   const code = searchParams.get("code");
   const next = safeRedirectPath(searchParams.get("next"));
   const claim = searchParams.get("claim");
+  const origin = getServerOrigin(request);
 
   if (code) {
     const cookieStore = await cookies();
