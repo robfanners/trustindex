@@ -23,6 +23,7 @@ type SettingsTab = {
 
 const tabs: SettingsTab[] = [
   { label: "Account", href: "/dashboard/settings" },
+  { label: "Organisation", href: "/dashboard/settings/organisation" },
   { label: "Billing", href: "/dashboard/settings/billing", planCheck: hasBillingAccess },
   { label: "Team", href: "/dashboard/settings/team", planCheck: canManageTeam },
   { label: "Security", href: "/dashboard/settings/security" },
