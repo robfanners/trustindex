@@ -145,6 +145,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: inviteErr.message }, { status: 500 });
     }
 
+    // Save survey scope (hierarchy selections)
+    const scope = body.scope as Array<{
+      subsidiaryId?: string;
+      functionId?: string;
+      teamId?: string;
+    }> | undefined;
+
+    if (scope?.length) {
+      const scopeRows = scope.map((s) => ({
+        survey_run_id: runId,
+        subsidiary_id: s.subsidiaryId || null,
+        function_id: s.functionId || null,
+        team_id: s.teamId || null,
+      }));
+      await supabase.from("survey_scope").insert(scopeRows);
+    }
+
     return NextResponse.json({
       runId,
       tokens,
