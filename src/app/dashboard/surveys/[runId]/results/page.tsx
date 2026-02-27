@@ -222,6 +222,8 @@ function SurveyResultsContent() {
   const [invites, setInvites] = useState<InviteRow[]>([]);
   const [exporting, setExporting] = useState(false);
   const [exportStatus, setExportStatus] = useState<string | null>(null);
+  const [acceptedDims, setAcceptedDims] = useState<Set<string>>(new Set());
+  const [acceptingDim, setAcceptingDim] = useState<string | null>(null);
 
   const radarData = useMemo(() => {
     const short = (s: string) =>
@@ -462,6 +464,36 @@ function SurveyResultsContent() {
       setExportStatus(err?.message || "Failed to export CSV.");
     } finally {
       setExporting(false);
+    }
+  };
+
+  // -------------------------------------------------------------------------
+  // Accept dimension as action
+  // -------------------------------------------------------------------------
+
+  const acceptDimensionAsAction = async (dimension: string, score: number) => {
+    setAcceptingDim(dimension);
+    try {
+      const res = await fetch("/api/actions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: `Improve ${dimension} (scored ${score}/100)`,
+          description: `Action generated from TrustOrg survey "${run?.title ?? ""}". The ${dimension} dimension scored ${score}/100, indicating room for improvement.`,
+          severity: score < 40 ? "high" : score < 70 ? "medium" : "low",
+          linked_run_id: runId,
+          linked_run_type: "org",
+          linked_dimension: dimension,
+          source_type: "org_survey",
+        }),
+      });
+      if (res.ok) {
+        setAcceptedDims((prev) => new Set(prev).add(dimension));
+      }
+    } catch {
+      // silent — user can retry
+    } finally {
+      setAcceptingDim(null);
     }
   };
 
@@ -838,10 +870,31 @@ function SurveyResultsContent() {
                   key={d.dimension}
                   className="rounded-lg border border-border p-4 space-y-2"
                 >
-                  <div className="flex items-baseline justify-between gap-4">
-                    <div className="font-semibold">{info.short}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {score}/100
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-baseline gap-4">
+                      <div className="font-semibold">{info.short}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {score}/100
+                      </div>
+                    </div>
+                    <div className="shrink-0 self-center">
+                      {acceptedDims.has(d.dimension) ? (
+                        <span className="text-xs text-success font-medium flex items-center gap-1">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          Action created
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => acceptDimensionAsAction(d.dimension, score)}
+                          disabled={acceptingDim === d.dimension}
+                          className="text-xs px-2.5 py-1 rounded border border-brand text-brand hover:bg-brand hover:text-white transition-colors disabled:opacity-50 whitespace-nowrap"
+                        >
+                          {acceptingDim === d.dimension ? "Creating..." : "Accept as Action"}
+                        </button>
+                      )}
                     </div>
                   </div>
 
