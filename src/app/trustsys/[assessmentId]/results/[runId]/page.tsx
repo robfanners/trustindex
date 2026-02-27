@@ -11,6 +11,7 @@ import { SYSTEM_DIMENSIONS } from "@/lib/systemQuestionBank";
 import type { RiskFlag } from "@/lib/systemScoring";
 import { getTierForScore } from "@/lib/trustGraphTiers";
 import MethodologyOverlay from "@/components/MethodologyOverlay";
+import Tooltip from "@/components/Tooltip";
 import {
   getStabilityBadge,
   calculateDrift,
@@ -24,6 +25,18 @@ import {
   PolarAngleAxis,
   ResponsiveContainer,
 } from "recharts";
+
+// ---------------------------------------------------------------------------
+// Dimension tooltip descriptions
+// ---------------------------------------------------------------------------
+
+const DIMENSION_TOOLTIPS: Record<string, string> = {
+  Transparency: "Visibility and clarity of decision-making processes",
+  Inclusion: "Psychological safety and participation across the organisation",
+  Confidence: "Trust in leadership follow-through and consistency",
+  Explainability: "How well decisions can be understood by stakeholders",
+  Risk: "Strength of governance controls and escalation paths",
+};
 
 // ---------------------------------------------------------------------------
 // Types
@@ -289,12 +302,13 @@ function ResultsContent() {
           >
             {tier.label}
           </span>
-          <span
-            className={`text-xs px-2.5 py-1 rounded-full font-medium ${stabilityBadge.className}`}
-            title={stabilityBadge.tooltip}
-          >
-            {stabilityBadge.label}
-          </span>
+          <Tooltip content={stabilityBadge.tooltip}>
+            <span
+              className={`text-xs px-2.5 py-1 rounded-full font-medium ${stabilityBadge.className}`}
+            >
+              {stabilityBadge.label}
+            </span>
+          </Tooltip>
           <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-muted text-muted-foreground">
             v{currentRun.version_number}
           </span>
@@ -415,7 +429,9 @@ function ResultsContent() {
                   key={dim}
                   className="flex items-center justify-between border border-border rounded-lg p-3"
                 >
-                  <div className="font-medium text-sm">{dim}</div>
+                  <Tooltip content={DIMENSION_TOOLTIPS[dim] ?? dim}>
+                    <span className="font-medium text-sm">{dim}</span>
+                  </Tooltip>
                   <div className={`text-sm font-semibold ${dimTier.colorClass}`}>
                     {score}/100
                   </div>

@@ -8,6 +8,7 @@ import RequireAuth from "@/components/RequireAuth";
 import { getPlanLimits } from "@/lib/entitlements";
 import { getTierForScore } from "@/lib/trustGraphTiers";
 import { getStabilityBadge, type StabilityStatus } from "@/lib/assessmentLifecycle";
+import Tooltip from "@/components/Tooltip";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -364,12 +365,13 @@ function TrustSysContent() {
                       ) : (
                         <span className="text-xs text-muted-foreground">No score</span>
                       )}
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full font-medium ${stability.className}`}
-                        title={stability.tooltip}
-                      >
-                        {stability.label}
-                      </span>
+                      <Tooltip content={stability.tooltip}>
+                        <span
+                          className={`text-xs px-2 py-0.5 rounded-full font-medium ${stability.className}`}
+                        >
+                          {stability.label}
+                        </span>
+                      </Tooltip>
                     </div>
 
                     {/* Action buttons — stop propagation so clicks don't toggle expand */}

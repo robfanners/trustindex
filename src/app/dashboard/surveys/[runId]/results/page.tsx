@@ -17,6 +17,7 @@ import {
 import TierBadge from "@/components/TierBadge";
 import ExecutiveSummary from "@/components/ExecutiveSummary";
 import MethodologyOverlay from "@/components/MethodologyOverlay";
+import Tooltip from "@/components/Tooltip";
 import { buildExecutiveSummary, type DimensionKey } from "@/lib/executiveSummary";
 
 // ---------------------------------------------------------------------------
@@ -189,6 +190,18 @@ function interpretationForDimension(name: string): DimInterpretation {
     }
   );
 }
+
+// ---------------------------------------------------------------------------
+// Dimension tooltip descriptions
+// ---------------------------------------------------------------------------
+
+const DIMENSION_TOOLTIPS: Record<string, string> = {
+  "Employee Confidence": "Trust in leadership follow-through and consistency",
+  "Leadership Credibility": "Reliability and authenticity of leadership signals",
+  "Operational Clarity": "Clarity of ownership, roles and decision pathways",
+  "AI Explainability": "How well AI-assisted decisions can be understood and challenged",
+  "Fairness & Consistency": "Evenness of rules, processes and performance standards",
+};
 
 // ---------------------------------------------------------------------------
 // /dashboard/surveys/[runId]/results — authenticated results view
@@ -872,7 +885,9 @@ function SurveyResultsContent() {
                 >
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex items-baseline gap-4">
-                      <div className="font-semibold">{info.short}</div>
+                      <Tooltip content={DIMENSION_TOOLTIPS[d.dimension] ?? d.dimension}>
+                        <span className="font-semibold">{info.short}</span>
+                      </Tooltip>
                       <div className="text-sm text-muted-foreground">
                         {score}/100
                       </div>
