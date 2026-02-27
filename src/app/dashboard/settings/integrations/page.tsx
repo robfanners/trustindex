@@ -1,105 +1,139 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 // ---------------------------------------------------------------------------
-// /dashboard/settings/integrations — Connectors (Coming Soon)
+// /dashboard/settings/integrations — Categorised Integrations
 // ---------------------------------------------------------------------------
 
-const integrations = [
+type IntegrationCard = {
+  name: string;
+  description: string;
+  active: boolean;
+  connectHref?: string;
+};
+
+type Category = {
+  title: string;
+  cards: IntegrationCard[];
+};
+
+const categories: Category[] = [
   {
-    name: "Slack",
-    description: "Get trust score alerts and survey notifications in Slack.",
-    icon: (
-      <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none">
-        <path d="M14.5 2a2 2 0 00-2 2v4h4a2 2 0 000-4h-2zm0 0" fill="#E01E5A" />
-        <path d="M2 9.5a2 2 0 002 2h4v-4a2 2 0 00-4 0v2zm0 0" fill="#36C5F0" />
-        <path d="M9.5 22a2 2 0 002-2v-4h-4a2 2 0 000 4h2zm0 0" fill="#2EB67D" />
-        <path d="M22 14.5a2 2 0 00-2-2h-4v4a2 2 0 004 0v-2zm0 0" fill="#ECB22E" />
-        <path d="M8.5 9.5h7v5h-7z" fill="#ECB22E" opacity=".2" />
-      </svg>
-    ),
-    action: "Connect",
+    title: "People & Talent",
+    cards: [
+      { name: "HiBob", description: "Sync org structure (divisions, departments, teams) from HiBob.", active: true, connectHref: "/api/integrations/hibob/auth" },
+      { name: "Deel", description: "Import team structure and employee data from Deel.", active: false },
+      { name: "Workday", description: "Sync workforce data from Workday HCM.", active: false },
+      { name: "ADP", description: "Import organisational hierarchy from ADP.", active: false },
+      { name: "Rippling", description: "Sync employee and department data from Rippling.", active: false },
+      { name: "Personio", description: "Import team structure from Personio HR.", active: false },
+    ],
   },
   {
-    name: "Microsoft Teams",
-    description: "Share trust reports and survey links directly in Teams channels.",
-    icon: (
-      <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none">
-        <rect x="3" y="3" width="18" height="18" rx="3" fill="#5B5FC7" opacity="0.15" />
-        <path d="M8 8h8v8H8z" fill="#5B5FC7" opacity="0.3" />
-        <text x="12" y="16" textAnchor="middle" fill="#5B5FC7" fontSize="10" fontWeight="bold">T</text>
-      </svg>
-    ),
-    action: "Connect",
+    title: "Communication & Collaboration",
+    cards: [
+      { name: "Slack", description: "Get trust score alerts and survey notifications in Slack.", active: false },
+      { name: "Microsoft Teams", description: "Share trust reports and survey links in Teams channels.", active: false },
+    ],
   },
   {
-    name: "Jira",
-    description: "Create and track trust improvement actions as Jira tickets.",
-    icon: (
-      <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none">
-        <path d="M12 2L2 12l10 10 10-10L12 2z" fill="#2684FF" opacity="0.15" />
-        <path d="M12 7l-5 5 5 5 5-5-5-5z" fill="#2684FF" opacity="0.3" />
-        <path d="M12 10l-2 2 2 2 2-2-2-2z" fill="#2684FF" />
-      </svg>
-    ),
-    action: "Connect",
+    title: "Project & Delivery",
+    cards: [
+      { name: "Jira", description: "Create and track trust improvement actions as Jira tickets.", active: false },
+    ],
   },
   {
-    name: "GRC Export",
-    description: "Export trust data in formats compatible with GRC platforms.",
-    icon: (
-      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" className="text-muted-foreground" />
-      </svg>
-    ),
-    action: "Configure",
+    title: "Governance, Risk & Compliance",
+    cards: [
+      { name: "GRC Export", description: "Export trust data in formats compatible with GRC platforms.", active: false },
+    ],
   },
 ];
 
 export default function IntegrationsSettingsPage() {
+  const [hibobStatus, setHibobStatus] = useState<string | null>(null);
+  const [hibobLastSync, setHibobLastSync] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/integrations/hibob/status")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data) {
+          setHibobStatus(data.status ?? null);
+          setHibobLastSync(data.last_synced_at ?? null);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   return (
-    <div className="space-y-6">
-      <div className="border border-border rounded-lg p-6 space-y-2">
-        <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold text-foreground">
-            Connectors
-          </h2>
-          <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-muted-foreground font-medium">
-            Coming soon
-          </span>
-        </div>
-        <p className="text-sm text-muted-foreground">
+    <div className="space-y-8">
+      <div>
+        <h2 className="text-lg font-semibold text-foreground">Integrations</h2>
+        <p className="text-sm text-muted-foreground mt-1">
           Connect TrustGraph with your existing tools and workflows.
-          Integrations are coming in a future release.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {integrations.map((int) => (
-          <div
-            key={int.name}
-            className="border border-border rounded-lg p-5 space-y-3 opacity-60"
-          >
-            <div className="flex items-center gap-3">
-              {int.icon}
-              <div>
-                <h3 className="text-sm font-semibold text-foreground">
-                  {int.name}
-                </h3>
+      {categories.map((cat) => (
+        <section key={cat.title} className="space-y-3">
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            {cat.title}
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {cat.cards.map((card) => (
+              <div
+                key={card.name}
+                className={`border border-border rounded-lg p-5 space-y-3 ${
+                  card.active ? "" : "opacity-60"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold text-foreground">{card.name}</h4>
+                  {!card.active && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-muted-foreground font-medium dark:bg-gray-800">
+                      Coming Soon
+                    </span>
+                  )}
+                  {card.name === "HiBob" && hibobStatus === "connected" && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 font-medium dark:bg-green-900 dark:text-green-300">
+                      Connected
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">{card.description}</p>
+
+                {/* HiBob-specific: show last synced */}
+                {card.name === "HiBob" && hibobStatus === "connected" && hibobLastSync && (
+                  <p className="text-xs text-muted-foreground">
+                    Last synced: {new Date(hibobLastSync).toLocaleDateString()}
+                  </p>
+                )}
+
+                {card.active ? (
+                  <a
+                    href={card.connectHref ?? "#"}
+                    className="inline-block px-3 py-1.5 rounded bg-brand text-white text-xs font-medium hover:bg-brand-hover"
+                  >
+                    {card.name === "HiBob" && hibobStatus === "connected" ? "Manage" : "Connect"}
+                  </a>
+                ) : (
+                  <button
+                    disabled
+                    className="px-3 py-1.5 rounded border border-border text-xs text-muted-foreground cursor-not-allowed"
+                  >
+                    Connect
+                  </button>
+                )}
               </div>
-            </div>
-            <p className="text-xs text-muted-foreground">{int.description}</p>
-            <button
-              disabled
-              className="px-3 py-1.5 rounded border border-border text-xs text-muted-foreground cursor-not-allowed"
-            >
-              {int.action}
-            </button>
+            ))}
           </div>
-        ))}
-      </div>
+        </section>
+      ))}
 
       <p className="text-xs text-muted-foreground text-center">
-        Integrations are coming in a future release. Contact{" "}
+        More integrations are coming soon. Contact{" "}
         <a
           href="mailto:hello@verisum.org"
           className="text-brand underline hover:text-foreground"
