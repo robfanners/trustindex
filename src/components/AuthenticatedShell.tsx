@@ -5,6 +5,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import ModuleSwitcher from "@/components/header/ModuleSwitcher";
+import GlobalSearch from "@/components/header/GlobalSearch";
+import QuickCreate from "@/components/header/QuickCreate";
+import NotificationBell from "@/components/header/NotificationBell";
+import UserMenu from "@/components/header/UserMenu";
+import HelpMenu from "@/components/header/HelpMenu";
 
 type AuthenticatedShellProps = {
   children: React.ReactNode;
@@ -68,7 +74,7 @@ function NavIcon({ icon }: { icon: string }) {
 
 function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
   const pathname = usePathname();
-  const { user, profile, signOut } = useAuth();
+  useAuth(); // ensure auth context is available for header components
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -146,22 +152,29 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
           </span>
         </Link>
 
-        {/* Right side: user info */}
-        <div className="ml-auto flex items-center gap-3">
-          {profile && (
-            <span className="hidden sm:inline text-xs px-2 py-0.5 rounded-full bg-brand-subtle text-brand font-medium capitalize">
-              {profile.plan}
-            </span>
-          )}
-          <span className="text-sm text-muted-foreground hidden sm:inline">
-            {user?.email}
-          </span>
+        {/* Module switcher */}
+        <ModuleSwitcher />
+
+        {/* Right side: header tools */}
+        <div className="ml-auto flex items-center gap-1.5">
+          <GlobalSearch />
+          <QuickCreate />
+
+          {/* AI placeholder */}
           <button
-            onClick={signOut}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            type="button"
+            disabled
+            className="p-1.5 rounded-md text-muted-foreground cursor-not-allowed opacity-50"
+            title="AI assistant — Coming soon"
           >
-            Log out
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+            </svg>
           </button>
+
+          <NotificationBell />
+          <HelpMenu />
+          <UserMenu />
         </div>
       </header>
 
