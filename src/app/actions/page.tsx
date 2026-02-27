@@ -22,6 +22,9 @@ type Action = {
   dimension_id: string | null;
   evidence: Record<string, unknown> | null;
   evidence_url: string | null;
+  ticket_provider: string | null;
+  ticket_key: string | null;
+  ticket_url: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -114,6 +117,10 @@ function ActionsContent() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [noteText, setNoteText] = useState("");
   const [addingNote, setAddingNote] = useState(false);
+  const [noteError, setNoteError] = useState<string | null>(null);
+  const [editingDueDate, setEditingDueDate] = useState(false);
+  const [dueValue, setDueValue] = useState("");
+  const [savingDue, setSavingDue] = useState(false);
 
   // Fetch actions
   const fetchActions = useCallback(async () => {
@@ -202,6 +209,7 @@ function ActionsContent() {
   const handleAddNote = async () => {
     if (!selectedAction || !noteText.trim()) return;
     setAddingNote(true);
+    setNoteError(null);
     try {
       const res = await fetch(`/api/actions/${selectedAction.id}/updates`, {
         method: "POST",
@@ -211,9 +219,12 @@ function ActionsContent() {
       if (res.ok) {
         setNoteText("");
         loadUpdates(selectedAction.id);
+      } else {
+        const d = await res.json().catch(() => ({}));
+        setNoteError(d.error || "Failed to save note");
       }
     } catch {
-      // silent
+      setNoteError("Network error — please try again");
     } finally {
       setAddingNote(false);
     }
@@ -469,15 +480,73 @@ function ActionsContent() {
                 >
                   {STATUS_LABEL[selectedAction.status]}
                 </span>
-                {selectedAction.due_date && (
-                  <span className="text-[10px] text-muted-foreground">
-                    Due{" "}
-                    {new Date(selectedAction.due_date).toLocaleDateString(
-                      "en-GB",
-                      { day: "numeric", month: "short" }
-                    )}
-                  </span>
-                )}
+                {/* Due date — editable */}
+                <div className="flex items-center gap-1.5">
+                  {editingDueDate ? (
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="date"
+                        value={dueValue}
+                        onChange={(e) => setDueValue(e.target.value)}
+                        className="border border-border rounded px-1.5 py-0.5 text-[10px] bg-background"
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        disabled={savingDue}
+                        onClick={async () => {
+                          if (!selectedAction) return;
+                          setSavingDue(true);
+                          try {
+                            const res = await fetch(`/api/actions/${selectedAction.id}`, {
+                              method: "PATCH",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ due_date: dueValue || null }),
+                            });
+                            if (res.ok) {
+                              const data = await res.json();
+                              setSelectedAction(data.action);
+                              setActions((prev) => prev.map((a) => a.id === data.action.id ? data.action : a));
+                              loadUpdates(selectedAction.id);
+                            }
+                          } catch {} finally {
+                            setSavingDue(false);
+                            setEditingDueDate(false);
+                          }
+                        }}
+                        className="text-[10px] text-brand hover:underline"
+                      >
+                        {savingDue ? "..." : "Save"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingDueDate(false)}
+                        className="text-[10px] text-muted-foreground hover:underline"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDueValue(selectedAction?.due_date?.split("T")[0] ?? "");
+                        setEditingDueDate(true);
+                      }}
+                      className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                        selectedAction?.due_date
+                          ? new Date(selectedAction.due_date) < new Date() && selectedAction.status !== "done"
+                            ? "bg-destructive/10 text-destructive"
+                            : "bg-muted text-muted-foreground"
+                          : "bg-muted text-muted-foreground border border-dashed border-muted-foreground/30"
+                      }`}
+                    >
+                      {selectedAction?.due_date
+                        ? `Due ${new Date(selectedAction.due_date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`
+                        : "Set due date"}
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Source link */}
@@ -549,6 +618,39 @@ function ActionsContent() {
                 >
                   {addingNote ? "Saving..." : "Save note"}
                 </button>
+                {noteError && (
+                  <div className="text-xs text-destructive mt-1">{noteError}</div>
+                )}
+              </div>
+
+              {/* Create ticket / linked ticket */}
+              <div className="mb-4">
+                <div className="text-xs font-medium text-muted-foreground mb-1.5">
+                  Backlog
+                </div>
+                {selectedAction.ticket_key ? (
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="px-2 py-0.5 rounded-full bg-brand/10 text-brand font-medium">
+                      {selectedAction.ticket_provider ?? "Ticket"}
+                    </span>
+                    <a
+                      href={selectedAction.ticket_url ?? "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-brand underline"
+                    >
+                      {selectedAction.ticket_key}
+                    </a>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Connect a partner on the{" "}
+                    <a href="/dashboard/settings/integrations" className="text-brand underline">
+                      Integrations page
+                    </a>{" "}
+                    to create tickets from actions.
+                  </p>
+                )}
               </div>
 
               {/* Audit trail */}
