@@ -10,6 +10,7 @@ import { canExportResults } from "@/lib/entitlements";
 import { SYSTEM_DIMENSIONS } from "@/lib/systemQuestionBank";
 import type { RiskFlag } from "@/lib/systemScoring";
 import { getTierForScore } from "@/lib/trustGraphTiers";
+import MethodologyOverlay from "@/components/MethodologyOverlay";
 import {
   getStabilityBadge,
   calculateDrift,
@@ -304,7 +305,10 @@ function ResultsContent() {
       <div className="border border-border rounded-xl p-6">
         <div className="flex items-end justify-between">
           <div>
-            <div className="text-sm text-muted-foreground">Overall Score</div>
+            <div className="flex items-center gap-2">
+              <div className="text-sm text-muted-foreground">Overall Score</div>
+              <MethodologyOverlay module="sys" />
+            </div>
             <div className="text-5xl font-bold">{overall}</div>
           </div>
           <div className="text-right space-y-1">
@@ -352,6 +356,31 @@ function ResultsContent() {
               )}
           </div>
         )}
+      </div>
+
+      {/* What this means */}
+      <div className="border border-border rounded-xl p-6 space-y-3">
+        <div className="text-sm text-muted-foreground">What this means</div>
+        {(() => {
+          const score = overall;
+          const band =
+            score < 40
+              ? { label: "Fragile", color: "text-destructive", summary: "Low trust signals systemic friction and elevated risk. Immediate remediation recommended." }
+              : score < 70
+                ? { label: "Mixed", color: "text-warning", summary: "Some trust foundations exist but inconsistencies create vulnerability. Targeted improvements needed." }
+                : { label: "Strong", color: "text-success", summary: "Solid trust infrastructure in place. Focus on maintaining and iterating." };
+          return (
+            <>
+              <div className={`text-xl font-semibold ${band.color}`}>
+                {band.label} trust ({score}/100)
+              </div>
+              <div className="text-sm text-muted-foreground">{band.summary}</div>
+              <div className="text-sm text-muted-foreground">
+                Recommended next step: Review risk flags and accept recommendations as actions to address the weakest dimensions.
+              </div>
+            </>
+          );
+        })()}
       </div>
 
       {/* Radar + Dimensions */}
@@ -484,6 +513,28 @@ function ResultsContent() {
           </div>
         </div>
       )}
+
+      {/* Completion */}
+      <div className="border border-border rounded-xl p-6 space-y-3">
+        <h2 className="text-lg font-semibold">Assessment completion</h2>
+        <div className="text-sm text-muted-foreground">
+          Completed runs: {completedRuns.length} {"\u00b7"} Current version: v{currentRun.version_number}
+        </div>
+        <div className="space-y-2">
+          {completedRuns.slice(0, 5).map((r) => (
+            <div key={r.id} className="flex items-center justify-between text-sm">
+              <div className="text-muted-foreground">
+                v{r.version_number} — {r.completed_at
+                  ? new Date(r.completed_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+                  : "In progress"}
+              </div>
+              <div className={r.overall_score !== null ? "text-foreground font-medium" : "text-muted-foreground"}>
+                {r.overall_score !== null ? `${r.overall_score}/100` : "—"}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Actions bar */}
       <div className="flex items-center gap-3 flex-wrap">
