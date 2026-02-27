@@ -33,7 +33,7 @@ async function getAuthenticatedOrg() {
 // ---------------------------------------------------------------------------
 // GET /api/actions — list actions for the user's org
 // ---------------------------------------------------------------------------
-// Query params: status, severity, linked_run_id, owner_id, page, per_page
+// Query params: status, severity, source_type, linked_run_id, owner_id, page, per_page
 
 export async function GET(req: NextRequest) {
   try {
@@ -46,6 +46,7 @@ export async function GET(req: NextRequest) {
 
     const status = url.searchParams.get("status");
     const severity = url.searchParams.get("severity");
+    const sourceType = url.searchParams.get("source_type");
     const linkedRunId = url.searchParams.get("linked_run_id");
     const ownerId = url.searchParams.get("owner_id");
     const page = Math.max(1, Number(url.searchParams.get("page")) || 1);
@@ -60,6 +61,7 @@ export async function GET(req: NextRequest) {
 
     if (status) query = query.eq("status", status);
     if (severity) query = query.eq("severity", severity);
+    if (sourceType) query = query.eq("source_type", sourceType);
     if (linkedRunId) query = query.eq("linked_run_id", linkedRunId);
     if (ownerId) query = query.eq("owner_id", ownerId);
 
@@ -86,7 +88,7 @@ export async function GET(req: NextRequest) {
 // ---------------------------------------------------------------------------
 // Body: { title, description?, severity?, owner_id?, due_date?,
 //         linked_run_id?, linked_run_type?, linked_dimension?,
-//         source_recommendation? }
+//         source_recommendation?, source_type? }
 
 export async function POST(req: NextRequest) {
   try {
@@ -131,6 +133,8 @@ export async function POST(req: NextRequest) {
       ? { source: "recommendation", recommendation: body.source_recommendation }
       : null;
 
+    const sourceType = typeof body.source_type === "string" ? body.source_type.trim() : null;
+
     const { data: action, error: insertErr } = await db
       .from("actions")
       .insert({
@@ -145,6 +149,7 @@ export async function POST(req: NextRequest) {
         linked_run_type: linkedRunType,
         dimension_id: dimensionId,
         evidence,
+        source_type: sourceType,
       })
       .select("*")
       .single();

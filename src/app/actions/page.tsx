@@ -32,6 +32,7 @@ type Action = {
 type Filters = {
   status: string;
   severity: string;
+  source: string;
 };
 
 // ---------------------------------------------------------------------------
@@ -106,7 +107,7 @@ function ActionsContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
-  const [filters, setFilters] = useState<Filters>({ status: "", severity: "" });
+  const [filters, setFilters] = useState<Filters>({ status: "", severity: "", source: "" });
   const [transitioning, setTransitioning] = useState<string | null>(null);
 
   // Detail panel state
@@ -130,6 +131,7 @@ function ActionsContent() {
       const params = new URLSearchParams();
       if (filters.status) params.set("status", filters.status);
       if (filters.severity) params.set("severity", filters.severity);
+      if (filters.source) params.set("source_type", filters.source);
 
       const res = await fetch(`/api/actions?${params.toString()}`);
       if (!res.ok) {
@@ -295,6 +297,16 @@ function ActionsContent() {
               </option>
             ))}
           </select>
+          <select
+            value={filters.source}
+            onChange={(e) => setFilters((f) => ({ ...f, source: e.target.value }))}
+            className="border border-border rounded-lg px-3 py-1.5 text-sm bg-card focus:outline-none focus:border-brand"
+          >
+            <option value="">All sources</option>
+            <option value="org_survey">Organisation</option>
+            <option value="system_assessment">System</option>
+            <option value="manual">Manual</option>
+          </select>
           <span className="text-xs text-muted-foreground ml-auto">
             {total} action{total !== 1 ? "s" : ""}
           </span>
@@ -314,7 +326,7 @@ function ActionsContent() {
 
       {/* Empty state */}
       {!loading && !error && actions.length === 0 && total === 0 && (
-        <EmptyState hasFilters={!!(filters.status || filters.severity)} />
+        <EmptyState hasFilters={!!(filters.status || filters.severity || filters.source)} />
       )}
 
       {/* Filtered empty */}
@@ -325,7 +337,7 @@ function ActionsContent() {
           </p>
           <button
             type="button"
-            onClick={() => setFilters({ status: "", severity: "" })}
+            onClick={() => setFilters({ status: "", severity: "", source: "" })}
             className="text-sm text-brand hover:underline"
           >
             Clear filters
