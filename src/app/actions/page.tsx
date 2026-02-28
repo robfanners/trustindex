@@ -656,7 +656,7 @@ function ActionsContent() {
                   </div>
                 ) : (
                   <p className="text-xs text-muted-foreground">
-                    Connect a partner on the{" "}
+                    Connect your backlog via the{" "}
                     <a href="/dashboard/settings/integrations" className="text-brand underline">
                       Integrations page
                     </a>{" "}

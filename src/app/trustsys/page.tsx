@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import AuthenticatedShell from "@/components/AuthenticatedShell";
@@ -62,6 +63,9 @@ function TrustSysContent() {
   const [runs, setRuns] = useState<Run[]>([]);
   const [runsLoading, setRunsLoading] = useState(false);
 
+  // Auto-open form when redirected from /trustsys/new
+  const searchParams = useSearchParams();
+
   // Create form state
   const [showForm, setShowForm] = useState(false);
   const [formName, setFormName] = useState("");
@@ -70,6 +74,13 @@ function TrustSysContent() {
   const [formEnvironment, setFormEnvironment] = useState("");
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  // Auto-open create form when redirected from /trustsys/new?create=1
+  useEffect(() => {
+    if (searchParams.get("create") === "1") {
+      setShowForm(true);
+    }
+  }, [searchParams]);
 
   // Load assessments from v2 API
   useEffect(() => {

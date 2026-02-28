@@ -188,13 +188,17 @@ function ResultsContent() {
             linked_run_type: "sys",
             linked_dimension: rec.dimension,
             source_recommendation: rec.recommendation,
+            source_type: "system_assessment",
           }),
         });
         if (res.ok) {
           setAcceptedRecs((prev) => new Set([...prev, idx]));
+        } else {
+          const d = await res.json().catch(() => ({}));
+          console.error("Accept as Action failed:", d.error);
         }
-      } catch {
-        // silent — user can retry
+      } catch (err) {
+        console.error("Accept as Action network error:", err);
       } finally {
         setAcceptingRec(null);
       }

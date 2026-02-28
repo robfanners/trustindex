@@ -502,9 +502,12 @@ function SurveyResultsContent() {
       });
       if (res.ok) {
         setAcceptedDims((prev) => new Set(prev).add(dimension));
+      } else {
+        const d = await res.json().catch(() => ({}));
+        console.error("Accept as Action failed:", d.error);
       }
-    } catch {
-      // silent — user can retry
+    } catch (err) {
+      console.error("Accept as Action network error:", err);
     } finally {
       setAcceptingDim(null);
     }
