@@ -204,6 +204,20 @@ function ReportsContent() {
 // Shared helpers
 // ---------------------------------------------------------------------------
 
+const STAT_EXPLANATIONS: Record<string, string> = {
+  "TrustGraph Health": "Composite relational score combining TrustOrg and TrustSys base scores, minus penalty adjustments for action debt, drift, escalations, and assessment expiry. Updated whenever a new assessment is completed.",
+  "TrustOrg Score": "Average score across organisational trust dimensions (Leadership, Culture, Policy, Operations, Stakeholder Engagement) from the most recent TrustOrg survey. Based on respondent ratings.",
+  "TrustSys Score": "Weighted average score across system governance dimensions (Governance, Data Privacy, Robustness, Oversight, Explainability) from the latest system assessments.",
+  "Total Actions": "Total number of remediation actions created from survey or assessment recommendations. Includes all statuses (open, in progress, blocked, and done).",
+  "Open": "Actions that are waiting to be started. A high count signals a growing remediation backlog.",
+  "Critical Open": "High-severity or critical actions that are still open. These should be prioritised immediately as they represent the highest governance risk.",
+  "Overdue": "Actions past their due date that are not yet completed. Indicates delivery slippage in the remediation pipeline.",
+  "Escalations": "Unresolved escalation events triggered by critical score drops, persistent drift, or policy violations. Requires senior leadership attention.",
+  "Drift Events": "Number of times a score moved significantly between assessment runs during this period. Frequent drift signals instability in trust posture.",
+  "Overdue Reassess.": "Assessments or surveys that are overdue for reassessment based on the configured reassessment policy frequency.",
+  "Relational Risk": "Composite risk indicator derived from open critical actions, unresolved escalations, and assessment drift patterns.",
+};
+
 function StatCard({
   label,
   value,
@@ -213,16 +227,95 @@ function StatCard({
   value: string | number;
   alert?: boolean;
 }) {
+  const [showExplainer, setShowExplainer] = useState(false);
+  const explanation = STAT_EXPLANATIONS[label];
+
   return (
-    <div className="border border-border rounded-xl p-4">
-      <div className="text-xs font-medium text-muted-foreground">{label}</div>
-      <div
-        className={`text-2xl font-bold mt-1 ${
-          alert ? "text-destructive" : "text-foreground"
-        }`}
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setShowExplainer((v) => !v)}
+        className="w-full text-left border border-border rounded-xl p-4 hover:border-brand/40 hover:shadow-sm transition-all cursor-pointer group"
       >
-        {value}
-      </div>
+        <div className="flex items-center justify-between">
+          <div className="text-xs font-medium text-muted-foreground">{label}</div>
+          <svg className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-brand transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div
+          className={`text-2xl font-bold mt-1 ${
+            alert ? "text-destructive" : "text-foreground"
+          }`}
+        >
+          {value}
+        </div>
+      </button>
+      {showExplainer && explanation && (
+        <div className="absolute z-50 top-full left-0 right-0 mt-1 p-3 bg-foreground text-background text-xs rounded-lg shadow-lg leading-relaxed">
+          {explanation}
+          <button
+            type="button"
+            onClick={() => setShowExplainer(false)}
+            className="block mt-2 text-background/60 hover:text-background text-[10px] underline"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ChartExportBar({ chartId, title }: { chartId: string; title: string }) {
+  const [exporting, setExporting] = useState(false);
+
+  const exportChart = async (format: "png" | "pdf") => {
+    setExporting(true);
+    try {
+      const el = document.getElementById(chartId);
+      if (!el) return;
+
+      const { default: html2canvas } = await import("html2canvas");
+      const canvas = await html2canvas(el, { backgroundColor: "#ffffff", scale: 2 });
+
+      if (format === "png") {
+        const link = document.createElement("a");
+        link.download = `${title.replace(/\s+/g, "-").toLowerCase()}-${new Date().toISOString().split("T")[0]}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      } else if (format === "pdf") {
+        const { default: jsPDF } = await import("jspdf");
+        const imgData = canvas.toDataURL("image/png");
+        const pdf = new jsPDF({ orientation: canvas.width > canvas.height ? "landscape" : "portrait", unit: "px", format: [canvas.width, canvas.height] });
+        pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height);
+        pdf.save(`${title.replace(/\s+/g, "-").toLowerCase()}-${new Date().toISOString().split("T")[0]}.pdf`);
+      }
+    } catch (err) {
+      console.error("Export failed:", err);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <button
+        type="button"
+        onClick={() => exportChart("png")}
+        disabled={exporting}
+        className="text-[10px] px-2 py-0.5 rounded border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors disabled:opacity-50"
+      >
+        PNG
+      </button>
+      <button
+        type="button"
+        onClick={() => exportChart("pdf")}
+        disabled={exporting}
+        className="text-[10px] px-2 py-0.5 rounded border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors disabled:opacity-50"
+      >
+        PDF
+      </button>
     </div>
   );
 }
@@ -367,66 +460,20 @@ function BoardSummaryReport({
     <div className="space-y-6">
       {/* Health score hero */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="border border-border rounded-xl p-6">
-          <div className="text-sm font-medium text-muted-foreground">
-            TrustGraph Health
-          </div>
-          <div className="mt-2 flex items-end gap-2">
-            {data.health_score !== null ? (
-              <>
-                <div className="text-4xl font-bold text-foreground">
-                  {data.health_score.toFixed(1)}
-                </div>
-                {band && (
-                  <span
-                    className={`text-xs px-2 py-0.5 rounded-full font-medium mb-1 ${band.bgColor} ${band.color}`}
-                  >
-                    {band.label}
-                  </span>
-                )}
-              </>
-            ) : (
-              <div className="text-3xl font-bold text-muted-foreground/30">
-                &mdash;
-              </div>
-            )}
-          </div>
-          <div className="text-xs text-muted-foreground mt-1">
-            Composite relational score
-          </div>
-        </div>
-
-        <div className="border border-border rounded-xl p-6">
-          <div className="text-sm font-medium text-muted-foreground">
-            TrustOrg Score
-          </div>
-          <div className="text-3xl font-bold text-foreground mt-2">
-            {data.org_base !== null ? data.org_base.toFixed(1) : "\u2014"}
-          </div>
-          <div className="text-xs text-muted-foreground mt-1">
-            Organisational trust readiness
-          </div>
-        </div>
-
-        <div className="border border-border rounded-xl p-6">
-          <div className="text-sm font-medium text-muted-foreground">
-            TrustSys Score
-          </div>
-          <div className="text-3xl font-bold text-foreground mt-2">
-            {data.sys_base !== null ? data.sys_base.toFixed(1) : "\u2014"}
-          </div>
-          <div className="text-xs text-muted-foreground mt-1">
-            System trust stability
-          </div>
-        </div>
+        <StatCard label="TrustGraph Health" value={data.health_score !== null ? data.health_score.toFixed(1) : "\u2014"} />
+        <StatCard label="TrustOrg Score" value={data.org_base !== null ? data.org_base.toFixed(1) : "\u2014"} />
+        <StatCard label="TrustSys Score" value={data.sys_base !== null ? data.sys_base.toFixed(1) : "\u2014"} />
       </div>
 
       {/* Penalty drivers chart */}
       {penaltyBars.length > 0 && (
-        <div className="border border-border rounded-xl p-6">
-          <h3 className="text-sm font-medium text-foreground mb-1">
-            Penalty Drivers
-          </h3>
+        <div id="chart-penalty-drivers" className="border border-border rounded-xl p-6">
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="text-sm font-medium text-foreground">
+              Penalty Drivers
+            </h3>
+            <ChartExportBar chartId="chart-penalty-drivers" title="Penalty Drivers" />
+          </div>
           <p className="text-xs text-muted-foreground mb-4">
             Factors reducing the health score from base of{" "}
             <span className="font-medium">
@@ -622,10 +669,13 @@ function AssessmentHistoryReport({
       <FilterRow runType={runType} setRunType={setRunType} />
 
       {/* Score over time line chart */}
-      <div className="border border-border rounded-xl p-6">
-        <h3 className="text-sm font-medium text-foreground mb-4">
-          Score Over Time
-        </h3>
+      <div id="chart-score-over-time" className="border border-border rounded-xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-medium text-foreground">
+            Score Over Time
+          </h3>
+          <ChartExportBar chartId="chart-score-over-time" title="Score Over Time" />
+        </div>
         <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
           <LineChart data={scoreTimeline}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -657,10 +707,13 @@ function AssessmentHistoryReport({
 
       {/* Dimension radar comparison (sys) */}
       {radarData.length > 0 && latestSys && (
-        <div className="border border-border rounded-xl p-6">
-          <h3 className="text-sm font-medium text-foreground mb-1">
-            Dimension Comparison — TrustSys
-          </h3>
+        <div id="chart-dimension-comparison" className="border border-border rounded-xl p-6">
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="text-sm font-medium text-foreground">
+              Dimension Comparison — TrustSys
+            </h3>
+            <ChartExportBar chartId="chart-dimension-comparison" title="Dimension Comparison" />
+          </div>
           <p className="text-xs text-muted-foreground mb-4">
             Latest run vs previous run
           </p>
@@ -965,10 +1018,13 @@ function ActionCompletionReport({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Created vs Resolved timeline */}
         {data.time_series.length > 0 && (
-          <div className="border border-border rounded-xl p-6">
-            <h3 className="text-sm font-medium text-foreground mb-4">
-              Created vs Resolved (Weekly)
-            </h3>
+          <div id="chart-created-resolved" className="border border-border rounded-xl p-6">
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-sm font-medium text-foreground">
+                Created vs Resolved (Weekly)
+              </h3>
+              <ChartExportBar chartId="chart-created-resolved" title="Created vs Resolved" />
+            </div>
             <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
               <BarChart data={data.time_series}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -998,10 +1054,13 @@ function ActionCompletionReport({
         {/* Severity donut + Status donut */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {donutData.length > 0 && (
-            <div className="border border-border rounded-xl p-6">
-              <h3 className="text-sm font-medium text-foreground mb-4">
-                By Severity
-              </h3>
+            <div id="chart-severity" className="border border-border rounded-xl p-6">
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="text-sm font-medium text-foreground">
+                  By Severity
+                </h3>
+                <ChartExportBar chartId="chart-severity" title="Actions by Severity" />
+              </div>
               <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
                   <Pie
@@ -1030,10 +1089,13 @@ function ActionCompletionReport({
           )}
 
           {statusDonut.length > 0 && (
-            <div className="border border-border rounded-xl p-6">
-              <h3 className="text-sm font-medium text-foreground mb-4">
-                By Status
-              </h3>
+            <div id="chart-status" className="border border-border rounded-xl p-6">
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="text-sm font-medium text-foreground">
+                  By Status
+                </h3>
+                <ChartExportBar chartId="chart-status" title="Actions by Status" />
+              </div>
               <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
                   <Pie
@@ -1217,10 +1279,13 @@ function RiskEscalationReport({
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Timeline */}
             {timeline.length > 0 && (
-              <div className="border border-border rounded-xl p-6">
-                <h3 className="text-sm font-medium text-foreground mb-4">
-                  Escalation Timeline
-                </h3>
+              <div id="chart-escalation-timeline" className="border border-border rounded-xl p-6">
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className="text-sm font-medium text-foreground">
+                    Escalation Timeline
+                  </h3>
+                  <ChartExportBar chartId="chart-escalation-timeline" title="Escalation Timeline" />
+                </div>
                 <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
                   <AreaChart data={timeline}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -1253,10 +1318,13 @@ function RiskEscalationReport({
 
             {/* Severity distribution */}
             {severityDist.length > 0 && (
-              <div className="border border-border rounded-xl p-6">
-                <h3 className="text-sm font-medium text-foreground mb-4">
-                  Severity Distribution
-                </h3>
+              <div id="chart-severity-dist" className="border border-border rounded-xl p-6">
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className="text-sm font-medium text-foreground">
+                    Severity Distribution
+                  </h3>
+                  <ChartExportBar chartId="chart-severity-dist" title="Severity Distribution" />
+                </div>
                 <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
                   <BarChart data={severityDist} layout="vertical" margin={{ left: 60 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} />
