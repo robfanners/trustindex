@@ -9,7 +9,7 @@
 // Types
 // ---------------------------------------------------------------------------
 
-export type PlanName = "explorer" | "pro" | "enterprise";
+export type PlanName = "explorer" | "starter" | "pro" | "enterprise";
 
 export type PlanLimits = {
   maxSurveys: number; // Infinity for enterprise
@@ -23,6 +23,7 @@ export type PlanLimits = {
 
 const LIMITS: Record<PlanName, PlanLimits> = {
   explorer: { maxSurveys: 1, maxSystems: 0, canExport: false },
+  starter: { maxSurveys: 3, maxSystems: 0, canExport: false },
   pro: { maxSurveys: 5, maxSystems: 2, canExport: true },
   enterprise: { maxSurveys: Infinity, maxSystems: Infinity, canExport: true },
 };
@@ -48,10 +49,10 @@ export function canExportResults(plan: string | null | undefined): boolean {
   return getPlanLimits(plan).canExport;
 }
 
-/** Can the user access billing settings? (Pro+) */
+/** Can the user access billing settings? (Starter+) */
 export function hasBillingAccess(plan: string | null | undefined): boolean {
   const p = plan ?? "explorer";
-  return p === "pro" || p === "enterprise";
+  return p === "starter" || p === "pro" || p === "enterprise";
 }
 
 /** Can the user manage team members? (Enterprise only) */
@@ -63,6 +64,60 @@ export function canManageTeam(plan: string | null | undefined): boolean {
 export function canAccessDataSettings(plan: string | null | undefined): boolean {
   const p = plan ?? "explorer";
   return p === "pro" || p === "enterprise";
+}
+
+// ---------------------------------------------------------------------------
+// Copilot feature entitlements (client + server safe)
+// ---------------------------------------------------------------------------
+
+/** Is this a paid plan? (Starter+) */
+export function isPaidPlan(plan: string | null | undefined): boolean {
+  const p = plan ?? "explorer";
+  return p === "starter" || p === "pro" || p === "enterprise";
+}
+
+/** Max staff declarations allowed */
+export function maxStaffDeclarations(plan: string | null | undefined): number {
+  const p = plan ?? "explorer";
+  if (p === "starter") return 25;
+  if (p === "pro") return 100;
+  if (p === "enterprise") return Infinity;
+  return 0;
+}
+
+/** Max AI vendors allowed */
+export function maxVendors(plan: string | null | undefined): number {
+  const p = plan ?? "explorer";
+  if (p === "starter") return 10;
+  if (p === "pro" || p === "enterprise") return Infinity;
+  return 0;
+}
+
+/** Max incidents per month */
+export function maxIncidentsPerMonth(plan: string | null | undefined): number {
+  const p = plan ?? "explorer";
+  if (p === "starter") return 5;
+  if (p === "pro" || p === "enterprise") return Infinity;
+  return 0;
+}
+
+/** Can generate AI policies? (Starter+) */
+export function canGeneratePolicy(plan: string | null | undefined): boolean {
+  return isPaidPlan(plan);
+}
+
+/** Can edit generated AI policies? (Pro+) */
+export function canEditPolicy(plan: string | null | undefined): boolean {
+  const p = plan ?? "explorer";
+  return p === "pro" || p === "enterprise";
+}
+
+/** Get compliance report level */
+export function getReportLevel(plan: string | null | undefined): "none" | "basic" | "full" {
+  const p = plan ?? "explorer";
+  if (p === "starter") return "basic";
+  if (p === "pro" || p === "enterprise") return "full";
+  return "none";
 }
 
 // ---------------------------------------------------------------------------
