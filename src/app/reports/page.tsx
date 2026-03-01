@@ -267,55 +267,190 @@ function StatCard({
   );
 }
 
+// ---------------------------------------------------------------------------
+// SVG-based chart export (bypasses html2canvas SVG rendering issues)
+// ---------------------------------------------------------------------------
+
+/** Recursively inline computed styles onto a cloned SVG so serialisation preserves appearance */
+function inlineSvgStyles(source: Element, target: Element) {
+  const computed = window.getComputedStyle(source);
+  const t = target as SVGElement;
+  const keys = [
+    "fill", "stroke", "stroke-width", "stroke-dasharray", "stroke-linecap",
+    "font-family", "font-size", "font-weight", "text-anchor",
+    "dominant-baseline", "opacity", "fill-opacity", "stroke-opacity",
+    "visibility", "display",
+  ];
+  for (const k of keys) {
+    const v = computed.getPropertyValue(k);
+    if (v && v !== "none" && v !== "normal" && v !== "visible") {
+      t.style?.setProperty(k, v);
+    }
+  }
+  for (let i = 0; i < source.children.length && i < target.children.length; i++) {
+    inlineSvgStyles(source.children[i], target.children[i]);
+  }
+}
+
+/** Capture a Recharts SVG as a canvas (with title + legend) */
+async function chartToCanvas(chartId: string, chartTitle: string): Promise<HTMLCanvasElement | null> {
+  const el = document.getElementById(chartId);
+  if (!el) return null;
+
+  const svg = el.querySelector("svg");
+  if (!svg) return null;
+
+  // Clone SVG and inline computed styles
+  const clone = svg.cloneNode(true) as SVGSVGElement;
+  inlineSvgStyles(svg, clone);
+
+  const rect = svg.getBoundingClientRect();
+  const scale = 2;
+  const w = Math.round(rect.width * scale);
+  const h = Math.round(rect.height * scale);
+
+  clone.setAttribute("width", String(w));
+  clone.setAttribute("height", String(h));
+  clone.setAttribute("viewBox", `0 0 ${rect.width} ${rect.height}`);
+  clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+
+  // Capture legend text from HTML outside SVG
+  const legendItems: string[] = [];
+  el.querySelectorAll(".recharts-legend-item-text").forEach((t) => {
+    if (t.textContent) legendItems.push(t.textContent);
+  });
+
+  // Serialise SVG to blob
+  const svgString = new XMLSerializer().serializeToString(clone);
+  const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+
+  return new Promise<HTMLCanvasElement | null>((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const pad = 24 * scale;
+      const titleH = 20 * scale;
+      const legendH = legendItems.length > 0 ? 18 * scale : 0;
+      const subtitleEl = el.querySelector("p");
+      const subtitleH = subtitleEl?.textContent ? 14 * scale : 0;
+
+      const canvas = document.createElement("canvas");
+      canvas.width = w + pad * 2;
+      canvas.height = h + titleH + subtitleH + legendH + pad * 2;
+      const ctx = canvas.getContext("2d")!;
+
+      // White background
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Title
+      let y = pad;
+      ctx.fillStyle = "#1a1a1a";
+      ctx.font = `600 ${14 * scale}px Inter, system-ui, -apple-system, sans-serif`;
+      ctx.fillText(chartTitle, pad, y + 14 * scale);
+      y += titleH;
+
+      // Subtitle
+      if (subtitleEl?.textContent) {
+        ctx.fillStyle = "#6b7280";
+        ctx.font = `400 ${11 * scale}px Inter, system-ui, -apple-system, sans-serif`;
+        ctx.fillText(subtitleEl.textContent, pad, y + 11 * scale);
+        y += subtitleH;
+      }
+
+      // Chart
+      ctx.drawImage(img, pad, y, w, h);
+      y += h;
+
+      // Legend
+      if (legendItems.length > 0) {
+        ctx.fillStyle = "#6b7280";
+        ctx.font = `400 ${10 * scale}px Inter, system-ui, -apple-system, sans-serif`;
+        ctx.fillText(legendItems.join("  ·  "), pad, y + 12 * scale);
+      }
+
+      URL.revokeObjectURL(url);
+      resolve(canvas);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(null);
+    };
+    img.src = url;
+  });
+}
+
 function ChartExportBar({ chartId, title }: { chartId: string; title: string }) {
-  const [exporting, setExporting] = useState(false);
+  const [exporting, setExporting] = useState<string | null>(null);
 
-  const exportChart = async (format: "png" | "pdf") => {
-    setExporting(true);
+  const exportChart = async (format: "png" | "pdf" | "pptx") => {
+    setExporting(format);
     try {
-      const el = document.getElementById(chartId);
-      if (!el) return;
-
-      const { default: html2canvas } = await import("html2canvas");
-      const canvas = await html2canvas(el, { backgroundColor: "#ffffff", scale: 2 });
+      const canvas = await chartToCanvas(chartId, title);
+      if (!canvas) {
+        alert("Could not capture chart. Please try again.");
+        return;
+      }
+      const filename = `${title.replace(/\s+/g, "-").toLowerCase()}-${new Date().toISOString().split("T")[0]}`;
+      const imgData = canvas.toDataURL("image/png");
 
       if (format === "png") {
         const link = document.createElement("a");
-        link.download = `${title.replace(/\s+/g, "-").toLowerCase()}-${new Date().toISOString().split("T")[0]}.png`;
-        link.href = canvas.toDataURL("image/png");
+        link.download = `${filename}.png`;
+        link.href = imgData;
         link.click();
       } else if (format === "pdf") {
-        const { default: jsPDF } = await import("jspdf");
-        const imgData = canvas.toDataURL("image/png");
-        const pdf = new jsPDF({ orientation: canvas.width > canvas.height ? "landscape" : "portrait", unit: "px", format: [canvas.width, canvas.height] });
+        const jspdfMod = await import("jspdf");
+        const jsPDF = jspdfMod.jsPDF ?? jspdfMod.default;
+        const pdf = new jsPDF({
+          orientation: canvas.width > canvas.height ? "landscape" : "portrait",
+          unit: "px",
+          format: [canvas.width, canvas.height],
+        });
         pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height);
-        pdf.save(`${title.replace(/\s+/g, "-").toLowerCase()}-${new Date().toISOString().split("T")[0]}.pdf`);
+        pdf.save(`${filename}.pdf`);
+      } else if (format === "pptx") {
+        const pptxMod = await import("pptxgenjs");
+        const PptxGenJS = pptxMod.default;
+        const pptx = new PptxGenJS();
+        const slide = pptx.addSlide();
+        // Fit image to slide (10"x7.5") with margin
+        const slideW = 10;
+        const slideH = 7.5;
+        const aspect = canvas.width / canvas.height;
+        let imgW = slideW - 1;
+        let imgH = imgW / aspect;
+        if (imgH > slideH - 1) { imgH = slideH - 1; imgW = imgH * aspect; }
+        slide.addImage({
+          data: imgData,
+          x: (slideW - imgW) / 2,
+          y: (slideH - imgH) / 2,
+          w: imgW,
+          h: imgH,
+        });
+        await pptx.writeFile({ fileName: `${filename}.pptx` });
       }
     } catch (err) {
       console.error("Export failed:", err);
+      alert("Export failed — see browser console for details.");
     } finally {
-      setExporting(false);
+      setExporting(null);
     }
   };
 
   return (
     <div className="flex items-center gap-1.5">
-      <button
-        type="button"
-        onClick={() => exportChart("png")}
-        disabled={exporting}
-        className="text-[10px] px-2 py-0.5 rounded border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors disabled:opacity-50"
-      >
-        PNG
-      </button>
-      <button
-        type="button"
-        onClick={() => exportChart("pdf")}
-        disabled={exporting}
-        className="text-[10px] px-2 py-0.5 rounded border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors disabled:opacity-50"
-      >
-        PDF
-      </button>
+      {(["png", "pdf", "pptx"] as const).map((fmt) => (
+        <button
+          key={fmt}
+          type="button"
+          onClick={() => exportChart(fmt)}
+          disabled={exporting !== null}
+          className="text-[10px] px-2 py-0.5 rounded border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors disabled:opacity-50"
+        >
+          {exporting === fmt ? "..." : fmt.toUpperCase()}
+        </button>
+      ))}
     </div>
   );
 }
