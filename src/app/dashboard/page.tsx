@@ -5,6 +5,18 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import AuthenticatedShell from "@/components/AuthenticatedShell";
 import RequireAuth from "@/components/RequireAuth";
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -631,21 +643,107 @@ function TrustOrgTab() {
         </div>
       )}
 
-      {/* Trend placeholders */}
+      {/* Charts */}
       <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="border border-border rounded-xl p-6">
-          <h3 className="text-sm font-medium text-muted-foreground mb-2">Score Trend</h3>
-          <div className="h-32 flex items-center justify-center text-xs text-muted-foreground">
-            Trend chart available after multiple assessments
-          </div>
-        </div>
-        <div className="border border-border rounded-xl p-6">
-          <h3 className="text-sm font-medium text-muted-foreground mb-2">Participation Analytics</h3>
-          <div className="h-32 flex items-center justify-center text-xs text-muted-foreground">
-            Participation data available after survey completion
-          </div>
-        </div>
+        <OrgScoreTrend />
+        <OrgParticipation surveys={surveys} />
       </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// TrustOrg: Score Trend chart
+// ---------------------------------------------------------------------------
+
+const CHART_COLORS = ["#4f46e5", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
+
+function OrgScoreTrend() {
+  const [data, setData] = useState<Array<{ date: string; score: number; label: string }>>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/dashboard/org-history");
+        if (res.ok) {
+          const d = await res.json();
+          setData(
+            (d.scores || []).map((s: { date: string; score: number; title: string }) => ({
+              date: new Date(s.date).toLocaleDateString("en-GB", { day: "numeric", month: "short" }),
+              score: Math.round(s.score * 10) / 10,
+              label: s.title,
+            }))
+          );
+        }
+      } catch {
+        // silent
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  return (
+    <div className="border border-border rounded-xl p-6">
+      <h3 className="text-sm font-medium text-muted-foreground mb-2">Score Trend</h3>
+      {loading ? (
+        <div className="h-40 flex items-center justify-center">
+          <div className="w-4 h-4 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : data.length < 2 ? (
+        <div className="h-40 flex items-center justify-center text-xs text-muted-foreground">
+          Trend chart available after multiple assessments
+        </div>
+      ) : (
+        <ResponsiveContainer width="100%" height={160}>
+          <LineChart data={data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="#9ca3af" />
+            <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} stroke="#9ca3af" />
+            <Tooltip
+              contentStyle={{ fontSize: 11, borderRadius: 8 }}
+              formatter={(v: number | undefined) => [`${v ?? ""}`, "TrustIndex"]}
+            />
+            <Line type="monotone" dataKey="score" stroke="#4f46e5" strokeWidth={2} dot={{ r: 3 }} />
+          </LineChart>
+        </ResponsiveContainer>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// TrustOrg: Participation Analytics chart
+// ---------------------------------------------------------------------------
+
+function OrgParticipation({ surveys }: { surveys: Array<{ title: string; respondents: number }> }) {
+  const data = surveys
+    .filter((s) => s.respondents > 0)
+    .slice(0, 6)
+    .map((s) => ({
+      name: s.title.replace("TrustIndex Pilot - ", "").slice(0, 12),
+      respondents: s.respondents,
+    }));
+
+  return (
+    <div className="border border-border rounded-xl p-6">
+      <h3 className="text-sm font-medium text-muted-foreground mb-2">Participation Analytics</h3>
+      {data.length === 0 ? (
+        <div className="h-40 flex items-center justify-center text-xs text-muted-foreground">
+          Participation data available after survey completion
+        </div>
+      ) : (
+        <ResponsiveContainer width="100%" height={160}>
+          <BarChart data={data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <XAxis dataKey="name" tick={{ fontSize: 10 }} stroke="#9ca3af" />
+            <YAxis tick={{ fontSize: 10 }} stroke="#9ca3af" />
+            <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8 }} />
+            <Bar dataKey="respondents" fill="#4f46e5" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      )}
     </div>
   );
 }
@@ -792,21 +890,136 @@ function TrustSysTab() {
         </div>
       )}
 
-      {/* Stability & drift placeholders */}
+      {/* Charts */}
       <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="border border-border rounded-xl p-6">
-          <h3 className="text-sm font-medium text-muted-foreground mb-2">Stability Tracking</h3>
-          <div className="h-32 flex items-center justify-center text-xs text-muted-foreground">
-            Stability data available after 3+ assessments per system
-          </div>
-        </div>
-        <div className="border border-border rounded-xl p-6">
-          <h3 className="text-sm font-medium text-muted-foreground mb-2">Cross-System Comparison</h3>
-          <div className="h-32 flex items-center justify-center text-xs text-muted-foreground">
-            Comparison available with 2+ assessed systems
-          </div>
-        </div>
+        <SysStabilityChart />
+        <SysCrossComparison assessments={assessments} />
       </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// TrustSys: Stability Tracking chart (score trend per system)
+// ---------------------------------------------------------------------------
+
+type SysHistory = {
+  id: string;
+  name: string;
+  runs: Array<{ score: number; date: string; label: string }>;
+};
+
+function SysStabilityChart() {
+  const [systems, setSystems] = useState<SysHistory[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/dashboard/sys-history");
+        if (res.ok) {
+          const d = await res.json();
+          setSystems((d.systems || []).filter((s: SysHistory) => s.runs.length >= 2));
+        }
+      } catch {
+        // silent
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  // Build unified timeline data for multi-line chart
+  const chartData = (() => {
+    if (systems.length === 0) return [];
+    // Collect all unique dates, build rows
+    const allRuns: Array<{ date: string; ts: number; [key: string]: string | number }> = [];
+    for (const sys of systems) {
+      for (const r of sys.runs) {
+        const ts = new Date(r.date).getTime();
+        const dateLabel = new Date(r.date).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+        let row = allRuns.find((d) => d.date === dateLabel);
+        if (!row) {
+          row = { date: dateLabel, ts } as typeof allRuns[0];
+          allRuns.push(row);
+        }
+        row[sys.name] = r.score;
+      }
+    }
+    return allRuns.sort((a, b) => a.ts - b.ts);
+  })();
+
+  return (
+    <div className="border border-border rounded-xl p-6">
+      <h3 className="text-sm font-medium text-muted-foreground mb-2">Stability Tracking</h3>
+      {loading ? (
+        <div className="h-40 flex items-center justify-center">
+          <div className="w-4 h-4 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : chartData.length < 2 ? (
+        <div className="h-40 flex items-center justify-center text-xs text-muted-foreground">
+          Stability data available after 2+ runs per system
+        </div>
+      ) : (
+        <ResponsiveContainer width="100%" height={160}>
+          <LineChart data={chartData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="#9ca3af" />
+            <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} stroke="#9ca3af" />
+            <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8 }} />
+            <Legend wrapperStyle={{ fontSize: 10 }} />
+            {systems.map((sys, i) => (
+              <Line
+                key={sys.id}
+                type="monotone"
+                dataKey={sys.name}
+                stroke={CHART_COLORS[i % CHART_COLORS.length]}
+                strokeWidth={2}
+                dot={{ r: 3 }}
+                connectNulls
+              />
+            ))}
+          </LineChart>
+        </ResponsiveContainer>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// TrustSys: Cross-System Comparison chart
+// ---------------------------------------------------------------------------
+
+function SysCrossComparison({
+  assessments,
+}: {
+  assessments: Array<{ name: string; latest_score: number | null }>;
+}) {
+  const data = assessments
+    .filter((a) => a.latest_score !== null)
+    .map((a) => ({
+      name: a.name.length > 18 ? a.name.slice(0, 16) + "..." : a.name,
+      score: a.latest_score!,
+    }));
+
+  return (
+    <div className="border border-border rounded-xl p-6">
+      <h3 className="text-sm font-medium text-muted-foreground mb-2">Cross-System Comparison</h3>
+      {data.length < 2 ? (
+        <div className="h-40 flex items-center justify-center text-xs text-muted-foreground">
+          Comparison available with 2+ assessed systems
+        </div>
+      ) : (
+        <ResponsiveContainer width="100%" height={160}>
+          <BarChart data={data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <XAxis dataKey="name" tick={{ fontSize: 10 }} stroke="#9ca3af" />
+            <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} stroke="#9ca3af" />
+            <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8 }} />
+            <Bar dataKey="score" fill="#4f46e5" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      )}
     </div>
   );
 }
