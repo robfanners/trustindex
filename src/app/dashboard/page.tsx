@@ -5,17 +5,19 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import AuthenticatedShell from "@/components/AuthenticatedShell";
 import RequireAuth from "@/components/RequireAuth";
+import CopilotDashboard from "@/components/copilot/CopilotDashboard";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-type DashboardTab = "overview" | "trustorg" | "trustsys";
+type DashboardTab = "overview" | "trustorg" | "trustsys" | "copilot";
 
 const TABS: { id: DashboardTab; label: string }[] = [
   { id: "overview", label: "Overview" },
   { id: "trustorg", label: "TrustOrg" },
   { id: "trustsys", label: "TrustSys" },
+  { id: "copilot", label: "Copilot" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -104,6 +106,7 @@ function DashboardContent() {
         {activeTab === "overview" && <OverviewTab />}
         {activeTab === "trustorg" && <TrustOrgTab />}
         {activeTab === "trustsys" && <TrustSysTab />}
+        {activeTab === "copilot" && <CopilotDashboard />}
       </div>
     </AuthenticatedShell>
   );
