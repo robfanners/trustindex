@@ -31,27 +31,38 @@ export async function POST(req: Request) {
       );
     }
 
-    // Only explorer users can upgrade
+    // Only explorer users can upgrade via checkout (existing paid users use portal)
     if (profile.plan !== "explorer") {
       return NextResponse.json(
-        { error: "Already on a paid plan" },
+        { error: "Already on a paid plan. Use billing portal to change." },
         { status: 400 }
       );
     }
 
-    // 3. Parse body for interval preference
+    // 3. Parse body for plan + interval
+    let targetPlan: "starter" | "pro" = "pro";
     let interval: "monthly" | "yearly" = "monthly";
     try {
       const body = await req.json();
+      if (body.plan === "starter") targetPlan = "starter";
       if (body.interval === "yearly") interval = "yearly";
     } catch {
-      // default to monthly
+      // defaults
     }
 
-    const priceId =
-      interval === "yearly"
-        ? process.env.STRIPE_PRO_YEARLY_PRICE_ID
-        : process.env.STRIPE_PRO_MONTHLY_PRICE_ID;
+    // 4. Resolve price ID
+    let priceId: string | undefined;
+    if (targetPlan === "starter") {
+      priceId =
+        interval === "yearly"
+          ? process.env.STRIPE_STARTER_YEARLY_PRICE_ID
+          : process.env.STRIPE_STARTER_MONTHLY_PRICE_ID;
+    } else {
+      priceId =
+        interval === "yearly"
+          ? process.env.STRIPE_PRO_YEARLY_PRICE_ID
+          : process.env.STRIPE_PRO_MONTHLY_PRICE_ID;
+    }
 
     if (!priceId) {
       return NextResponse.json(
@@ -60,7 +71,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 4. Get or create Stripe customer
+    // 5. Get or create Stripe customer
     let customerId = profile.stripe_customer_id;
 
     if (!customerId) {
@@ -70,14 +81,13 @@ export async function POST(req: Request) {
       });
       customerId = customer.id;
 
-      // Save customer ID to profile
       await sb
         .from("profiles")
         .update({ stripe_customer_id: customerId })
         .eq("id", user.id);
     }
 
-    // 5. Create Checkout Session
+    // 6. Create Checkout Session
     const origin = getServerOrigin(req);
 
     const session = await getStripe().checkout.sessions.create({
@@ -86,7 +96,7 @@ export async function POST(req: Request) {
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${origin}/upgrade?success=true`,
       cancel_url: `${origin}/upgrade?cancelled=true`,
-      metadata: { supabase_user_id: user.id },
+      metadata: { supabase_user_id: user.id, target_plan: targetPlan },
     });
 
     return NextResponse.json({ url: session.url });
