@@ -11,10 +11,13 @@ import { useAuth } from "@/context/AuthContext";
 
 type PlanTier = {
   name: string;
+  slug: "explorer" | "starter" | "pro" | "enterprise";
   price: string;
   period: string;
+  yearlyNote?: string;
   description: string;
   features: string[];
+  copilotFeatures: { label: string; available: boolean }[];
   highlighted?: boolean;
   cta: string;
   ctaStyle: "primary" | "secondary" | "outline";
@@ -23,32 +26,75 @@ type PlanTier = {
 const tiers: PlanTier[] = [
   {
     name: "Explorer",
+    slug: "explorer",
     price: "Free",
     period: "",
     description:
       "Try a private self-assessment to see how trust is experienced in your organisation.",
     features: [
-      "1 survey (self-assessment)",
+      "1 org assessment",
       "Instant results with radar chart",
       "Band interpretation and actions",
       "No sign-up required to start",
+    ],
+    copilotFeatures: [
+      { label: "AI Policy Generator", available: false },
+      { label: "Staff Declaration Portal", available: false },
+      { label: "AI Vendor Register", available: false },
+      { label: "Monthly Compliance PDF", available: false },
+      { label: "Incident Logging", available: false },
+      { label: "Regulatory Feed", available: false },
     ],
     cta: "Get started free",
     ctaStyle: "outline",
   },
   {
+    name: "Starter",
+    slug: "starter",
+    price: "\u00a379",
+    period: "/month",
+    yearlyNote: "or \u00a3711/year (save \u00a3237)",
+    description:
+      "AI governance essentials for small teams. Policies, declarations, and compliance in one place.",
+    features: [
+      "3 org assessments",
+      "Instant results with radar chart",
+      "Band interpretation and actions",
+    ],
+    copilotFeatures: [
+      { label: "AI Policy Generator (1 auto-generated)", available: true },
+      { label: "Staff Declaration Portal (25 staff)", available: true },
+      { label: "AI Vendor Register (10 vendors)", available: true },
+      { label: "Monthly Compliance PDF (basic)", available: true },
+      { label: "Incident Logging (5/month)", available: true },
+      { label: "Regulatory Feed (UK/EU)", available: true },
+    ],
+    cta: "Start with Starter",
+    ctaStyle: "outline",
+  },
+  {
     name: "Pro",
+    slug: "pro",
     price: "\u00a3199",
     period: "/month",
+    yearlyNote: "or \u00a31,788/year (save \u00a3600)",
     description:
-      "Run organisational surveys, track trust over time, and export data for your team.",
+      "Full AI governance suite with system assessments, editable policies, and board-ready reports.",
     features: [
-      "Up to 5 surveys",
-      "Up to 2 systems assessed",
+      "5 org assessments",
+      "2 AI system assessments",
       "CSV data export",
       "Historical tracking",
       "Dimension-level insights",
       "Priority support",
+    ],
+    copilotFeatures: [
+      { label: "AI Policy Generator (editable)", available: true },
+      { label: "Staff Declaration Portal (100 staff)", available: true },
+      { label: "AI Vendor Register (unlimited)", available: true },
+      { label: "Monthly Compliance PDF (full board report)", available: true },
+      { label: "Incident Logging (unlimited)", available: true },
+      { label: "Regulatory Feed (UK/EU + sector)", available: true },
     ],
     highlighted: true,
     cta: "Upgrade to Pro",
@@ -56,13 +102,14 @@ const tiers: PlanTier[] = [
   },
   {
     name: "Enterprise",
+    slug: "enterprise",
     price: "Custom",
     period: "",
     description:
       "For organisations that need unlimited capacity, governance tooling, and API access.",
     features: [
-      "Unlimited surveys",
-      "Unlimited systems",
+      "Unlimited org assessments",
+      "Unlimited system assessments",
       "Full CSV export",
       "Historical tracking",
       "Governance & audit trail",
@@ -70,20 +117,43 @@ const tiers: PlanTier[] = [
       "SSO / SAML",
       "Dedicated account manager",
     ],
+    copilotFeatures: [
+      { label: "AI Policy Generator (custom templates)", available: true },
+      { label: "Staff Declaration Portal (unlimited + SSO)", available: true },
+      { label: "AI Vendor Register (+ risk scoring)", available: true },
+      { label: "Monthly Compliance PDF (custom branding)", available: true },
+      { label: "Incident Logging (+ workflow routing)", available: true },
+      { label: "Regulatory Feed (custom jurisdictions)", available: true },
+    ],
     cta: "Contact us",
     ctaStyle: "secondary",
   },
 ];
 
-// Feature comparison for the matrix below the cards
-const featureMatrix: { feature: string; explorer: string; pro: string; enterprise: string }[] = [
-  { feature: "Surveys", explorer: "1", pro: "5", enterprise: "Unlimited" },
-  { feature: "Systems assessed", explorer: "\u2014", pro: "2", enterprise: "Unlimited" },
-  { feature: "CSV export", explorer: "\u2014", pro: "\u2713", enterprise: "\u2713" },
-  { feature: "Historical tracking", explorer: "\u2014", pro: "\u2713", enterprise: "\u2713" },
-  { feature: "Governance & audit", explorer: "\u2014", pro: "\u2014", enterprise: "\u2713" },
-  { feature: "API access", explorer: "\u2014", pro: "\u2014", enterprise: "\u2713" },
-  { feature: "SSO / SAML", explorer: "\u2014", pro: "\u2014", enterprise: "\u2713" },
+// Feature comparison matrix
+type MatrixRow = {
+  feature: string;
+  explorer: string;
+  starter: string;
+  pro: string;
+  enterprise: string;
+  isCopilot?: boolean;
+};
+
+const featureMatrix: MatrixRow[] = [
+  { feature: "Org assessments", explorer: "1", starter: "3", pro: "5", enterprise: "Unlimited" },
+  { feature: "System assessments", explorer: "\u2014", starter: "\u2014", pro: "2", enterprise: "Unlimited" },
+  { feature: "CSV export", explorer: "\u2014", starter: "\u2014", pro: "\u2713", enterprise: "\u2713" },
+  { feature: "Historical tracking", explorer: "\u2014", starter: "\u2014", pro: "\u2713", enterprise: "\u2713" },
+  { feature: "AI Policy Generator", explorer: "\u2014", starter: "1 (auto)", pro: "Editable", enterprise: "Custom", isCopilot: true },
+  { feature: "Staff Declarations", explorer: "\u2014", starter: "25 staff", pro: "100 staff", enterprise: "Unlimited", isCopilot: true },
+  { feature: "AI Vendor Register", explorer: "\u2014", starter: "10", pro: "Unlimited", enterprise: "Unlimited", isCopilot: true },
+  { feature: "Monthly Compliance PDF", explorer: "\u2014", starter: "Basic", pro: "Full report", enterprise: "Custom", isCopilot: true },
+  { feature: "Incident Logging", explorer: "\u2014", starter: "5/month", pro: "Unlimited", enterprise: "Unlimited", isCopilot: true },
+  { feature: "Regulatory Feed", explorer: "\u2014", starter: "UK/EU", pro: "UK/EU + sector", enterprise: "Custom", isCopilot: true },
+  { feature: "Team management", explorer: "\u2014", starter: "\u2014", pro: "\u2014", enterprise: "\u2713" },
+  { feature: "API access", explorer: "\u2014", starter: "\u2014", pro: "\u2014", enterprise: "\u2713" },
+  { feature: "SSO / SAML", explorer: "\u2014", starter: "\u2014", pro: "\u2014", enterprise: "\u2713" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -94,10 +164,6 @@ function UpgradeContent() {
   const searchParams = useSearchParams();
   const { user, profile, loading: authLoading } = useAuth();
 
-  // Prevent hydration mismatch: first client render must match server render.
-  // useAuth() may synchronously return authLoading=false if auth state is cached,
-  // but the server always renders with authLoading=true. This guard ensures the
-  // first client paint uses the same loading path as the server.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const showLoading = !mounted || authLoading;
@@ -106,27 +172,36 @@ function UpgradeContent() {
   const cancelled = searchParams.get("cancelled") === "true";
   const currentPlan = profile?.plan ?? null;
 
-  // Determine CTA for each tier based on auth state and plan
   function ctaFor(tier: PlanTier) {
     if (showLoading) {
-      return { label: tier.cta, href: "#", disabled: true };
+      return { label: tier.cta, href: "#", disabled: true, checkoutPlan: null as string | null };
     }
 
-    if (tier.name === "Explorer") {
-      if (!user) return { label: "Try free", href: "/try", disabled: false };
+    if (tier.slug === "explorer") {
+      if (!user) return { label: "Try free", href: "/try", disabled: false, checkoutPlan: null };
       if (currentPlan === "explorer")
-        return { label: "Current plan", href: "#", disabled: true };
-      return { label: "Explorer", href: "/dashboard", disabled: true };
+        return { label: "Current plan", href: "#", disabled: true, checkoutPlan: null };
+      return { label: "Explorer", href: "/dashboard", disabled: true, checkoutPlan: null };
     }
 
-    if (tier.name === "Pro") {
-      if (!user) return { label: "Sign in to upgrade", href: "/auth/login", disabled: false };
+    if (tier.slug === "starter") {
+      if (!user) return { label: "Sign in to upgrade", href: "/auth/login", disabled: false, checkoutPlan: null };
+      if (currentPlan === "starter")
+        return { label: "Current plan", href: "#", disabled: true, checkoutPlan: null };
+      if (currentPlan === "pro" || currentPlan === "enterprise")
+        return { label: "Current plan is higher", href: "#", disabled: true, checkoutPlan: null };
+      return { label: "Start with Starter", href: "#checkout", disabled: false, checkoutPlan: "starter" };
+    }
+
+    if (tier.slug === "pro") {
+      if (!user) return { label: "Sign in to upgrade", href: "/auth/login", disabled: false, checkoutPlan: null };
       if (currentPlan === "pro")
-        return { label: "Current plan", href: "#", disabled: true };
+        return { label: "Current plan", href: "#", disabled: true, checkoutPlan: null };
       if (currentPlan === "enterprise")
-        return { label: "Enterprise", href: "#", disabled: true };
-      // Explorer user -> upgrade via Stripe
-      return { label: "Upgrade to Pro", href: "#checkout", disabled: false };
+        return { label: "Current plan is higher", href: "#", disabled: true, checkoutPlan: null };
+      if (currentPlan === "starter")
+        return { label: "Upgrade to Pro", href: "#portal", disabled: false, checkoutPlan: null };
+      return { label: "Upgrade to Pro", href: "#checkout", disabled: false, checkoutPlan: "pro" };
     }
 
     // Enterprise
@@ -134,15 +209,16 @@ function UpgradeContent() {
       label: "Contact us",
       href: "mailto:hello@verisum.org?subject=TrustGraph%20Enterprise%20enquiry",
       disabled: false,
+      checkoutPlan: null,
     };
   }
 
-  async function handleCheckout() {
+  async function handleCheckout(plan: "starter" | "pro") {
     try {
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ interval: "monthly" }),
+        body: JSON.stringify({ plan, interval: "monthly" }),
       });
       const data = await res.json();
       if (data.url) {
@@ -155,15 +231,25 @@ function UpgradeContent() {
     }
   }
 
+  async function handlePortal() {
+    try {
+      const res = await fetch("/api/stripe/portal", { method: "POST" });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+    } catch {
+      alert("Could not open billing portal.");
+    }
+  }
+
   return (
-    <div className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 py-12 space-y-12">
+    <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8 py-12 space-y-12">
       {/* Success / cancelled banners */}
       {success && (
         <div className="border border-success rounded-lg p-4 bg-green-50 text-sm">
           <span className="font-semibold text-success">
             Payment successful.
           </span>{" "}
-          Your plan has been upgraded to Pro. It may take a moment to reflect in
+          Your plan has been upgraded. It may take a moment to reflect in
           your dashboard.
         </div>
       )}
@@ -182,13 +268,13 @@ function UpgradeContent() {
           Plans &amp; pricing
         </h1>
         <p className="text-muted-foreground max-w-xl mx-auto">
-          Start free with Explorer. Upgrade when you need organisational
-          surveys, data export, and systems assessment.
+          AI governance sorted in 48 hours. Start free, upgrade when you need
+          policies, declarations, and compliance reporting.
         </p>
       </div>
 
       {/* Pricing cards */}
-      <div className="grid md:grid-cols-3 gap-6">
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
         {tiers.map((tier) => {
           const cta = ctaFor(tier);
           return (
@@ -217,13 +303,15 @@ function UpgradeContent() {
                       </span>
                     )}
                   </div>
-                  {tier.name === "Pro" && (
+                  {tier.yearlyNote && (
                     <div className="text-xs text-muted-foreground mt-1">
-                      or &pound;1,788/year (save &pound;600)
+                      {tier.yearlyNote}
                     </div>
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">{tier.description}</p>
+
+                {/* Core features */}
                 <ul className="space-y-2">
                   {tier.features.map((f) => (
                     <li key={f} className="flex items-start gap-2 text-sm">
@@ -232,16 +320,59 @@ function UpgradeContent() {
                     </li>
                   ))}
                 </ul>
+
+                {/* Copilot features */}
+                {tier.copilotFeatures.length > 0 && (
+                  <>
+                    <div className="border-t border-border/30 pt-3">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                        AI Governance Copilot
+                      </p>
+                      <ul className="space-y-2">
+                        {tier.copilotFeatures.map((f) => (
+                          <li
+                            key={f.label}
+                            className={`flex items-start gap-2 text-sm ${
+                              f.available ? "" : "text-muted-foreground/50"
+                            }`}
+                          >
+                            {f.available ? (
+                              <span className="text-success mt-0.5">&#10003;</span>
+                            ) : (
+                              <span className="mt-0.5">&#128274;</span>
+                            )}
+                            <span>{f.available ? f.label : f.label}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      {tier.slug === "explorer" && (
+                        <p className="text-xs text-brand mt-2 font-medium">
+                          Upgrade to unlock Copilot features &rarr;
+                        </p>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* CTA */}
-              {cta.href === "#checkout" ? (
+              {cta.href === "#checkout" && cta.checkoutPlan ? (
                 <button
-                  onClick={handleCheckout}
+                  onClick={() => handleCheckout(cta.checkoutPlan as "starter" | "pro")}
                   disabled={cta.disabled}
                   className={`w-full text-center px-5 py-3 rounded font-semibold text-sm transition-colors ${
-                    "bg-brand text-white hover:bg-brand-hover"
+                    tier.ctaStyle === "primary"
+                      ? "bg-brand text-white hover:bg-brand-hover"
+                      : "border border-brand text-brand hover:bg-brand hover:text-white"
                   } disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  {cta.label}
+                </button>
+              ) : cta.href === "#portal" ? (
+                <button
+                  onClick={handlePortal}
+                  disabled={cta.disabled}
+                  className="w-full text-center px-5 py-3 rounded font-semibold text-sm transition-colors bg-brand text-white hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {cta.label}
                 </button>
@@ -264,19 +395,11 @@ function UpgradeContent() {
         })}
       </div>
 
-      {/* Manage billing (Pro users) */}
-      {currentPlan === "pro" && (
+      {/* Manage billing (paid users) */}
+      {(currentPlan === "starter" || currentPlan === "pro") && (
         <div className="text-center">
           <button
-            onClick={async () => {
-              try {
-                const res = await fetch("/api/stripe/portal", { method: "POST" });
-                const data = await res.json();
-                if (data.url) window.location.href = data.url;
-              } catch {
-                alert("Could not open billing portal.");
-              }
-            }}
+            onClick={handlePortal}
             className="text-sm text-brand underline hover:text-foreground transition-colors"
           >
             Manage billing &amp; subscription
@@ -293,6 +416,7 @@ function UpgradeContent() {
               <tr className="border-b border-border">
                 <th className="text-left py-3 px-4 font-semibold">Feature</th>
                 <th className="text-center py-3 px-4 font-semibold">Explorer</th>
+                <th className="text-center py-3 px-4 font-semibold">Starter</th>
                 <th className="text-center py-3 px-4 font-semibold text-brand">
                   Pro
                 </th>
@@ -300,13 +424,26 @@ function UpgradeContent() {
               </tr>
             </thead>
             <tbody>
-              {featureMatrix.map((row) => (
-                <tr key={row.feature} className="border-b border-border/30">
-                  <td className="py-3 px-4 text-muted-foreground">{row.feature}</td>
-                  <td className="py-3 px-4 text-center">{row.explorer}</td>
-                  <td className="py-3 px-4 text-center font-medium">
-                    {row.pro}
+              {featureMatrix.map((row, i) => (
+                <tr
+                  key={row.feature}
+                  className={`border-b border-border/30 ${
+                    row.isCopilot && i === featureMatrix.findIndex((r) => r.isCopilot)
+                      ? "border-t-2 border-t-border"
+                      : ""
+                  }`}
+                >
+                  <td className="py-3 px-4 text-muted-foreground">
+                    {row.isCopilot && i === featureMatrix.findIndex((r) => r.isCopilot) && (
+                      <span className="text-[10px] uppercase tracking-wide font-semibold text-brand block mb-1">
+                        Copilot
+                      </span>
+                    )}
+                    {row.feature}
                   </td>
+                  <td className="py-3 px-4 text-center">{row.explorer}</td>
+                  <td className="py-3 px-4 text-center">{row.starter}</td>
+                  <td className="py-3 px-4 text-center font-medium">{row.pro}</td>
                   <td className="py-3 px-4 text-center">{row.enterprise}</td>
                 </tr>
               ))}
@@ -334,7 +471,7 @@ export default function UpgradePage() {
     <AppShell>
       <Suspense
         fallback={
-          <div className="max-w-5xl mx-auto p-12 text-center text-muted-foreground">
+          <div className="max-w-6xl mx-auto p-12 text-center text-muted-foreground">
             Loading pricing...
           </div>
         }

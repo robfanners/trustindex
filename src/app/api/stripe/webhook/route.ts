@@ -35,11 +35,12 @@ export async function POST(req: Request) {
   try {
     switch (event.type) {
       // -----------------------------------------------------------------------
-      // Checkout completed → upgrade to Pro
+      // Checkout completed → upgrade to target plan (starter or pro)
       // -----------------------------------------------------------------------
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
         const userId = session.metadata?.supabase_user_id;
+        const targetPlan = session.metadata?.target_plan ?? "pro";
         const subscriptionId =
           typeof session.subscription === "string"
             ? session.subscription
@@ -49,12 +50,12 @@ export async function POST(req: Request) {
           await sb
             .from("profiles")
             .update({
-              plan: "pro",
+              plan: targetPlan,
               stripe_subscription_id: subscriptionId,
             })
             .eq("id", userId);
 
-          console.log(`[stripe] User ${userId} upgraded to Pro (sub: ${subscriptionId})`);
+          console.log(`[stripe] User ${userId} upgraded to ${targetPlan} (sub: ${subscriptionId})`);
         }
         break;
       }

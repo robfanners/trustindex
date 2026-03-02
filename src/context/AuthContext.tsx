@@ -14,7 +14,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase-auth-browser";
 type Profile = {
   id: string;
   email: string;
-  plan: "explorer" | "pro" | "enterprise";
+  plan: "explorer" | "starter" | "pro" | "enterprise";
   full_name: string | null;
   company_name: string | null;
   company_size: string | null;
