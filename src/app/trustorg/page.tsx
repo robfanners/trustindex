@@ -86,27 +86,12 @@ function TrustOrgContent() {
                 <PlusIcon />
                 Create a new survey
               </span>
-              {limits.maxSurveys === 0 ? (
-                <div className="mt-3 border border-border rounded-lg p-4 bg-muted/30">
-                  <p className="text-sm text-foreground font-medium">
-                    TrustOrg assessments are available on Pro and above.
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Use the{" "}
-                    <a href="/setup" className="text-brand underline hover:text-foreground transition-colors">
-                      AI Governance Setup Wizard
-                    </a>{" "}
-                    for your governance assessment and instant governance pack.
-                  </p>
-                </div>
-              ) : (
-                <p className="text-sm text-destructive mt-2">
-                  You&apos;ve reached your plan limit of {limits.maxSurveys} survey{limits.maxSurveys !== 1 ? "s" : ""}.{" "}
-                  <a href="/upgrade" className="underline hover:text-foreground transition-colors">
-                    Upgrade to continue
-                  </a>.
-                </p>
-              )}
+              <p className="text-sm text-destructive mt-2">
+                You&apos;ve reached your plan limit of {limits.maxSurveys} survey{limits.maxSurveys !== 1 ? "s" : ""}.{" "}
+                <a href="/upgrade" className="underline hover:text-foreground transition-colors">
+                  Upgrade for more
+                </a>.
+              </p>
             </div>
           ) : (
             <div>
@@ -138,36 +123,18 @@ function TrustOrgContent() {
 
         {!loading && !error && surveys.length === 0 && (
           <div className="border border-border rounded-xl p-8 text-center">
-            {limits.maxSurveys === 0 ? (
-              <>
-                <div className="text-muted-foreground mb-2">TrustOrg surveys are not included in your plan</div>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Your plan includes the AI Governance Setup Wizard instead.{" "}
-                  <a href="/setup" className="text-brand underline hover:text-foreground">
-                    Set up your governance
-                  </a>
-                </p>
-                <a
-                  href="/upgrade"
-                  className="inline-flex items-center gap-2 px-4 py-2 border border-brand text-brand font-medium rounded-lg hover:bg-brand hover:text-white transition-colors text-sm"
+            <>
+              <div className="text-muted-foreground mb-2">No surveys yet</div>
+              <p className="text-sm text-muted-foreground mb-4">Create your first survey to get started.</p>
+              {!atCap && (
+                <Link
+                  href="/trustorg/new"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-brand text-white font-medium rounded-lg hover:bg-brand/90 transition-colors text-sm"
                 >
-                  Upgrade to Pro for TrustOrg
-                </a>
-              </>
-            ) : (
-              <>
-                <div className="text-muted-foreground mb-2">No surveys yet</div>
-                <p className="text-sm text-muted-foreground mb-4">Create your first survey to get started.</p>
-                {!atCap && (
-                  <Link
-                    href="/trustorg/new"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-brand text-white font-medium rounded-lg hover:bg-brand/90 transition-colors text-sm"
-                  >
-                    Create survey
-                  </Link>
-                )}
-              </>
-            )}
+                  Create survey
+                </Link>
+              )}
+            </>
           </div>
         )}
 

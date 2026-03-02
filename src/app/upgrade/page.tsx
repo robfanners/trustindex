@@ -32,7 +32,7 @@ const tiers: PlanTier[] = [
     description:
       "Try a private self-assessment to see how trust is experienced in your organisation.",
     features: [
-      "1 org assessment",
+      "1 self-assessment",
       "Instant results with radar chart",
       "Band interpretation and actions",
       "No sign-up required to start",
@@ -60,10 +60,11 @@ const tiers: PlanTier[] = [
       "AI Governance Setup Wizard",
       "Governance Pack (3 PDF documents)",
       "Instant gap analysis & recommendations",
+      "1 org assessment (TrustOrg)",
     ],
     copilotFeatures: [
       { label: "AI Policy Generator (1 auto-generated)", available: true },
-      { label: "Staff Declaration Portal (25 staff)", available: true },
+      { label: "Staff Declaration Portal (50 staff)", available: true },
       { label: "AI Vendor Register (10 vendors)", available: true },
       { label: "Monthly Compliance PDF (basic)", available: true },
       { label: "Incident Logging (5/month)", available: true },
@@ -85,6 +86,7 @@ const tiers: PlanTier[] = [
       "Everything in Starter, plus:",
       "5 org assessments (TrustOrg)",
       "2 AI system assessments",
+      "Basic team management (up to 5 users)",
       "CSV data export",
       "Historical tracking",
       "Dimension-level insights",
@@ -92,7 +94,7 @@ const tiers: PlanTier[] = [
     ],
     copilotFeatures: [
       { label: "AI Policy Generator (editable)", available: true },
-      { label: "Staff Declaration Portal (100 staff)", available: true },
+      { label: "Staff Declaration Portal (250 staff)", available: true },
       { label: "AI Vendor Register (unlimited)", available: true },
       { label: "Monthly Compliance PDF (full board report)", available: true },
       { label: "Incident Logging (unlimited)", available: true },
@@ -143,17 +145,17 @@ type MatrixRow = {
 
 const featureMatrix: MatrixRow[] = [
   { feature: "Governance Wizard + Pack", explorer: "\u2014", starter: "\u2713", pro: "\u2713", enterprise: "\u2713" },
-  { feature: "Org assessments", explorer: "1", starter: "\u2014", pro: "5", enterprise: "Unlimited" },
+  { feature: "Org assessments", explorer: "Self", starter: "1", pro: "5", enterprise: "Unlimited" },
   { feature: "System assessments", explorer: "\u2014", starter: "\u2014", pro: "2", enterprise: "Unlimited" },
   { feature: "CSV export", explorer: "\u2014", starter: "\u2014", pro: "\u2713", enterprise: "\u2713" },
   { feature: "Historical tracking", explorer: "\u2014", starter: "\u2014", pro: "\u2713", enterprise: "\u2713" },
   { feature: "AI Policy Generator", explorer: "\u2014", starter: "1 (auto)", pro: "Editable", enterprise: "Custom", isCopilot: true },
-  { feature: "Staff Declarations", explorer: "\u2014", starter: "25 staff", pro: "100 staff", enterprise: "Unlimited", isCopilot: true },
+  { feature: "Staff Declarations", explorer: "\u2014", starter: "50 staff", pro: "250 staff", enterprise: "Unlimited", isCopilot: true },
   { feature: "AI Vendor Register", explorer: "\u2014", starter: "10", pro: "Unlimited", enterprise: "Unlimited", isCopilot: true },
   { feature: "Monthly Compliance PDF", explorer: "\u2014", starter: "Basic", pro: "Full report", enterprise: "Custom", isCopilot: true },
   { feature: "Incident Logging", explorer: "\u2014", starter: "5/month", pro: "Unlimited", enterprise: "Unlimited", isCopilot: true },
   { feature: "Regulatory Feed", explorer: "\u2014", starter: "UK/EU", pro: "UK/EU + sector", enterprise: "Custom", isCopilot: true },
-  { feature: "Team management", explorer: "\u2014", starter: "\u2014", pro: "\u2014", enterprise: "\u2713" },
+  { feature: "Team management", explorer: "\u2014", starter: "\u2014", pro: "5 users", enterprise: "Unlimited" },
   { feature: "API access", explorer: "\u2014", starter: "\u2014", pro: "\u2014", enterprise: "\u2713" },
   { feature: "SSO / SAML", explorer: "\u2014", starter: "\u2014", pro: "\u2014", enterprise: "\u2713" },
 ];
