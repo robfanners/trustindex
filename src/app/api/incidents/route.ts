@@ -63,8 +63,8 @@ export async function GET(req: Request) {
       monthlyCount: monthlyCount ?? 0,
       monthlyLimit: limit,
     });
-  } catch (err: any) {
-    return NextResponse.json({ error: err?.message || "Internal server error" }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Internal server error" }, { status: 500 });
   }
 }
 
@@ -137,8 +137,8 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ incident });
-  } catch (err: any) {
-    return NextResponse.json({ error: err?.message || "Internal server error" }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Internal server error" }, { status: 500 });
   }
 }
 
@@ -192,7 +192,7 @@ export async function PATCH(req: Request) {
     }
 
     return NextResponse.json({ incident });
-  } catch (err: any) {
-    return NextResponse.json({ error: err?.message || "Internal server error" }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Internal server error" }, { status: 500 });
   }
 }

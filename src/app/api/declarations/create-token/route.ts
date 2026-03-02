@@ -74,10 +74,10 @@ export async function POST(req: Request) {
     const shareableUrl = `${origin}/declare/${token.token}`;
 
     return NextResponse.json({ token, shareableUrl });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[declarations] create-token error:", err);
     return NextResponse.json(
-      { error: err?.message || "Internal server error" },
+      { error: err instanceof Error ? err.message : "Internal server error" },
       { status: 500 }
     );
   }

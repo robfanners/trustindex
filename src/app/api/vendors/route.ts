@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
 import { supabaseServer } from "@/lib/supabaseServer";
-import { getUserPlan, maxVendors } from "@/lib/entitlements";
+import { maxVendors } from "@/lib/entitlements";
 
 // GET — list vendors for org
 export async function GET() {
@@ -42,8 +42,9 @@ export async function GET() {
       limit,
       count: vendors?.length ?? 0,
     });
-  } catch (err: any) {
-    return NextResponse.json({ error: err?.message || "Internal server error" }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Internal server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -110,8 +111,9 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ vendor });
-  } catch (err: any) {
-    return NextResponse.json({ error: err?.message || "Internal server error" }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Internal server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -170,8 +172,9 @@ export async function PATCH(req: Request) {
     }
 
     return NextResponse.json({ vendor });
-  } catch (err: any) {
-    return NextResponse.json({ error: err?.message || "Internal server error" }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Internal server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -215,7 +218,8 @@ export async function DELETE(req: Request) {
     }
 
     return NextResponse.json({ deleted: true });
-  } catch (err: any) {
-    return NextResponse.json({ error: err?.message || "Internal server error" }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Internal server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

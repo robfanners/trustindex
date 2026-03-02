@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type Incident = {
   id: string;
@@ -53,7 +53,7 @@ export default function IncidentLog() {
   const [newImpact, setNewImpact] = useState("low");
   const [adding, setAdding] = useState(false);
 
-  async function fetchIncidents() {
+  const fetchIncidents = useCallback(async () => {
     try {
       const url = filter ? `/api/incidents?status=${filter}` : "/api/incidents";
       const res = await fetch(url);
@@ -68,26 +68,25 @@ export default function IncidentLog() {
     } finally {
       setLoading(false);
     }
-  }
-
-  async function fetchVendors() {
-    try {
-      const res = await fetch("/api/vendors");
-      const data = await res.json();
-      if (data.vendors) setVendors(data.vendors);
-    } catch {
-      // silent
-    }
-  }
+  }, [filter]);
 
   useEffect(() => {
+    async function fetchVendors() {
+      try {
+        const res = await fetch("/api/vendors");
+        const data = await res.json();
+        if (data.vendors) setVendors(data.vendors);
+      } catch {
+        // silent
+      }
+    }
     fetchIncidents();
     fetchVendors();
-  }, []);
+  }, [fetchIncidents]);
 
   useEffect(() => {
     fetchIncidents();
-  }, [filter]);
+  }, [fetchIncidents]);
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();

@@ -93,10 +93,10 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ policy });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[copilot] generate-policy error:", err);
     return NextResponse.json(
-      { error: err?.message || "Internal server error" },
+      { error: err instanceof Error ? err.message : "Internal server error" },
       { status: 500 }
     );
   }

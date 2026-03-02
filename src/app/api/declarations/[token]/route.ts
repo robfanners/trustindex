@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
-import { getUserPlan, maxStaffDeclarations } from "@/lib/entitlements";
+import { maxStaffDeclarations } from "@/lib/entitlements";
 
 // GET — validate token, return org name + token status (public, no auth)
 export async function GET(
@@ -53,10 +53,10 @@ export async function GET(
       organisationName: org?.name ?? "Your organisation",
       label: tokenRow.label,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[declarations] GET error:", err);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: err instanceof Error ? err.message : "Internal server error" },
       { status: 500 }
     );
   }
@@ -182,10 +182,10 @@ export async function POST(
     }
 
     return NextResponse.json({ declaration });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[declarations] POST error:", err);
     return NextResponse.json(
-      { error: err?.message || "Internal server error" },
+      { error: err instanceof Error ? err.message : "Internal server error" },
       { status: 500 }
     );
   }

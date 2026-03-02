@@ -110,9 +110,9 @@ export async function GET(req: Request) {
       count: results.length,
       results,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[monthly-report] Fatal error:", err);
-    return NextResponse.json({ error: err?.message || "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Internal server error" }, { status: 500 });
   }
 }
 
