@@ -81,7 +81,7 @@ src/
     emailTemplates.ts       # Welcome, monthly report, declaration reminder, policy ready
     url.ts                  # Safe origin resolution (server + client)
 supabase/
-  migrations/               # SQL migrations (004–011)
+  migrations/               # SQL migrations (004–014)
 ```
 
 ## Key Patterns
