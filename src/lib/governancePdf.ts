@@ -213,7 +213,7 @@ export function generateGovernanceStatementPdf(
     year: "numeric",
   });
 
-  let y = addHeader(doc, "AI Governance Statement", orgName, version, date);
+  const y = addHeader(doc, "AI Governance Statement", orgName, version, date);
   renderMarkdownSimple(doc, statementMd, y);
   addPageFooters(doc);
 
@@ -333,7 +333,7 @@ export function generateGapAnalysisPdf(
     year: "numeric",
   });
 
-  let y = addHeader(doc, "Risk & Gap Summary", orgName, version, date);
+  const y = addHeader(doc, "Risk & Gap Summary", orgName, version, date);
   renderMarkdownSimple(doc, gapMd, y);
   addPageFooters(doc);
 
