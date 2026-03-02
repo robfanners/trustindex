@@ -2,7 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { isPaidPlan, canGeneratePolicy } from "@/lib/entitlements";
+import {
+  isPaidPlan,
+  canGeneratePolicy,
+  canAccessWizard,
+  canGeneratePack,
+  canAccessMonthlyReport,
+} from "@/lib/entitlements";
 import VendorRegister from "./VendorRegister";
 import IncidentLog from "./IncidentLog";
 import RegulatoryFeed from "./RegulatoryFeed";
@@ -100,6 +106,50 @@ export default function CopilotDashboard() {
   const plan = profile?.plan ?? "explorer";
   const paid = isPaidPlan(plan);
 
+  // Wizard + governance pack state
+  const [wizard, setWizard] = useState<{ completed_at: string | null } | null>(null);
+  const [packs, setPacks] = useState<{ id: string; version: number; status: string; generated_at: string | null }[]>([]);
+  const [wizardLoading, setWizardLoading] = useState(true);
+  const [packsLoading, setPacksLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadWizard() {
+      try {
+        const res = await fetch("/api/wizard");
+        if (res.ok) {
+          const data = await res.json();
+          setWizard(data.wizard ?? null);
+        }
+      } catch {
+        // silent
+      } finally {
+        setWizardLoading(false);
+      }
+    }
+    async function loadPacks() {
+      try {
+        const res = await fetch("/api/governance-pack");
+        if (res.ok) {
+          const data = await res.json();
+          setPacks(data.packs ?? []);
+        }
+      } catch {
+        // silent
+      } finally {
+        setPacksLoading(false);
+      }
+    }
+    if (paid) {
+      loadWizard();
+      loadPacks();
+    } else {
+      setWizardLoading(false);
+      setPacksLoading(false);
+    }
+  }, [paid]);
+
+  const latestPack = packs.length > 0 ? packs[0] : null;
+
   return (
     <div className="space-y-6">
       <div>
@@ -108,6 +158,141 @@ export default function CopilotDashboard() {
           Manage your AI policies, vendor register, staff declarations, and compliance.
         </p>
       </div>
+
+      {/* Governance Setup */}
+      <Section
+        title="Governance Setup"
+        description="Complete the setup wizard to configure your AI governance framework"
+        locked={!canAccessWizard(plan)}
+        lockLabel="AI governance setup wizard"
+      >
+        {wizardLoading ? (
+          <div className="text-sm text-muted-foreground">Loading...</div>
+        ) : wizard?.completed_at ? (
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">
+              Last completed:{" "}
+              {new Date(wizard.completed_at).toLocaleDateString("en-GB", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })}
+            </p>
+            <a
+              href="/setup"
+              className="inline-block text-sm px-4 py-2 rounded bg-brand text-white hover:bg-brand-hover transition-colors"
+            >
+              Re-run wizard
+            </a>
+          </div>
+        ) : (
+          <div className="rounded-lg border border-brand/30 bg-brand/5 p-4 space-y-3">
+            <p className="text-sm font-medium text-foreground">
+              Set up your AI governance
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Complete the setup wizard to generate your governance pack — policies,
+              inventory, and gap analysis in one go.
+            </p>
+            <a
+              href="/setup"
+              className="inline-block text-sm px-4 py-2 rounded bg-brand text-white hover:bg-brand-hover transition-colors"
+            >
+              Start setup wizard
+            </a>
+          </div>
+        )}
+      </Section>
+
+      {/* Governance Pack */}
+      <Section
+        title="Governance Pack"
+        description="Download your AI governance documents"
+        locked={!canGeneratePack(plan)}
+        lockLabel="Governance pack downloads"
+      >
+        {packsLoading ? (
+          <div className="text-sm text-muted-foreground">Loading...</div>
+        ) : latestPack ? (
+          latestPack.status === "generating" ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <svg
+                className="animate-spin h-4 w-4 text-brand"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                />
+              </svg>
+              Generating your governance pack...
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Version {latestPack.version}
+                {latestPack.generated_at && (
+                  <>
+                    {" — "}
+                    {new Date(latestPack.generated_at).toLocaleDateString("en-GB", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </>
+                )}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <a
+                  href={`/api/governance-pack/${latestPack.id}/pdf?type=statement`}
+                  className="inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded border border-border hover:bg-muted transition-colors"
+                >
+                  <span aria-hidden="true">&#128196;</span> Governance Statement
+                </a>
+                <a
+                  href={`/api/governance-pack/${latestPack.id}/pdf?type=inventory`}
+                  className="inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded border border-border hover:bg-muted transition-colors"
+                >
+                  <span aria-hidden="true">&#128202;</span> AI Usage Inventory
+                </a>
+                <a
+                  href={`/api/governance-pack/${latestPack.id}/pdf?type=gap`}
+                  className="inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded border border-border hover:bg-muted transition-colors"
+                >
+                  <span aria-hidden="true">&#128203;</span> Risk &amp; Gap Analysis
+                </a>
+              </div>
+            </div>
+          )
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Complete the setup wizard to generate your governance pack.
+          </p>
+        )}
+      </Section>
+
+      {/* Monthly Report */}
+      <Section
+        title="Monthly Compliance Report"
+        description="Automated monthly summary of your AI governance posture"
+        locked={!canAccessMonthlyReport(plan)}
+        lockLabel="Monthly compliance report"
+      >
+        <p className="text-sm text-muted-foreground">
+          Your monthly compliance report will be emailed on the 1st of each month.
+        </p>
+      </Section>
 
       {/* AI Policies */}
       <Section

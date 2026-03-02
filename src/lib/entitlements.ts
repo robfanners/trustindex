@@ -23,7 +23,7 @@ export type PlanLimits = {
 
 const LIMITS: Record<PlanName, PlanLimits> = {
   explorer: { maxSurveys: 1, maxSystems: 0, canExport: false },
-  starter: { maxSurveys: 3, maxSystems: 0, canExport: false },
+  starter: { maxSurveys: 0, maxSystems: 0, canExport: false },
   pro: { maxSurveys: 5, maxSystems: 2, canExport: true },
   enterprise: { maxSurveys: Infinity, maxSystems: Infinity, canExport: true },
 };
@@ -110,6 +110,21 @@ export function canGeneratePolicy(plan: string | null | undefined): boolean {
 export function canEditPolicy(plan: string | null | undefined): boolean {
   const p = plan ?? "explorer";
   return p === "pro" || p === "enterprise";
+}
+
+/** Can access AI Governance Setup Wizard? (Starter+) */
+export function canAccessWizard(plan: string | null | undefined): boolean {
+  return isPaidPlan(plan);
+}
+
+/** Can generate governance pack? (Starter+) */
+export function canGeneratePack(plan: string | null | undefined): boolean {
+  return isPaidPlan(plan);
+}
+
+/** Can access monthly compliance report? (Starter+) */
+export function canAccessMonthlyReport(plan: string | null | undefined): boolean {
+  return isPaidPlan(plan);
 }
 
 /** Get compliance report level */

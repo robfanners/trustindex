@@ -55,11 +55,11 @@ const tiers: PlanTier[] = [
     period: "/month",
     yearlyNote: "or \u00a3711/year (save \u00a3237)",
     description:
-      "AI governance essentials for small teams. Policies, declarations, and compliance in one place.",
+      "Get your AI governance sorted in 30 minutes. Guided setup, instant governance pack, ongoing compliance tools.",
     features: [
-      "3 org assessments",
-      "Instant results with radar chart",
-      "Band interpretation and actions",
+      "AI Governance Setup Wizard",
+      "Governance Pack (3 PDF documents)",
+      "Instant gap analysis & recommendations",
     ],
     copilotFeatures: [
       { label: "AI Policy Generator (1 auto-generated)", available: true },
@@ -69,8 +69,9 @@ const tiers: PlanTier[] = [
       { label: "Incident Logging (5/month)", available: true },
       { label: "Regulatory Feed (UK/EU)", available: true },
     ],
-    cta: "Start with Starter",
-    ctaStyle: "outline",
+    highlighted: true,
+    cta: "Get started",
+    ctaStyle: "primary",
   },
   {
     name: "Pro",
@@ -81,7 +82,8 @@ const tiers: PlanTier[] = [
     description:
       "Full AI governance suite with system assessments, editable policies, and board-ready reports.",
     features: [
-      "5 org assessments",
+      "Everything in Starter, plus:",
+      "5 org assessments (TrustOrg)",
       "2 AI system assessments",
       "CSV data export",
       "Historical tracking",
@@ -96,9 +98,8 @@ const tiers: PlanTier[] = [
       { label: "Incident Logging (unlimited)", available: true },
       { label: "Regulatory Feed (UK/EU + sector)", available: true },
     ],
-    highlighted: true,
     cta: "Upgrade to Pro",
-    ctaStyle: "primary",
+    ctaStyle: "outline",
   },
   {
     name: "Enterprise",
@@ -141,7 +142,8 @@ type MatrixRow = {
 };
 
 const featureMatrix: MatrixRow[] = [
-  { feature: "Org assessments", explorer: "1", starter: "3", pro: "5", enterprise: "Unlimited" },
+  { feature: "Governance Wizard + Pack", explorer: "\u2014", starter: "\u2713", pro: "\u2713", enterprise: "\u2713" },
+  { feature: "Org assessments", explorer: "1", starter: "\u2014", pro: "5", enterprise: "Unlimited" },
   { feature: "System assessments", explorer: "\u2014", starter: "\u2014", pro: "2", enterprise: "Unlimited" },
   { feature: "CSV export", explorer: "\u2014", starter: "\u2014", pro: "\u2713", enterprise: "\u2713" },
   { feature: "Historical tracking", explorer: "\u2014", starter: "\u2014", pro: "\u2713", enterprise: "\u2713" },
