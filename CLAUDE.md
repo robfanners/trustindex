@@ -17,7 +17,7 @@ AI Governance Copilot SaaS for SMEs. Helps organisations assess, monitor, and de
 - **Payments:** Stripe 20.3.1 (checkout sessions, webhooks, subscriptions)
 - **PDF Export:** jsPDF 4.2.0 + html2canvas 1.4.1
 - **Charts:** Recharts 3.6.0
-- **Hosting:** Vercel (with cron jobs)
+- **Hosting:** Hostinger (Next.js via git deploy, Node 22)
 
 ## Commands
 
@@ -38,6 +38,11 @@ src/
       stripe/               # checkout, webhook, portal
       trustgraph/           # health, drift, escalations, reassessment
       trustsys/             # system assessments
+      copilot/              # policies, monthly-report
+      declarations/         # staff declaration tokens + submissions
+      incidents/            # AI incident logging
+      regulatory/           # regulatory feed CRUD
+      vendors/              # AI vendor register
       reports/              # summary, history, analytics
       verisum-admin/        # admin dashboard, org management, audit
       org/                  # teams, subsidiaries, functions
@@ -53,6 +58,7 @@ src/
     try/                    # Public explorer mode (no auth)
   components/
     header/                 # ModuleSwitcher, GlobalSearch, NotificationBell, UserMenu, QuickCreate
+    copilot/                # CopilotDashboard, VendorRegister, IncidentLog, RegulatoryFeed
     vcc/                    # Admin components (VCCShell, MetricCard, ConfirmDialog)
     AppShell.tsx            # Public page shell
     AuthenticatedShell.tsx  # Authenticated shell with sidebar
@@ -71,6 +77,8 @@ src/
     trustGraphTiers.ts      # Score → tier classification (Trusted/Stable/Elevated/Critical)
     systemScoring.ts        # Assessment scoring engine
     pdfExport.ts            # PDF generation pipeline
+    email.ts                # Resend wrapper with graceful fallback
+    emailTemplates.ts       # Welcome, monthly report, declaration reminder, policy ready
     url.ts                  # Safe origin resolution (server + client)
 supabase/
   migrations/               # SQL migrations (004–011)
@@ -114,18 +122,19 @@ Server-only DB queries: `getUserPlan()`, `getUserSurveyCount()`.
 
 ## Current Pricing Tiers
 
-| Tier | Price | Surveys | Systems | Export |
-|------|-------|---------|---------|--------|
-| Explorer | Free | 1 | 0 | No |
-| Pro | £199/mo | 5 | 2 | Yes |
-| Enterprise | Custom | Unlimited | Unlimited | Yes |
+| Tier | Price | Surveys | Systems | Copilot | Export |
+|------|-------|---------|---------|---------|--------|
+| Explorer | Free | 1 | 0 | No | No |
+| Starter | £79/mo | 3 | 1 | Basic | Yes |
+| Pro | £199/mo | 5 | 2 | Full | Yes |
+| Enterprise | Custom | Unlimited | Unlimited | Full | Yes |
 
 ## Database
 
 **Supabase project:** ktwrztposaiyllhadqys.supabase.co
-**Migrations:** `supabase/migrations/` (004–011)
+**Migrations:** `supabase/migrations/` (004–014)
 
-Key tables: `profiles`, `organisations`, `survey_runs`, `systems`, `system_runs`, `trustgraph_health_mv` (materialized view), `escalations`, `reassessment_policies`, `actions`.
+Key tables: `profiles`, `organisations`, `survey_runs`, `systems`, `system_runs`, `trustgraph_health_mv` (materialized view), `escalations`, `reassessment_policies`, `actions`, `ai_policies`, `declaration_tokens`, `staff_declarations`, `ai_vendors`, `incidents`, `regulatory_updates`.
 
 RLS enabled on all tables. Service role client used for cross-org admin queries.
 
@@ -135,7 +144,11 @@ See `.env.example` for full list. Critical ones:
 - `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Supabase connection
 - `SUPABASE_SERVICE_ROLE_KEY` — Server-only DB access
 - `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` — Stripe billing
-- `STRIPE_PRO_MONTHLY_PRICE_ID` / `STRIPE_PRO_YEARLY_PRICE_ID` — Stripe prices
+- `STRIPE_STARTER_MONTHLY_PRICE_ID` / `STRIPE_STARTER_YEARLY_PRICE_ID` — Starter tier prices
+- `STRIPE_PRO_MONTHLY_PRICE_ID` / `STRIPE_PRO_YEARLY_PRICE_ID` — Pro tier prices
+- `ANTHROPIC_API_KEY` — Claude API for AI policy generation
+- `RESEND_API_KEY` / `RESEND_FROM_EMAIL` — Transactional email via Resend
+- `CRON_SECRET` — Authenticates scheduled jobs (monthly report via Make.com)
 - `NEXT_PUBLIC_SITE_URL` — Canonical site URL
 - `SYSADMIN_CODE` / `VERISUM_ADMIN_CODE` — Admin access codes
 
@@ -143,6 +156,7 @@ See `.env.example` for full list. Critical ones:
 
 - **TrustOrg:** Org-level trust readiness surveys across governance dimensions
 - **TrustSys:** Individual AI system assessments with scoring engine
+- **AI Governance Copilot:** Policy generator, staff declarations, vendor register, incidents, regulatory feed, monthly reports
 - **Actions:** Remediation tracking from recommendations
 - **Reports:** PDF export, dimension-level insights, charts
 - **VCC (Verisum Control Centre):** Internal admin dashboard

@@ -110,14 +110,13 @@ CREATE TABLE IF NOT EXISTS regulatory_updates (
   title           text NOT NULL,
   summary         text NOT NULL,
   source_url      text,
-  jurisdiction    text NOT NULL DEFAULT 'uk' CHECK (jurisdiction IN ('uk', 'eu', 'us', 'global')),
-  relevance_tags  jsonb DEFAULT '[]',
-  sector_tags     jsonb DEFAULT '[]',
+  jurisdictions   text[] NOT NULL DEFAULT '{}',
+  sector_tags     text[] DEFAULT '{}',
   published_at    timestamptz NOT NULL DEFAULT now(),
   created_at      timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_regulatory_updates_jurisdiction ON regulatory_updates(jurisdiction);
+CREATE INDEX idx_regulatory_updates_jurisdictions ON regulatory_updates USING GIN(jurisdictions);
 
 -- --------------------------------------------------------------------------
 -- 7. RLS policies
