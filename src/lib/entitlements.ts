@@ -23,7 +23,7 @@ export type PlanLimits = {
 
 const LIMITS: Record<PlanName, PlanLimits> = {
   explorer: { maxSurveys: 1, maxSystems: 0, canExport: false },
-  starter: { maxSurveys: 0, maxSystems: 0, canExport: false },
+  starter: { maxSurveys: 1, maxSystems: 0, canExport: false },
   pro: { maxSurveys: 5, maxSystems: 2, canExport: true },
   enterprise: { maxSurveys: Infinity, maxSystems: Infinity, canExport: true },
 };
@@ -55,9 +55,18 @@ export function hasBillingAccess(plan: string | null | undefined): boolean {
   return p === "starter" || p === "pro" || p === "enterprise";
 }
 
-/** Can the user manage team members? (Enterprise only) */
+/** Can the user manage team members? (Pro+ — basic for Pro, full for Enterprise) */
 export function canManageTeam(plan: string | null | undefined): boolean {
-  return (plan ?? "explorer") === "enterprise";
+  const p = plan ?? "explorer";
+  return p === "pro" || p === "enterprise";
+}
+
+/** Max team members allowed */
+export function maxTeamMembers(plan: string | null | undefined): number {
+  const p = plan ?? "explorer";
+  if (p === "pro") return 5;
+  if (p === "enterprise") return Infinity;
+  return 1; // owner only
 }
 
 /** Can the user access data & export settings? (Pro+) */
@@ -79,8 +88,8 @@ export function isPaidPlan(plan: string | null | undefined): boolean {
 /** Max staff declarations allowed */
 export function maxStaffDeclarations(plan: string | null | undefined): number {
   const p = plan ?? "explorer";
-  if (p === "starter") return 25;
-  if (p === "pro") return 100;
+  if (p === "starter") return 50;
+  if (p === "pro") return 250;
   if (p === "enterprise") return Infinity;
   return 0;
 }
