@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { isPaidPlan, canGeneratePolicy } from "@/lib/entitlements";
 import VendorRegister from "./VendorRegister";
 import IncidentLog from "./IncidentLog";
+import RegulatoryFeed from "./RegulatoryFeed";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -148,14 +149,12 @@ export default function CopilotDashboard() {
         <IncidentLog />
       </Section>
 
-      {/* Regulatory Feed — placeholder until Task 13 */}
+      {/* Regulatory Feed */}
       <Section
         title="Regulatory Updates"
         description="Stay current with AI governance regulations"
       >
-        <div className="py-6 text-center text-sm text-muted-foreground">
-          Regulatory feed coming soon. We'll curate UK and EU AI governance updates here.
-        </div>
+        <RegulatoryFeed />
       </Section>
     </div>
   );
