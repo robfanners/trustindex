@@ -243,6 +243,7 @@ Workspace: "Verisum" with sections:
 - **AI Governance Copilot v2** — Chat interface, inline suggestions, agentic workflows
 - **HAPP as infrastructure** — Use HAPP protocol for provenance verification within TrustGraph
 - **Human-HarmonAI licensing** — Package framework for enterprise licensing deals
+- **Hosting evaluation** — Assess alternatives to Hostinger (e.g. Vercel, Railway, Fly.io) for better DX: native cron jobs, env var management, preview deploys, zero-config git push. Current Hostinger quirks: failed deploys block settings access, no native cron, archive deploys default to wrong Node version. Evaluate when revenue justifies the cost increase.
 
 ---
 
