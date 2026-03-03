@@ -56,6 +56,36 @@ export async function POST(req: Request) {
             .eq("id", userId);
 
           console.log(`[stripe] User ${userId} upgraded to ${targetPlan} (sub: ${subscriptionId})`);
+
+          // Auto-create organisation if user doesn't have one
+          const { data: updatedProfile } = await sb
+            .from("profiles")
+            .select("organisation_id, email, company_name")
+            .eq("id", userId)
+            .single();
+
+          if (updatedProfile && !updatedProfile.organisation_id) {
+            const orgName =
+              updatedProfile.company_name ||
+              (updatedProfile.email
+                ? updatedProfile.email.split("@")[1]?.split(".")[0] ?? "My Organisation"
+                : "My Organisation");
+
+            const { data: org } = await sb
+              .from("organisations")
+              .insert({ name: orgName })
+              .select("id")
+              .single();
+
+            if (org) {
+              await sb
+                .from("profiles")
+                .update({ organisation_id: org.id })
+                .eq("id", userId);
+
+              console.log(`[stripe] Auto-created org "${orgName}" (${org.id}) for user ${userId}`);
+            }
+          }
         }
         break;
       }
