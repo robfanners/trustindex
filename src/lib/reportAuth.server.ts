@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
 import { supabaseServer } from "@/lib/supabaseServer";
-import type { TrustGraphRole } from "@/lib/reportAuth";
+import type { VersiumRole } from "@/lib/roles";
 
 // ---------------------------------------------------------------------------
 // Server-side helper: authenticate + get org_id + role
@@ -38,6 +38,6 @@ export async function getAuthenticatedOrgWithRole() {
   return {
     user,
     orgId: profile.organisation_id as string,
-    role: (profile.role as TrustGraphRole) ?? null,
+    role: (profile.role as VersiumRole) ?? null,
   };
 }

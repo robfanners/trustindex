@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedOrgWithRole } from "@/lib/reportAuth.server";
 import { canAccessReport } from "@/lib/reportAuth";
-import type { TrustGraphRole } from "@/lib/reportAuth";
+import type { VersiumRole } from "@/lib/roles";
 import { supabaseServer } from "@/lib/supabaseServer";
 
 // ---------------------------------------------------------------------------
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
 
     const { orgId, role } = result;
 
-    if (!canAccessReport(role as TrustGraphRole, "assessment_history")) {
+    if (!canAccessReport(role as VersiumRole, "assessment_history")) {
       return NextResponse.json(
         { error: "Insufficient permissions" },
         { status: 403 }
