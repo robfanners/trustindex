@@ -9,6 +9,7 @@ import {
   canGeneratePack,
   canAccessMonthlyReport,
 } from "@/lib/entitlements";
+import Tooltip from "@/components/Tooltip";
 import VendorRegister from "./VendorRegister";
 import IncidentLog from "./IncidentLog";
 import RegulatoryFeed from "./RegulatoryFeed";
@@ -68,12 +69,14 @@ function LockedOverlay({ children, label }: { children: React.ReactNode; label: 
 function Section({
   title,
   description,
+  tooltip,
   locked,
   lockLabel,
   children,
 }: {
   title: string;
   description?: string;
+  tooltip?: string;
   locked?: boolean;
   lockLabel?: string;
   children: React.ReactNode;
@@ -81,7 +84,14 @@ function Section({
   const content = (
     <div className="border border-border rounded-xl p-6 space-y-4">
       <div>
-        <h3 className="font-semibold text-foreground">{title}</h3>
+        <div className="flex items-center gap-1.5">
+          <h3 className="font-semibold text-foreground">{title}</h3>
+          {tooltip && (
+            <Tooltip content={tooltip}>
+              <span className="text-muted-foreground hover:text-foreground cursor-help text-sm">&#9432;</span>
+            </Tooltip>
+          )}
+        </div>
         {description && (
           <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
         )}
@@ -212,6 +222,7 @@ export default function CopilotDashboard() {
       <Section
         title="Governance Setup"
         description="Complete the setup wizard to configure your AI governance framework"
+        tooltip="Complete the setup wizard to generate your AI governance framework — policies, inventory, and gap analysis."
         locked={!canAccessWizard(plan)}
         lockLabel="AI governance setup wizard"
       >
@@ -257,6 +268,7 @@ export default function CopilotDashboard() {
       <Section
         title="Governance Pack"
         description="Download your AI governance documents"
+        tooltip="Download your generated governance documents. Re-run the wizard to generate updated versions."
         locked={!canGeneratePack(plan)}
         lockLabel="Governance pack downloads"
       >
@@ -335,6 +347,7 @@ export default function CopilotDashboard() {
       <Section
         title="Monthly Compliance Report"
         description="Automated monthly summary of your AI governance posture"
+        tooltip="Automated monthly summary of your AI governance posture, emailed on the 1st of each month."
         locked={!canAccessMonthlyReport(plan)}
         lockLabel="Monthly compliance report"
       >
@@ -347,6 +360,7 @@ export default function CopilotDashboard() {
       <Section
         title="AI Policies"
         description="Generate and manage AI governance policies for your organisation"
+        tooltip="Generate tailored AI governance policies using AI. Policies are customised to your organisation's context."
         locked={!paid}
         lockLabel="Generate AI policies"
       >
@@ -357,6 +371,7 @@ export default function CopilotDashboard() {
       <Section
         title="Staff Declarations"
         description="Collect AI usage declarations from your team"
+        tooltip="Collect AI usage declarations from staff. Create a campaign link, invite your team, and track responses."
         locked={!paid}
         lockLabel="Staff declaration portal"
       >
@@ -367,6 +382,7 @@ export default function CopilotDashboard() {
       <Section
         title="AI Vendor Register"
         description="Track and assess AI tools used across your organisation"
+        tooltip="Track and assess all AI tools used across your organisation. Vendors are auto-added from staff declarations."
         locked={!paid}
         lockLabel="AI vendor register"
       >
@@ -377,6 +393,7 @@ export default function CopilotDashboard() {
       <Section
         title="Incident Log"
         description="Track AI-related incidents and near-misses"
+        tooltip="Record AI-related incidents and near-misses. Maintain an audit trail for governance compliance."
         locked={!paid}
         lockLabel="Incident logging"
       >
@@ -387,6 +404,7 @@ export default function CopilotDashboard() {
       <Section
         title="Regulatory Updates"
         description="Stay current with AI governance regulations"
+        tooltip="Stay current with AI governance regulations and guidance relevant to your jurisdiction."
       >
         <RegulatoryFeed />
       </Section>
