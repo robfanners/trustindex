@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
 import { supabaseServer } from "@/lib/supabaseServer";
+import { requireTier } from "@/lib/requireTier";
 
 // ---------------------------------------------------------------------------
 // GET /api/trustgraph/drift — list drift events for the user's org
@@ -10,28 +10,15 @@ import { supabaseServer } from "@/lib/supabaseServer";
 
 export async function GET(req: NextRequest) {
   try {
-    const authClient = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await authClient.auth.getUser();
+    const check = await requireTier("Assure");
+    if (!check.authorized) return check.response;
 
-    if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    const db = supabaseServer();
-
-    const { data: profile } = await db
-      .from("profiles")
-      .select("organisation_id")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile?.organisation_id) {
+    if (!check.orgId) {
       return NextResponse.json({ error: "No organisation linked" }, { status: 400 });
     }
 
-    const orgId = profile.organisation_id;
+    const db = supabaseServer();
+    const orgId = check.orgId;
     const url = req.nextUrl;
 
     const runType = url.searchParams.get("run_type"); // 'org' | 'sys' | null
