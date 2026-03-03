@@ -11,6 +11,7 @@ import QuickCreate from "@/components/header/QuickCreate";
 import NotificationBell from "@/components/header/NotificationBell";
 import UserMenu from "@/components/header/UserMenu";
 import HelpMenu from "@/components/header/HelpMenu";
+import { navSections, meetsMinTier } from "@/lib/navigation";
 
 type AuthenticatedShellProps = {
   children: React.ReactNode;
@@ -18,14 +19,6 @@ type AuthenticatedShellProps = {
 
 const SIDEBAR_KEY = "ti_sidebar_collapsed";
 
-const navLinks = [
-  { label: "Dashboard", href: "/dashboard", icon: "home" },
-  { label: "TrustOrg Surveys", href: "/trustorg", icon: "clipboard" },
-  { label: "TrustSys Assessments", href: "/trustsys", icon: "cpu" },
-  { label: "Actions", href: "/actions", icon: "check-circle" },
-  { label: "Reports", href: "/reports", icon: "file-text" },
-  { label: "Settings", href: "/dashboard/settings", icon: "settings" },
-];
 
 function NavIcon({ icon }: { icon: string }) {
   const cls = "w-5 h-5 shrink-0";
@@ -137,7 +130,7 @@ function NavIcon({ icon }: { icon: string }) {
 
 function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
   const pathname = usePathname();
-  useAuth(); // ensure auth context is available for header components
+  const { profile } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -165,13 +158,18 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
   const currentYear = new Date().getFullYear();
 
   const activeNav = useMemo(() => {
+    // Exact matches first
     if (pathname.startsWith("/dashboard/settings")) return "/dashboard/settings";
     if (pathname === "/dashboard") return "/dashboard";
+    // Section routes
     if (pathname.startsWith("/trustorg")) return "/trustorg";
     if (pathname.startsWith("/trustsys")) return "/trustsys";
     if (pathname.startsWith("/actions")) return "/actions";
     if (pathname.startsWith("/reports")) return "/reports";
-    // Legacy routes — highlight closest new nav item
+    if (pathname.startsWith("/copilot")) return "/copilot/generate-policy";
+    if (pathname.startsWith("/monitor")) return pathname;
+    if (pathname.startsWith("/prove")) return pathname;
+    // Legacy routes
     if (pathname.startsWith("/dashboard/surveys")) return "/trustorg";
     if (pathname.startsWith("/systems")) return "/trustsys";
     return pathname;
@@ -262,29 +260,76 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
             ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
           `}
         >
-          <nav className={`flex-1 py-4 space-y-1 ${sidebarCollapsed ? "lg:px-1.5" : "px-3"}`}>
-            {navLinks.map((link) => {
-              const isActive = activeNav === link.href;
+          <nav className={`flex-1 py-3 overflow-y-auto ${sidebarCollapsed ? "lg:px-1.5" : "px-3"}`}>
+            {navSections.map((section) => {
+              const isLocked = !meetsMinTier(profile?.plan, section.minTier);
+
               return (
-                <Link
-                  key={link.label}
-                  href={link.href}
-                  title={sidebarCollapsed ? link.label : undefined}
-                  className={`
-                    flex items-center gap-3 py-2 rounded-lg text-sm transition-all
-                    ${sidebarCollapsed ? "lg:justify-center lg:px-0 px-3" : "px-3"}
-                    ${isActive
-                      ? "bg-brand/10 text-brand font-medium"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                    }
-                  `}
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <NavIcon icon={link.icon} />
-                  <span className={sidebarCollapsed ? "lg:hidden" : ""}>
-                    {link.label}
-                  </span>
-                </Link>
+                <div key={section.id} className={section.label ? "mt-5 first:mt-0" : ""}>
+                  {/* Section header */}
+                  {section.label && !sidebarCollapsed && (
+                    <div className="flex items-center justify-between px-3 mb-1">
+                      <span className={`text-[10px] font-semibold tracking-widest ${
+                        isLocked ? "text-muted-foreground/50" : "text-muted-foreground"
+                      }`}>
+                        {section.label}
+                      </span>
+                      {isLocked && section.tierBadge && (
+                        <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-brand/10 text-brand">
+                          {section.tierBadge}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Collapsed section indicator */}
+                  {section.label && sidebarCollapsed && (
+                    <div className="hidden lg:flex justify-center my-2">
+                      <div className={`w-5 h-px ${isLocked ? "bg-border/50" : "bg-border"}`} />
+                    </div>
+                  )}
+
+                  {/* Nav items */}
+                  <div className="space-y-0.5">
+                    {section.items.map((item) => {
+                      const isActive = activeNav === item.href;
+                      const href = isLocked ? "#" : item.href;
+
+                      return (
+                        <Link
+                          key={item.href}
+                          href={href}
+                          title={sidebarCollapsed ? item.label : undefined}
+                          onClick={(e) => {
+                            if (isLocked) {
+                              e.preventDefault();
+                              return;
+                            }
+                            setSidebarOpen(false);
+                          }}
+                          className={`
+                            flex items-center gap-3 py-2 rounded-lg text-sm transition-all
+                            ${sidebarCollapsed ? "lg:justify-center lg:px-0 px-3" : "px-3"}
+                            ${isLocked
+                              ? "text-muted-foreground/40 cursor-default"
+                              : isActive
+                                ? "bg-brand/10 text-brand font-medium"
+                                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                            }
+                          `}
+                        >
+                          <NavIcon icon={item.icon} />
+                          <span className={sidebarCollapsed ? "lg:hidden" : ""}>
+                            {item.label}
+                          </span>
+                          {isLocked && !sidebarCollapsed && (
+                            <NavIcon icon="lock" />
+                          )}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
               );
             })}
           </nav>
