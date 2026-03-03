@@ -70,10 +70,10 @@ export const navSections: NavSection[] = [
     minTier: "pro",
     tierBadge: "Assure",
     items: [
-      { label: "Drift & Alerts", href: "/monitor/drift", icon: "activity", exists: false },
-      { label: "Escalations", href: "/monitor/escalations", icon: "alert-triangle", exists: false },
-      { label: "Incidents", href: "/monitor/incidents", icon: "zap", exists: false },
-      { label: "Declarations", href: "/monitor/declarations", icon: "user-check", exists: false },
+      { label: "Drift & Alerts", href: "/monitor/drift", icon: "activity", exists: true },
+      { label: "Escalations", href: "/monitor/escalations", icon: "alert-triangle", exists: true },
+      { label: "Incidents", href: "/monitor/incidents", icon: "zap", exists: true },
+      { label: "Declarations", href: "/monitor/declarations", icon: "user-check", exists: true },
     ],
   },
   {
