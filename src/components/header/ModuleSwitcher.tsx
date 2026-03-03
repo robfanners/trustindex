@@ -2,17 +2,13 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
-
-const modules = [
-  { label: "TrustOrg Surveys", href: "/trustorg" },
-  { label: "TrustSys Assessments", href: "/trustsys" },
-  { label: "Actions", href: "/actions" },
-  { label: "Reports", href: "/reports" },
-];
+import { useAuth } from "@/context/AuthContext";
+import { navSections, meetsMinTier } from "@/lib/navigation";
 
 export default function ModuleSwitcher() {
   const pathname = usePathname();
   const router = useRouter();
+  const { profile } = useAuth();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -24,8 +20,16 @@ export default function ModuleSwitcher() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  const current = modules.find(
-    (m) => pathname.startsWith(m.href) || (m.href === "/trustorg" && pathname.startsWith("/dashboard/surveys"))
+  // Flatten accessible items for the switcher
+  const accessibleItems = navSections
+    .filter((s) => meetsMinTier(profile?.plan, s.minTier))
+    .flatMap((s) => s.items)
+    .filter((item) => item.href !== "/dashboard" && item.href !== "/dashboard/settings");
+
+  const current = accessibleItems.find(
+    (m) =>
+      pathname.startsWith(m.href) ||
+      (m.href === "/trustorg" && pathname.startsWith("/dashboard/surveys"))
   );
 
   return (
@@ -43,7 +47,7 @@ export default function ModuleSwitcher() {
 
       {open && (
         <div className="absolute left-0 mt-1 w-52 bg-background border border-border rounded-lg shadow-lg z-50 py-1">
-          {modules.map((m) => {
+          {accessibleItems.map((m) => {
             const active = pathname.startsWith(m.href);
             return (
               <button
