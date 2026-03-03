@@ -66,7 +66,7 @@ export default function VCCDashboardPage() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Platform Dashboard</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Real-time overview of the TrustGraph platform
+          Real-time overview of the Verisum platform
         </p>
       </div>
 

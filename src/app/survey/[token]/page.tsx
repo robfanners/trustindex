@@ -201,10 +201,10 @@ export default function SurveyPage() {
                   href={
                     "mailto:?" +
                     "subject=" +
-                    encodeURIComponent("My TrustGraph results link") +
+                    encodeURIComponent("My Verisum results link") +
                     "&body=" +
                     encodeURIComponent(
-                      `Here are my TrustGraph links:\n\n` +
+                      `Here are my Verisum links:\n\n` +
                         `Results: ${window.location.origin}/dashboard/${runId}\n` +
                         `Survey Dashboard: ${window.location.origin}/admin/run/${runId}\n`
                     )

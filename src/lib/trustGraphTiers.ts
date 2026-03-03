@@ -1,4 +1,4 @@
-// Pure tier classification functions for TrustGraph scoring.
+// Pure tier classification functions for Verisum scoring.
 // No React, no side-effects.
 
 export type TierKey = "trusted" | "stable" | "elevated_risk" | "critical";

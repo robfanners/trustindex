@@ -121,7 +121,7 @@ export default function LoginPage() {
           )}
 
           <p className="text-xs text-muted-foreground text-center mt-6">
-            New to TrustGraph?{" "}
+            New to Verisum?{" "}
             <a
               href="/try"
               className="text-brand hover:text-brand/80 font-medium"

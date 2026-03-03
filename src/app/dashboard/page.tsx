@@ -262,7 +262,7 @@ function OverviewTab() {
 
   return (
     <div className="space-y-6">
-      {/* TrustGraph Health Score cards */}
+      {/* Verisum Health Score cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <HealthScoreCard
           title="Trust Health"

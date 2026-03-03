@@ -3,7 +3,7 @@ import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
 import { supabaseServer } from "@/lib/supabaseServer";
 
 // ---------------------------------------------------------------------------
-// GET /api/trustgraph/health — TrustGraph Health Score for the user's org
+// GET /api/trustgraph/health — Verisum Health Score for the user's org
 // ---------------------------------------------------------------------------
 // Returns the composite health score + penalty drivers from the materialized
 // view (fast) with a fallback to direct function call.
