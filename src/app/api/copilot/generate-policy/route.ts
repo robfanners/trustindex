@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
 import { supabaseServer } from "@/lib/supabaseServer";
-import { getUserPlan, canGeneratePolicy } from "@/lib/entitlements";
+import { getUserPlan, canGeneratePolicy, maxPolicyGenerations } from "@/lib/entitlements";
 import { generateText } from "@/lib/llm";
 import { SYSTEM_PROMPT, buildPolicyPrompt } from "@/lib/policyPrompts";
 import type { PolicyType, PolicyQuestionnaire } from "@/lib/policyPrompts";
@@ -28,18 +28,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Parse request
-    const body = await req.json();
-    const policyType = body.policyType as PolicyType;
-    const questionnaire = body.questionnaire as PolicyQuestionnaire;
-
-    if (!policyType || !questionnaire?.companyName) {
-      return NextResponse.json(
-        { error: "Missing policyType or questionnaire" },
-        { status: 400 }
-      );
-    }
-
     // Get org
     const sb = supabaseServer();
     const { data: profile } = await sb
@@ -55,20 +43,65 @@ export async function POST(req: Request) {
       );
     }
 
+    // Rate limit check
+    const limit = maxPolicyGenerations(plan);
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const { count: monthlyCount } = await sb
+      .from("ai_policies")
+      .select("id", { count: "exact", head: true })
+      .eq("organisation_id", profile.organisation_id)
+      .gte("created_at", startOfMonth.toISOString());
+
+    const used = monthlyCount ?? 0;
+    if (used >= limit) {
+      return NextResponse.json(
+        {
+          error: `You've used all ${limit} policy generation${limit !== 1 ? "s" : ""} this month. Upgrade for more.`,
+          remaining: 0,
+          limit,
+        },
+        { status: 403 }
+      );
+    }
+
+    // Parse request
+    const body = await req.json();
+    const policyType = body.policyType as PolicyType;
+    const questionnaire = body.questionnaire as PolicyQuestionnaire;
+
+    if (!policyType || !questionnaire?.companyName) {
+      return NextResponse.json(
+        { error: "Missing policyType or questionnaire" },
+        { status: 400 }
+      );
+    }
+
     // Generate policy via LLM
-    const prompt = buildPolicyPrompt(policyType, questionnaire);
-    const content = await generateText(SYSTEM_PROMPT, [
-      { role: "user", content: prompt },
-    ]);
+    let content: string;
+    try {
+      const prompt = buildPolicyPrompt(policyType, questionnaire);
+      content = await generateText(SYSTEM_PROMPT, [
+        { role: "user", content: prompt },
+      ]);
+    } catch (llmErr: unknown) {
+      console.error("[copilot] LLM generation failed:", llmErr);
+      return NextResponse.json(
+        { error: "Policy generation is temporarily unavailable. Please try again in a few minutes." },
+        { status: 503 }
+      );
+    }
 
     // Get current version number
-    const { count } = await sb
+    const { count: versionCount } = await sb
       .from("ai_policies")
       .select("id", { count: "exact", head: true })
       .eq("organisation_id", profile.organisation_id)
       .eq("policy_type", policyType);
 
-    const version = (count ?? 0) + 1;
+    const version = (versionCount ?? 0) + 1;
 
     // Save to DB
     const { data: policy, error } = await sb
@@ -92,11 +125,15 @@ export async function POST(req: Request) {
       );
     }
 
-    return NextResponse.json({ policy });
+    return NextResponse.json({
+      policy,
+      remaining: limit - (used + 1),
+      limit,
+    });
   } catch (err: unknown) {
     console.error("[copilot] generate-policy error:", err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Internal server error" },
+      { error: "Something went wrong. Please try again." },
       { status: 500 }
     );
   }
