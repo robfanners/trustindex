@@ -51,7 +51,7 @@ export async function GET() {
       return new Response(header, {
         headers: {
           "Content-Type": "text/csv; charset=utf-8",
-          "Content-Disposition": `attachment; filename="trustgraph_surveys_export.csv"`,
+          "Content-Disposition": `attachment; filename="verisum_surveys_export.csv"`,
         },
       });
     }
@@ -116,7 +116,7 @@ export async function GET() {
     return new Response(csv, {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="trustgraph_surveys_export.csv"`,
+        "Content-Disposition": `attachment; filename="verisum_surveys_export.csv"`,
       },
     });
   } catch (e: unknown) {

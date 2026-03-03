@@ -1646,7 +1646,7 @@ function FullAuditExport({
     try {
       await exportElementToPdf(
         "audit-export-content",
-        `trustgraph-audit-${dateFrom}-to-${dateTo}.pdf`
+        `verisum-audit-${dateFrom}-to-${dateTo}.pdf`
       );
     } catch {
       /* silent */

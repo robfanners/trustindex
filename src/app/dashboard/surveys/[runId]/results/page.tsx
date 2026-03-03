@@ -469,7 +469,7 @@ function SurveyResultsContent() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `trustgraph_${runId}_responses.csv`;
+      a.download = `verisum_${runId}_responses.csv`;
       a.click();
       URL.revokeObjectURL(url);
       setExportStatus("CSV downloaded.");
