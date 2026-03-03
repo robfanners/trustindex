@@ -46,8 +46,9 @@ export async function anchorOnChain(
   }
 
   try {
-    // Dynamic import ethers only when chain is enabled
-    const { ethers } = await import("ethers");
+    // Dynamic import ethers only when chain is enabled.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const ethers = (await import("ethers" as any)) as any;
     const provider = new ethers.JsonRpcProvider(process.env.CHAIN_RPC_URL);
     const signer = new ethers.Wallet(
       process.env.CHAIN_RELAYER_PRIVATE_KEY!,
