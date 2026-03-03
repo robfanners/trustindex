@@ -61,14 +61,14 @@ export default function AppShell({ children }: AppShellProps) {
             >
               <Image
                 src="/verisum-icon.png"
-                alt="TrustGraph"
+                alt="Verisum"
                 width={28}
                 height={28}
                 className="rounded-sm"
                 style={{  }}
               />
               <span className="text-base font-bold text-brand">
-                TrustGraph
+                Verisum
               </span>
             </a>
 
@@ -218,7 +218,7 @@ export default function AppShell({ children }: AppShellProps) {
                   className="rounded-sm opacity-90"
                 />
                 <span className="text-sm font-bold text-white">
-                  TrustGraph
+                  Verisum
                 </span>
               </div>
               <p className="text-sm text-white/50 leading-relaxed">
@@ -297,7 +297,7 @@ export default function AppShell({ children }: AppShellProps) {
           {/* Bottom bar */}
           <div className="mt-10 pt-6 border-t border-white/10 text-center">
             <p className="text-xs text-white/40">
-              © {currentYear} Verisum Ltd. • TrustGraph™ • Built in the UK
+              © {currentYear} Verisum Ltd. • Built in the UK
             </p>
           </div>
         </div>

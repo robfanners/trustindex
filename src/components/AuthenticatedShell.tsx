@@ -208,14 +208,14 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
         >
           <Image
             src="/verisum-icon.png"
-            alt="TrustGraph"
+            alt="Verisum"
             width={24}
             height={24}
             className="rounded-sm"
             style={{  }}
           />
           <span className="text-base font-bold text-brand">
-            TrustGraph
+            Verisum
           </span>
         </Link>
 
@@ -366,7 +366,7 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
           {/* Sidebar footer */}
           <div className={`border-t border-border px-4 py-3 ${sidebarCollapsed ? "lg:hidden" : ""}`}>
             <div className="text-xs text-muted-foreground">
-              &copy; {currentYear} Verisum Ltd. &middot; TrustGraph&trade;
+              &copy; {currentYear} Verisum Ltd.
             </div>
           </div>
         </aside>
