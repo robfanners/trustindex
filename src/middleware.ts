@@ -72,6 +72,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/trustsys") ||
     pathname.startsWith("/actions") ||
     pathname.startsWith("/reports") ||
+    pathname.startsWith("/monitor") ||
+    pathname.startsWith("/prove") ||
     pathname.startsWith("/verisum-admin")
   ) {
     if (!user) {
@@ -94,6 +96,8 @@ export const config = {
     "/trustsys/:path*",
     "/actions/:path*",
     "/reports/:path*",
+    "/monitor/:path*",
+    "/prove/:path*",
     "/verisum-admin/:path*",
   ],
 };
