@@ -237,7 +237,7 @@ async function copyText(label: string, text: string) {
                     href={
                       "mailto:?" +
                       "subject=" +
-                      encodeURIComponent(`TrustGraph links – ${runTitle}`) +
+                      encodeURIComponent(`Verisum links – ${runTitle}`) +
                       "&body=" +
                       encodeURIComponent(
                         `Survey Dashboard: ${window.location.origin}/admin/run/${result.runId}\nResults: ` +

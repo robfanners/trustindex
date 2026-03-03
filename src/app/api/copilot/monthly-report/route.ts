@@ -370,7 +370,7 @@ function generateReportPdf(data: PdfReportInput): Uint8Array {
 
   if (data.healthScore !== null) {
     doc.text(
-      `TrustGraph Health Score: ${data.healthScore.toFixed(1)} / 100`,
+      `Verisum Health Score: ${data.healthScore.toFixed(1)} / 100`,
       margin,
       y
     );

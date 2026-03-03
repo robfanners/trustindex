@@ -114,7 +114,7 @@ export default function MethodologyOverlay({ module = "org" }: Props) {
           <div className="relative bg-card rounded-xl shadow-lg border border-border max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 space-y-5">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">
-                TrustGraph Methodology
+                Verisum Methodology
               </h2>
               <button
                 type="button"
@@ -176,7 +176,7 @@ export default function MethodologyOverlay({ module = "org" }: Props) {
             <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2 border-t border-border">
               <span>
                 Methodology version:{" "}
-                <strong>TrustGraph v1.0</strong>
+                <strong>Verisum v1.0</strong>
               </span>
               <span>
                 Last updated: <strong>February 2026</strong>

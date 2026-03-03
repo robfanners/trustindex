@@ -72,7 +72,7 @@ export default function IntegrationsSettingsPage() {
       <div>
         <h2 className="text-lg font-semibold text-foreground">Integrations</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Connect TrustGraph with your existing tools and workflows.
+          Connect Verisum with your existing tools and workflows.
         </p>
       </div>
 

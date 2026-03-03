@@ -1014,7 +1014,7 @@ export default function AdminRunPage() {
             href={
               "mailto:?" +
               "subject=" +
-              encodeURIComponent(`TrustGraph links – ${run?.title || "Survey"}`) +
+              encodeURIComponent(`Verisum links – ${run?.title || "Survey"}`) +
               "&body=" +
               encodeURIComponent(
                 `${linkPack}\n\nAdmin code: [Your admin code - save this from when you created the survey]`

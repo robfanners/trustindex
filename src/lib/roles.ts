@@ -3,7 +3,7 @@
 /**
  * Verisum role definitions and role-to-navigation mapping.
  *
- * Extends the original TrustGraphRole set with three new roles:
+ * Extends the original role set with three new roles:
  * board_viewer, signatory, auditor. Each role maps to a set of
  * visible nav section IDs (from navigation.ts).
  */

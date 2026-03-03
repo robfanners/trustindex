@@ -223,7 +223,7 @@ function UpgradeContent() {
     // Enterprise
     return {
       label: "Contact us",
-      href: "mailto:hello@verisum.org?subject=TrustGraph%20Enterprise%20enquiry",
+      href: "mailto:hello@verisum.org?subject=Verisum%20Enterprise%20enquiry",
       disabled: false,
       checkoutPlan: null,
     };

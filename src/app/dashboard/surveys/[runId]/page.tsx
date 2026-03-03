@@ -777,7 +777,7 @@ function SurveyManageContent() {
               "mailto:?" +
               "subject=" +
               encodeURIComponent(
-                `TrustGraph links \u2013 ${run?.title || "Survey"}`
+                `Verisum links \u2013 ${run?.title || "Survey"}`
               ) +
               "&body=" +
               encodeURIComponent(linkPack)

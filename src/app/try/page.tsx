@@ -378,7 +378,7 @@ export default function TryExplorerPage() {
         <div className="max-w-3xl mx-auto p-4 md:p-6 lg:p-10">
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
             <div className="w-5 h-5 border-2 border-brand border-t-transparent rounded-full animate-spin" />
-            Calculating your TrustGraph score…
+            Calculating your Verisum score…
           </div>
         </div>
       </AppShell>
@@ -399,7 +399,7 @@ export default function TryExplorerPage() {
       <AppShell>
         <div className="max-w-3xl mx-auto p-4 md:p-6 lg:p-10 space-y-6 md:space-y-8">
           <header className="space-y-2">
-            <h1 className="text-3xl font-bold">Your TrustGraph™ Results</h1>
+            <h1 className="text-3xl font-bold">Your Verisum™ Results</h1>
             <p className="text-muted-foreground">
               Here&apos;s a snapshot of how trust is experienced based on your
               self-assessment.
@@ -412,7 +412,7 @@ export default function TryExplorerPage() {
               <div className="rounded-xl border border-border p-6 flex items-end justify-between shadow-sm">
                 <div>
                   <div className="text-sm text-muted-foreground">
-                    TrustGraph Score™
+                    Verisum Score™
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="text-5xl font-bold">
@@ -467,7 +467,7 @@ export default function TryExplorerPage() {
               Save your results &amp; unlock the full dashboard
             </h2>
             <p className="text-sm text-muted-foreground">
-              Sign up free to keep your TrustGraph results, run organisational
+              Sign up free to keep your Verisum results, run organisational
               surveys, and access dimension-level analysis with recommended
               actions.
             </p>
@@ -501,7 +501,7 @@ export default function TryExplorerPage() {
     <AppShell>
       <div className="max-w-3xl mx-auto p-4 md:p-6 lg:p-10 space-y-6 md:space-y-8">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold">TrustGraph Explorer</h1>
+          <h1 className="text-3xl font-bold">Verisum Explorer</h1>
           <p className="text-muted-foreground">
             Take a free, private self-assessment. See how trust, transparency,
             and decision-making are experienced in your organisation — in about

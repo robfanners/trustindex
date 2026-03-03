@@ -529,7 +529,7 @@ function SurveyResultsContent() {
   if (error) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-bold">TrustGraph Results</h1>
+        <h1 className="text-2xl font-bold">Verisum Results</h1>
         <div className="text-destructive">{error}</div>
         <a className="text-brand underline" href={manageHref}>
           Back to Survey Dashboard
@@ -545,7 +545,7 @@ function SurveyResultsContent() {
   if (gateActive) {
     return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold">TrustGraph Results</h1>
+        <h1 className="text-3xl font-bold">Verisum Results</h1>
         <div className="text-muted-foreground">{run?.title}</div>
 
         <div className="rounded-xl border border-border p-6 shadow-sm space-y-2">
@@ -624,7 +624,7 @@ function SurveyResultsContent() {
   if (!trust) {
     return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold">TrustGraph Results</h1>
+        <h1 className="text-3xl font-bold">Verisum Results</h1>
         <div className="text-muted-foreground">{run?.title}</div>
         <div className="rounded-xl border border-border p-6 shadow-sm space-y-2">
           <div className="text-muted-foreground font-medium">
@@ -694,9 +694,9 @@ function SurveyResultsContent() {
   return (
     <div className="space-y-6 md:space-y-8">
       <header className="space-y-2">
-        <h1 className="text-3xl font-bold">TrustGraph Results</h1>
+        <h1 className="text-3xl font-bold">Verisum Results</h1>
         <p className="text-sm text-muted-foreground">
-          This view shows a live TrustGraph snapshot based on current
+          This view shows a live Verisum snapshot based on current
           responses.
         </p>
         <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
@@ -717,7 +717,7 @@ function SurveyResultsContent() {
       <div className="rounded-xl border border-border p-6 flex items-end justify-between shadow-sm">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <div className="text-sm text-muted-foreground">TrustGraph Score™</div>
+            <div className="text-sm text-muted-foreground">Verisum Score™</div>
             <MethodologyOverlay module="org" />
           </div>
           <div className="flex items-center gap-3">
