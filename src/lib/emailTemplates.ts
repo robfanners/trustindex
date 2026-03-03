@@ -191,3 +191,44 @@ export function policyReadyEmail(params: {
     ),
   };
 }
+
+/**
+ * Declaration invite — sent to staff asking them to complete AI usage declaration.
+ */
+export function declarationInviteEmail(params: {
+  orgName: string;
+  campaignLabel: string;
+  declarationUrl: string;
+  senderName?: string;
+}): { subject: string; html: string } {
+  const { orgName, campaignLabel, declarationUrl, senderName } = params;
+
+  return {
+    subject: `AI Usage Declaration — ${orgName}`,
+    html: layout(
+      `AI Usage Declaration`,
+      `
+      <p style="font-size:14px;color:#374151;line-height:1.6;">
+        ${senderName ? `${senderName} from ` : ""}${orgName} is asking you to complete a brief AI usage declaration
+        ${campaignLabel ? ` as part of <strong>${campaignLabel}</strong>` : ""}.
+      </p>
+      <p style="font-size:14px;color:#374151;line-height:1.6;">
+        This helps your organisation understand how AI tools are being used and ensure responsible AI governance.
+        It takes about <strong>2\u20133 minutes</strong> to complete.
+      </p>
+      ${button("Complete Declaration", declarationUrl)}
+      <p style="font-size:14px;color:#374151;line-height:1.6;margin-top:16px;">
+        <strong>What you\u2019ll be asked:</strong>
+      </p>
+      <ul style="font-size:14px;color:#374151;line-height:1.8;padding-left:20px;">
+        <li>Which AI tools you use (e.g. ChatGPT, Copilot, Claude)</li>
+        <li>What you use them for</li>
+        <li>What types of data you input</li>
+      </ul>
+      <p style="font-size:13px;color:${MUTED_COLOR};margin-top:16px;">
+        Your responses help build a clear picture of AI usage across ${orgName}. If you have questions, contact your line manager or IT team.
+      </p>
+      `
+    ),
+  };
+}
