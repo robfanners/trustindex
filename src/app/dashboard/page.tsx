@@ -85,7 +85,7 @@ function DashboardContent() {
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-foreground">
-            TrustGraph Dashboard
+            Trust Dashboard
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {user?.email
@@ -265,7 +265,7 @@ function OverviewTab() {
       {/* TrustGraph Health Score cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <HealthScoreCard
-          title="TrustGraph Health"
+          title="Trust Health"
           description="Composite relational score"
           score={health?.health_score ?? null}
           band={band}

@@ -205,7 +205,7 @@ function ReportsContent() {
 // ---------------------------------------------------------------------------
 
 const STAT_EXPLANATIONS: Record<string, string> = {
-  "TrustGraph Health": "Composite relational score combining TrustOrg and TrustSys base scores, minus penalty adjustments for action debt, drift, escalations, and assessment expiry. Updated whenever a new assessment is completed.",
+  "Trust Health": "Composite relational score combining TrustOrg and TrustSys base scores, minus penalty adjustments for action debt, drift, escalations, and assessment expiry. Updated whenever a new assessment is completed.",
   "TrustOrg Score": "Average score across organisational trust dimensions (Leadership, Culture, Policy, Operations, Stakeholder Engagement) from the most recent TrustOrg survey. Based on respondent ratings.",
   "TrustSys Score": "Weighted average score across system governance dimensions (Governance, Data Privacy, Robustness, Oversight, Explainability) from the latest system assessments.",
   "Total Actions": "Total number of remediation actions created from survey or assessment recommendations. Includes all statuses (open, in progress, blocked, and done).",
@@ -595,7 +595,7 @@ function BoardSummaryReport({
     <div className="space-y-6">
       {/* Health score hero */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <StatCard label="TrustGraph Health" value={data.health_score !== null ? data.health_score.toFixed(1) : "\u2014"} />
+        <StatCard label="Trust Health" value={data.health_score !== null ? data.health_score.toFixed(1) : "\u2014"} />
         <StatCard label="TrustOrg Score" value={data.org_base !== null ? data.org_base.toFixed(1) : "\u2014"} />
         <StatCard label="TrustSys Score" value={data.sys_base !== null ? data.sys_base.toFixed(1) : "\u2014"} />
       </div>
@@ -1679,7 +1679,7 @@ function FullAuditExport({
         {/* Header */}
         <div className="border border-border rounded-xl p-6 bg-white">
           <h2 className="text-lg font-semibold text-foreground">
-            TrustGraph Audit Report
+            Trust Audit Report
           </h2>
           <div className="mt-2 grid grid-cols-2 gap-4 text-sm text-muted-foreground">
             <div>
