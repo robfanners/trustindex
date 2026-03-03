@@ -147,6 +147,15 @@ function NavIcon({ icon }: { icon: string }) {
           <circle cx="12" cy="12" r="2" strokeWidth={1.5} />
         </svg>
       );
+    case "share":
+      return (
+        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <circle strokeWidth={1.5} cx="18" cy="5" r="3" />
+          <circle strokeWidth={1.5} cx="6" cy="12" r="3" />
+          <circle strokeWidth={1.5} cx="18" cy="19" r="3" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.59 13.51l6.83 3.98m-.01-10.98l-6.82 3.98" />
+        </svg>
+      );
     default:
       return null;
   }

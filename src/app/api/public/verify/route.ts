@@ -77,5 +77,40 @@ export async function GET(req: NextRequest) {
     });
   }
 
+  // Search incident locks
+  const { data: lock } = await db
+    .from("prove_incident_locks")
+    .select("snapshot, lock_reason, locked_at, verification_id, event_hash, chain_tx_hash, chain_status, organisation_id, created_at")
+    .eq("verification_id", verificationId)
+    .single();
+
+  if (lock) {
+    const { data: org } = await db
+      .from("organisations")
+      .select("name")
+      .eq("id", lock.organisation_id)
+      .single();
+
+    const snapshot = lock.snapshot as Record<string, unknown> | null;
+
+    return NextResponse.json({
+      found: true,
+      type: "incident_lock",
+      record: {
+        title: (snapshot?.title as string) ?? "Incident Lock",
+        lock_reason: lock.lock_reason,
+        impact_level: snapshot?.impact_level ?? null,
+        incident_status: snapshot?.status ?? null,
+        locked_at: lock.locked_at,
+        verification_id: lock.verification_id,
+        event_hash: lock.event_hash,
+        chain_tx_hash: lock.chain_tx_hash,
+        chain_status: lock.chain_status,
+        organisation_name: org?.name ?? "Unknown",
+        created_at: lock.created_at,
+      },
+    });
+  }
+
   return NextResponse.json({ found: false });
 }
