@@ -113,6 +113,9 @@ function GeneratePolicyContent() {
   const [generating, setGenerating] = useState(false);
   const [generatedContent, setGeneratedContent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [remaining, setRemaining] = useState<number | null>(null);
+  const [rateLimitMsg, setRateLimitMsg] = useState<string | null>(null);
+  const [serviceUnavailable, setServiceUnavailable] = useState(false);
 
   // Pre-fill company name from profile
   useEffect(() => {
@@ -143,6 +146,8 @@ function GeneratePolicyContent() {
     setGenerating(true);
     setError(null);
     setGeneratedContent(null);
+    setRateLimitMsg(null);
+    setServiceUnavailable(false);
 
     try {
       const res = await fetch("/api/copilot/generate-policy", {
@@ -163,12 +168,24 @@ function GeneratePolicyContent() {
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to generate policy");
+        if (res.status === 403) {
+          const data = await res.json().catch(() => null);
+          setRateLimitMsg(
+            data?.error || "You have reached your policy generation limit for this month."
+          );
+          return;
+        }
+        if (res.status === 503) {
+          setServiceUnavailable(true);
+          return;
+        }
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || "Failed to generate policy");
       }
 
       const data = await res.json();
       setGeneratedContent(data.policy?.content ?? null);
+      if (data.remaining !== undefined) setRemaining(data.remaining);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -279,6 +296,14 @@ function GeneratePolicyContent() {
           <p className="text-sm text-muted-foreground mt-1">
             Answer a few questions and we&apos;ll generate a tailored governance
             policy for your organisation.
+          </p>
+        </div>
+
+        <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 border border-blue-200 text-sm text-blue-800 mb-6">
+          <span className="shrink-0 mt-0.5">&#9432;</span>
+          <p>
+            Policies are generated using AI and tailored to your organisation&apos;s context.
+            Always review generated content before adopting.
           </p>
         </div>
 
@@ -481,6 +506,26 @@ function GeneratePolicyContent() {
             />
           </div>
 
+          {/* Rate limit */}
+          {rateLimitMsg && (
+            <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-800">
+              <p>{rateLimitMsg}</p>
+              <button
+                onClick={() => router.push("/upgrade")}
+                className="mt-2 text-xs font-medium underline hover:no-underline"
+              >
+                Upgrade your plan for more generations
+              </button>
+            </div>
+          )}
+
+          {/* Service unavailable */}
+          {serviceUnavailable && (
+            <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800">
+              Policy generation is temporarily unavailable. Please try again in a few minutes.
+            </div>
+          )}
+
           {/* Error */}
           {error && (
             <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800">
@@ -530,6 +575,11 @@ function GeneratePolicyContent() {
               )}
             </button>
           </div>
+          {remaining !== null && (
+            <p className="text-xs text-muted-foreground text-center">
+              {remaining} generation{remaining !== 1 ? "s" : ""} remaining this month
+            </p>
+          )}
         </div>
       </div>
     </AuthenticatedShell>
