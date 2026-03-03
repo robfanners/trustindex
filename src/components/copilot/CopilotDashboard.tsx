@@ -102,9 +102,13 @@ function Section({
 // ---------------------------------------------------------------------------
 
 export default function CopilotDashboard() {
-  const { profile } = useAuth();
+  const { profile, refreshProfile } = useAuth();
   const plan = profile?.plan ?? "explorer";
   const paid = isPaidPlan(plan);
+
+  // Org bootstrap state
+  const [orgReady, setOrgReady] = useState(!!profile?.organisation_id);
+  const [orgBootstrapping, setOrgBootstrapping] = useState(false);
 
   // Wizard + governance pack state
   const [wizard, setWizard] = useState<{ completed_at: string | null } | null>(null);
@@ -112,7 +116,34 @@ export default function CopilotDashboard() {
   const [wizardLoading, setWizardLoading] = useState(true);
   const [packsLoading, setPacksLoading] = useState(true);
 
+  // Auto-create org for paid users who don't have one
   useEffect(() => {
+    if (!paid || profile?.organisation_id) {
+      setOrgReady(!!profile?.organisation_id);
+      return;
+    }
+    let cancelled = false;
+    async function ensureOrg() {
+      setOrgBootstrapping(true);
+      try {
+        const res = await fetch("/api/org/ensure", { method: "POST" });
+        if (res.ok && !cancelled) {
+          setOrgReady(true);
+          // Refresh the auth context so downstream fetches pick up the org
+          refreshProfile?.();
+        }
+      } catch {
+        // silent
+      } finally {
+        if (!cancelled) setOrgBootstrapping(false);
+      }
+    }
+    ensureOrg();
+    return () => { cancelled = true; };
+  }, [paid, profile?.organisation_id, refreshProfile]);
+
+  useEffect(() => {
+    if (!orgReady) return;
     async function loadWizard() {
       try {
         const res = await fetch("/api/wizard");
@@ -146,9 +177,27 @@ export default function CopilotDashboard() {
       setWizardLoading(false);
       setPacksLoading(false);
     }
-  }, [paid]);
+  }, [paid, orgReady]);
 
   const latestPack = packs.length > 0 ? packs[0] : null;
+
+  // Show loading state while bootstrapping org
+  if (paid && orgBootstrapping) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">AI Governance Copilot</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Setting up your organisation...
+          </p>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground py-8">
+          <div className="w-4 h-4 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+          Creating your organisation workspace
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
