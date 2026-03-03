@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { navSections, meetsMinTier } from "@/lib/navigation";
+import { canSeeSection } from "@/lib/roles";
 
 export default function ModuleSwitcher() {
   const pathname = usePathname();
@@ -22,6 +23,7 @@ export default function ModuleSwitcher() {
 
   // Flatten accessible items for the switcher
   const accessibleItems = navSections
+    .filter((s) => canSeeSection(profile?.role, s.id))
     .filter((s) => meetsMinTier(profile?.plan, s.minTier))
     .flatMap((s) => s.items)
     .filter((item) => item.href !== "/dashboard" && item.href !== "/dashboard/settings");
