@@ -37,7 +37,7 @@ export default function DataSettingsPage() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `trustgraph_${type}_export_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.download = `verisum_${type}_export_${new Date().toISOString().slice(0, 10)}.csv`;
         a.click();
         URL.revokeObjectURL(url);
         setExportMsg(`${type === "surveys" ? "Survey" : "System"} data exported.`);

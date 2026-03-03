@@ -305,7 +305,7 @@ function SurveyManageContent() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      const baseName = `trustgraph_${runId}_responses`;
+      const baseName = `verisum_${runId}_responses`;
       const safeSuffix = clientSafeExport ? "_client_safe" : "";
       const segSuffix = includeSegmentation ? "" : "_no_seg";
       a.download = `${baseName}${safeSuffix}${segSuffix}.csv`;
@@ -414,7 +414,7 @@ function SurveyManageContent() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      const baseName = `trustgraph_${runId}_summary`;
+      const baseName = `verisum_${runId}_summary`;
       const safeSuffix = clientSafeExport ? "_client_safe" : "";
       const segSuffix = includeSegmentation ? "" : "_no_seg";
       a.download = `${baseName}${safeSuffix}${segSuffix}.csv`;
@@ -517,7 +517,7 @@ function SurveyManageContent() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `trustgraph-links-${runId}.txt`;
+    a.download = `verisum-links-${runId}.txt`;
     a.click();
     URL.revokeObjectURL(url);
   };
