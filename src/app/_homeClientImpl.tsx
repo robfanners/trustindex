@@ -6,11 +6,11 @@ export default function Home() {
   return (
     <AppShell>
       <div className="max-w-5xl mx-auto p-4 md:p-6 lg:p-12">
-        <h1 className="text-3xl md:text-4xl font-bold mb-4">TrustGraph&trade;</h1>
+        <h1 className="text-3xl md:text-4xl font-bold mb-4">Verisum</h1>
 
         <p className="text-base md:text-lg max-w-2xl mb-8">
           Trust is now a measurable performance and risk signal.
-          TrustGraph&trade; helps organisations quantify how trust, transparency,
+          Verisum helps organisations quantify how trust, transparency,
           explainability, and confidence are experienced in practice &mdash;
           before trust becomes a problem.
         </p>
@@ -19,7 +19,7 @@ export default function Home() {
           <div className="rounded-xl border border-border p-8 shadow-sm">
             <h2 className="text-xl font-semibold mb-2">What this measures</h2>
             <p className="text-sm text-muted-foreground mb-3">
-              TrustGraph measures five dimensions that directly affect
+              Verisum measures five dimensions that directly affect
               organisational performance:
             </p>
             <ul className="list-disc pl-6 text-muted-foreground space-y-1">
