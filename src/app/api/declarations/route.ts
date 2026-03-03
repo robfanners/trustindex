@@ -37,10 +37,27 @@ export async function GET() {
       .select("id", { count: "exact", head: true })
       .eq("organisation_id", profile.organisation_id);
 
+    // Fetch invite stats per token
+    const tokenIds = (tokens ?? []).map((t: { id: string }) => t.id);
+    let inviteStats: Record<string, { sent: number; submitted: number }> = {};
+    if (tokenIds.length > 0) {
+      const { data: invites } = await sb
+        .from("declaration_invites")
+        .select("token_id, submitted_at")
+        .in("token_id", tokenIds);
+
+      for (const inv of invites ?? []) {
+        if (!inviteStats[inv.token_id]) inviteStats[inv.token_id] = { sent: 0, submitted: 0 };
+        inviteStats[inv.token_id].sent++;
+        if (inv.submitted_at) inviteStats[inv.token_id].submitted++;
+      }
+    }
+
     return NextResponse.json({
       tokens: tokens ?? [],
-      tokenCount: (tokens ?? []).filter((t) => t.is_active).length,
+      tokenCount: (tokens ?? []).filter((t: { is_active: boolean }) => t.is_active).length,
       totalDeclarations: totalDeclarations ?? 0,
+      inviteStats,
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Internal server error";

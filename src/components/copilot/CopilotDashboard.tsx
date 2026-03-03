@@ -38,6 +38,8 @@ type DeclarationStats = {
   tokenCount: number;
 };
 
+type InviteStatsMap = Record<string, { sent: number; submitted: number }>;
+
 // ---------------------------------------------------------------------------
 // Upgrade overlay for Explorer users
 // ---------------------------------------------------------------------------
@@ -497,31 +499,39 @@ function PolicySection({ plan }: { plan: string }) {
 function DeclarationSection() {
   const [tokens, setTokens] = useState<TokenSummary[]>([]);
   const [stats, setStats] = useState<DeclarationStats | null>(null);
+  const [inviteStats, setInviteStats] = useState<InviteStatsMap>({});
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [newLabel, setNewLabel] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [copyMsg, setCopyMsg] = useState<string | null>(null);
+  // Email sharing state
+  const [sharingTokenId, setSharingTokenId] = useState<string | null>(null);
+  const [emailInput, setEmailInput] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sendResult, setSendResult] = useState<string | null>(null);
+
+  async function loadDeclarations() {
+    try {
+      const res = await fetch("/api/declarations");
+      if (res.ok) {
+        const data = await res.json();
+        setTokens(data.tokens ?? []);
+        setStats({
+          totalDeclarations: data.totalDeclarations ?? 0,
+          tokenCount: data.tokenCount ?? 0,
+        });
+        setInviteStats(data.inviteStats ?? {});
+      }
+    } catch {
+      // silent
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function load() {
-      try {
-        const res = await fetch("/api/declarations");
-        if (res.ok) {
-          const data = await res.json();
-          setTokens(data.tokens ?? []);
-          setStats({
-            totalDeclarations: data.totalDeclarations ?? 0,
-            tokenCount: data.tokenCount ?? 0,
-          });
-        }
-      } catch {
-        // silent
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
+    loadDeclarations();
   }, []);
 
   async function createToken() {
@@ -563,6 +573,42 @@ function DeclarationSection() {
     });
   }
 
+  async function sendInvites(tokenId: string) {
+    const emails = emailInput
+      .split(",")
+      .map((e) => e.trim())
+      .filter((e) => e.includes("@"));
+    if (emails.length === 0) return;
+
+    setSending(true);
+    setSendResult(null);
+    try {
+      const res = await fetch("/api/declarations/invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tokenId, emails }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSendResult(`Sent to ${data.sent} recipient${data.sent !== 1 ? "s" : ""}`);
+        setEmailInput("");
+        // Refresh invite stats
+        loadDeclarations();
+        setTimeout(() => {
+          setSendResult(null);
+          setSharingTokenId(null);
+        }, 3000);
+      } else {
+        const data = await res.json();
+        setSendResult(data.error || "Failed to send invites");
+      }
+    } catch {
+      setSendResult("Failed to send invites");
+    } finally {
+      setSending(false);
+    }
+  }
+
   if (loading) {
     return <div className="text-sm text-muted-foreground">Loading declarations...</div>;
   }
@@ -591,23 +637,78 @@ function DeclarationSection() {
               key={t.id}
               className="flex items-center justify-between px-3 py-2 rounded-lg bg-muted/50"
             >
-              <div className="flex items-center gap-2">
-                <span className="text-sm">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <span className="text-sm truncate">
                   {t.label || "Declaration link"}
                 </span>
                 {!t.is_active && (
-                  <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 shrink-0">
                     Inactive
                   </span>
                 )}
+                <span className="text-xs text-muted-foreground shrink-0 ml-auto">
+                  {new Date(t.created_at).toLocaleDateString("en-GB", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </span>
               </div>
-              {t.is_active && (
-                <button
-                  onClick={() => copyLink(t.token)}
-                  className="text-xs px-2 py-1 rounded border border-border hover:bg-muted transition-colors"
-                >
-                  Copy link
-                </button>
+              <div className="flex items-center gap-2 shrink-0">
+                {t.is_active && (
+                  <>
+                    <button
+                      onClick={() => copyLink(t.token)}
+                      className="text-xs px-2 py-1 rounded border border-border hover:bg-muted transition-colors"
+                    >
+                      Copy link
+                    </button>
+                    <button
+                      onClick={() => setSharingTokenId(sharingTokenId === t.id ? null : t.id)}
+                      className="text-xs px-2 py-1 rounded border border-brand/30 text-brand hover:bg-brand/5 transition-colors"
+                    >
+                      Share via email
+                    </button>
+                  </>
+                )}
+              </div>
+              {/* Invite stats */}
+              {inviteStats[t.id] && (
+                <div className="text-xs text-muted-foreground mt-1">
+                  Sent: {inviteStats[t.id].sent} / Submitted: {inviteStats[t.id].submitted} / Pending: {inviteStats[t.id].sent - inviteStats[t.id].submitted}
+                </div>
+              )}
+              {/* Email sharing form */}
+              {sharingTokenId === t.id && (
+                <div className="mt-2 space-y-2 border-t border-border pt-2">
+                  <textarea
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
+                    placeholder="Enter email addresses, separated by commas"
+                    rows={2}
+                    className="w-full border border-border rounded px-3 py-1.5 text-sm bg-background resize-none"
+                  />
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => sendInvites(t.id)}
+                      disabled={sending || !emailInput.trim()}
+                      className="text-xs px-3 py-1.5 rounded bg-brand text-white hover:bg-brand-hover disabled:opacity-50"
+                    >
+                      {sending ? "Sending..." : "Send invitations"}
+                    </button>
+                    <button
+                      onClick={() => { setSharingTokenId(null); setEmailInput(""); setSendResult(null); }}
+                      className="text-xs px-3 py-1.5 rounded border border-border hover:bg-muted"
+                    >
+                      Cancel
+                    </button>
+                    {sendResult && (
+                      <span className={`text-xs ${sendResult.startsWith("Sent") ? "text-green-600" : "text-red-600"}`}>
+                        {sendResult}
+                      </span>
+                    )}
+                  </div>
+                </div>
               )}
             </div>
           ))}
@@ -621,27 +722,30 @@ function DeclarationSection() {
 
       {/* Create new */}
       {showCreate ? (
-        <div className="flex items-center gap-2">
-          <input
-            type="text"
-            value={newLabel}
-            onChange={(e) => setNewLabel(e.target.value)}
-            placeholder="Label (optional)"
-            className="flex-1 border border-border rounded px-3 py-1.5 text-sm bg-background"
-          />
-          <button
-            onClick={createToken}
-            disabled={creating}
-            className="text-sm px-3 py-1.5 rounded bg-brand text-white hover:bg-brand-hover disabled:opacity-50"
-          >
-            {creating ? "Creating..." : "Create"}
-          </button>
-          <button
-            onClick={() => setShowCreate(false)}
-            className="text-sm px-3 py-1.5 rounded border border-border hover:bg-muted"
-          >
-            Cancel
-          </button>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={newLabel}
+              onChange={(e) => setNewLabel(e.target.value)}
+              placeholder="e.g. Q1 2026 AI Usage Declaration"
+              className="flex-1 border border-border rounded px-3 py-1.5 text-sm bg-background"
+            />
+            <button
+              onClick={createToken}
+              disabled={creating}
+              className="text-sm px-3 py-1.5 rounded bg-brand text-white hover:bg-brand-hover disabled:opacity-50"
+            >
+              {creating ? "Creating..." : "Create"}
+            </button>
+            <button
+              onClick={() => setShowCreate(false)}
+              className="text-sm px-3 py-1.5 rounded border border-border hover:bg-muted"
+            >
+              Cancel
+            </button>
+          </div>
+          <p className="text-xs text-muted-foreground">Give this campaign a clear name so you can identify it later</p>
         </div>
       ) : (
         <button
