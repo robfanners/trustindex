@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import { useAuth } from "@/context/AuthContext";
+import type { VersiumTier } from "@/lib/tiers";
 
 // ---------------------------------------------------------------------------
 // Plan data
@@ -12,6 +13,8 @@ import { useAuth } from "@/context/AuthContext";
 type PlanTier = {
   name: string;
   slug: "explorer" | "starter" | "pro" | "enterprise";
+  tier: VersiumTier;
+  tierTagline: string;
   price: string;
   period: string;
   yearlyNote?: string;
@@ -27,6 +30,8 @@ const tiers: PlanTier[] = [
   {
     name: "Explorer",
     slug: "explorer",
+    tier: "Core",
+    tierTagline: "Governance Intelligence Foundation",
     price: "Free",
     period: "",
     description:
@@ -51,6 +56,8 @@ const tiers: PlanTier[] = [
   {
     name: "Starter",
     slug: "starter",
+    tier: "Core",
+    tierTagline: "Governance Intelligence Foundation",
     price: "\u00a379",
     period: "/month",
     yearlyNote: "or \u00a3711/year (save \u00a3237)",
@@ -77,6 +84,8 @@ const tiers: PlanTier[] = [
   {
     name: "Pro",
     slug: "pro",
+    tier: "Assure",
+    tierTagline: "Continuous Alignment & Runtime Governance",
     price: "\u00a3199",
     period: "/month",
     yearlyNote: "or \u00a31,788/year (save \u00a3600)",
@@ -106,6 +115,8 @@ const tiers: PlanTier[] = [
   {
     name: "Enterprise",
     slug: "enterprise",
+    tier: "Verify",
+    tierTagline: "Cryptographic Proof & Trust Portability",
     price: "Custom",
     period: "",
     description:
@@ -175,6 +186,7 @@ function UpgradeContent() {
   const success = searchParams.get("success") === "true";
   const cancelled = searchParams.get("cancelled") === "true";
   const currentPlan = profile?.plan ?? null;
+  const highlightTier = searchParams.get("tier") as VersiumTier | null;
 
   function ctaFor(tier: PlanTier) {
     if (showLoading) {
@@ -269,11 +281,10 @@ function UpgradeContent() {
       {/* Header */}
       <div className="text-center space-y-3">
         <h1 className="text-3xl md:text-4xl font-bold">
-          Plans &amp; pricing
+          Plans &amp; Pricing
         </h1>
         <p className="text-muted-foreground max-w-xl mx-auto">
-          AI governance sorted in 48 hours. Start free, upgrade when you need
-          policies, declarations, and compliance reporting.
+          Choose the Verisum tier that matches your governance maturity. Start free, upgrade as you grow.
         </p>
       </div>
 
@@ -287,7 +298,9 @@ function UpgradeContent() {
               className={`border rounded-lg p-6 flex flex-col justify-between space-y-6 ${
                 tier.highlighted
                   ? "border-brand border-2 relative"
-                  : "border-border"
+                  : highlightTier === tier.tier
+                    ? "border-brand/50 border-2"
+                    : "border-border"
               }`}
             >
               {tier.highlighted && (
@@ -298,7 +311,10 @@ function UpgradeContent() {
 
               <div className="space-y-4">
                 <div>
-                  <h2 className="text-xl font-bold">{tier.name}</h2>
+                  <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-brand/10 text-brand">
+                    Verisum {tier.tier}
+                  </span>
+                  <h2 className="text-xl font-bold mt-2">{tier.name}</h2>
                   <div className="mt-2">
                     <span className="text-3xl font-bold">{tier.price}</span>
                     {tier.period && (
@@ -419,12 +435,22 @@ function UpgradeContent() {
             <thead>
               <tr className="border-b border-border">
                 <th className="text-left py-3 px-4 font-semibold">Feature</th>
-                <th className="text-center py-3 px-4 font-semibold">Explorer</th>
-                <th className="text-center py-3 px-4 font-semibold">Starter</th>
-                <th className="text-center py-3 px-4 font-semibold text-brand">
-                  Pro
+                <th className="text-center py-3 px-4">
+                  <div className="font-semibold">Explorer</div>
+                  <div className="text-[10px] text-muted-foreground font-normal">Core</div>
                 </th>
-                <th className="text-center py-3 px-4 font-semibold">Enterprise</th>
+                <th className="text-center py-3 px-4">
+                  <div className="font-semibold">Starter</div>
+                  <div className="text-[10px] text-muted-foreground font-normal">Core</div>
+                </th>
+                <th className="text-center py-3 px-4 text-brand">
+                  <div className="font-semibold">Pro</div>
+                  <div className="text-[10px] font-normal">Assure</div>
+                </th>
+                <th className="text-center py-3 px-4">
+                  <div className="font-semibold">Enterprise</div>
+                  <div className="text-[10px] text-muted-foreground font-normal">Verify</div>
+                </th>
               </tr>
             </thead>
             <tbody>
