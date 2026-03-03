@@ -14,6 +14,7 @@ import HelpMenu from "@/components/header/HelpMenu";
 import { navSections, meetsMinTier } from "@/lib/navigation";
 import UpgradeModal from "@/components/UpgradeModal";
 import type { VersiumTier } from "@/lib/tiers";
+import { canSeeSection } from "@/lib/roles";
 
 type AuthenticatedShellProps = {
   children: React.ReactNode;
@@ -266,7 +267,7 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
           `}
         >
           <nav className={`flex-1 py-3 overflow-y-auto ${sidebarCollapsed ? "lg:px-1.5" : "px-3"}`}>
-            {navSections.map((section) => {
+            {navSections.filter((section) => canSeeSection(profile?.role, section.id)).map((section) => {
               const isLocked = !meetsMinTier(profile?.plan, section.minTier);
 
               return (
