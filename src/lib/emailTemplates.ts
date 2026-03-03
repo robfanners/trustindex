@@ -108,7 +108,7 @@ export function monthlyReportEmail(params: {
       </p>
       <div style="background:#f9fafb;border-radius:8px;padding:16px;margin:16px 0;">
         <table style="width:100%;font-size:14px;color:#374151;">
-          ${healthScore !== null ? `<tr><td style="padding:4px 0;">TrustGraph Health</td><td style="text-align:right;font-weight:600;">${healthScore.toFixed(1)}/100</td></tr>` : ""}
+          ${healthScore !== null ? `<tr><td style="padding:4px 0;">Trust Health</td><td style="text-align:right;font-weight:600;">${healthScore.toFixed(1)}/100</td></tr>` : ""}
           <tr><td style="padding:4px 0;">AI Vendors tracked</td><td style="text-align:right;font-weight:600;">${vendorCount}</td></tr>
           <tr><td style="padding:4px 0;">Staff declarations</td><td style="text-align:right;font-weight:600;">${declarationCount}</td></tr>
           <tr><td style="padding:4px 0;">Incidents logged</td><td style="text-align:right;font-weight:600;">${incidentCount}</td></tr>
