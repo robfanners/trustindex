@@ -61,6 +61,8 @@ export const navSections: NavSection[] = [
       { label: "TrustOrg", href: "/trustorg", icon: "clipboard", exists: true },
       { label: "TrustSys", href: "/trustsys", icon: "cpu", exists: true },
       { label: "Policies", href: "/copilot/generate-policy", icon: "scroll", exists: true },
+      { label: "AI Registry", href: "/govern/registry", icon: "server", exists: true },
+      { label: "Vendors", href: "/govern/vendors", icon: "building", exists: true },
       { label: "Actions", href: "/actions", icon: "check-circle", exists: true },
     ],
   },
@@ -74,6 +76,7 @@ export const navSections: NavSection[] = [
       { label: "Escalations", href: "/monitor/escalations", icon: "alert-triangle", exists: true },
       { label: "Incidents", href: "/monitor/incidents", icon: "zap", exists: true },
       { label: "Declarations", href: "/monitor/declarations", icon: "user-check", exists: true },
+      { label: "Signals", href: "/monitor/signals", icon: "radio", exists: true },
     ],
   },
   {
