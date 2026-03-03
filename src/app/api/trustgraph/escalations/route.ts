@@ -1,33 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
 import { supabaseServer } from "@/lib/supabaseServer";
+import { requireTier } from "@/lib/requireTier";
 
 // ---------------------------------------------------------------------------
-// Helper: authenticate + get org_id
+// Helper: authenticate + check Assure tier + get org_id
 // ---------------------------------------------------------------------------
 
 async function getAuthenticatedOrg() {
-  const authClient = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await authClient.auth.getUser();
-
-  if (!user) {
-    return { error: NextResponse.json({ error: "Not authenticated" }, { status: 401 }) };
+  const check = await requireTier("Assure");
+  if (!check.authorized) {
+    return { error: check.response };
   }
 
-  const db = supabaseServer();
-  const { data: profile } = await db
-    .from("profiles")
-    .select("organisation_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile?.organisation_id) {
+  if (!check.orgId) {
     return { error: NextResponse.json({ error: "No organisation linked" }, { status: 400 }) };
   }
 
-  return { user, orgId: profile.organisation_id };
+  return { user: { id: check.userId }, orgId: check.orgId };
 }
 
 // ---------------------------------------------------------------------------
