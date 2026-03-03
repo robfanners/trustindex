@@ -1,4 +1,4 @@
-// Executive Summary Logic Engine for TrustGraph.
+// Executive Summary Logic Engine for Verisum.
 // Pure functions, no React, no LLM calls. Fully deterministic.
 
 import { getTier, type TierKey } from "./trustGraphTiers";
@@ -14,7 +14,7 @@ export type DimensionKey =
   | "explainability"
   | "risk";
 
-export type TrustGraphInputs = {
+export type TrustPostureInputs = {
   module: "org" | "sys";
   score: number; // 0-100
   responseCount: number; // integer
@@ -275,16 +275,16 @@ export function makeHeadline(opts: {
   let headline: string;
   switch (tier) {
     case "trusted":
-      headline = `TrustGraph is strong and resilient \u2014 your main advantage is ${strongLabel}, with attention needed on ${weakLabel}.`;
+      headline = `Trust posture is strong and resilient \u2014 your main advantage is ${strongLabel}, with attention needed on ${weakLabel}.`;
       break;
     case "stable":
-      headline = `TrustGraph is broadly stable \u2014 performance is supported by ${strongLabel}, but ${weakLabel} is the main constraint.`;
+      headline = `Trust posture is broadly stable \u2014 performance is supported by ${strongLabel}, but ${weakLabel} is the main constraint.`;
       break;
     case "elevated_risk":
-      headline = `TrustGraph is under strain \u2014 ${weakLabel} is pulling overall trust down and will limit performance unless addressed.`;
+      headline = `Trust posture is under strain \u2014 ${weakLabel} is pulling overall trust down and will limit performance unless addressed.`;
       break;
     case "critical":
-      headline = `TrustGraph is fragile \u2014 multiple trust drivers are failing, with ${weakLabel} the most urgent exposure.`;
+      headline = `Trust posture is fragile \u2014 multiple trust drivers are failing, with ${weakLabel} the most urgent exposure.`;
       break;
   }
 
@@ -338,7 +338,7 @@ export function makeConfidenceNote(
 }
 
 export function makeTrendNote(
-  input: TrustGraphInputs
+  input: TrustPostureInputs
 ): string | undefined {
   if (input.previousScore === undefined) return undefined;
 
@@ -384,7 +384,7 @@ export function makeTrendNote(
 // ---------------------------------------------------------------------------
 
 export function buildExecutiveSummary(
-  input: TrustGraphInputs
+  input: TrustPostureInputs
 ): ExecSummaryOutput {
   const status = getStatus(
     input.responseCount,
