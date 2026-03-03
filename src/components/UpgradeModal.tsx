@@ -93,7 +93,7 @@ export default function UpgradeModal({ open, requiredTier, featureLabel, onClose
         {/* CTA */}
         <div className="flex flex-col gap-2">
           <Link
-            href="/upgrade"
+            href={`/upgrade?tier=${requiredTier}`}
             onClick={onClose}
             className="w-full text-center px-4 py-2.5 rounded-lg bg-brand text-white text-sm font-medium hover:bg-brand/90 transition-colors"
           >
