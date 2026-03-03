@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { getPlanLimits, hasBillingAccess } from "@/lib/entitlements";
+import { getRoleOptions } from "@/lib/roles";
 
 // ---------------------------------------------------------------------------
 // /dashboard/settings — Account Overview
@@ -18,14 +19,6 @@ const ORG_SIZE_OPTIONS = [
   "5,001–10,000",
   "10,001–50,000",
   "50,000+",
-];
-
-const ROLE_OPTIONS = [
-  { value: "owner", label: "Owner" },
-  { value: "admin", label: "Admin" },
-  { value: "exec", label: "Executive" },
-  { value: "operator", label: "Operator" },
-  { value: "risk", label: "Risk" },
 ];
 
 export default function AccountSettingsPage() {
@@ -174,7 +167,7 @@ export default function AccountSettingsPage() {
                 onChange={(e) => setRole(e.target.value)}
               >
                 <option value="">Select role...</option>
-                {ROLE_OPTIONS.map((opt) => (
+                {getRoleOptions().map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
