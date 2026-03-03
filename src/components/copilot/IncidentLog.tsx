@@ -13,6 +13,8 @@ type Incident = {
   status: string;
   created_at: string;
   resolved_at: string | null;
+  edited_at: string | null;
+  edited_by: string | null;
 };
 
 type Vendor = {
@@ -46,6 +48,15 @@ export default function IncidentLog() {
   const [showAdd, setShowAdd] = useState(false);
   const [filter, setFilter] = useState<string>("");
 
+  // Edit state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+  const [editVendor, setEditVendor] = useState("");
+  const [editImpact, setEditImpact] = useState("low");
+  const [editResolution, setEditResolution] = useState("");
+  const [saving, setSaving] = useState(false);
+
   // Add form
   const [newTitle, setNewTitle] = useState("");
   const [newDesc, setNewDesc] = useState("");
@@ -70,23 +81,28 @@ export default function IncidentLog() {
     }
   }, [filter]);
 
-  useEffect(() => {
-    async function fetchVendors() {
-      try {
-        const res = await fetch("/api/vendors");
-        const data = await res.json();
-        if (data.vendors) setVendors(data.vendors);
-      } catch {
-        // silent
-      }
+  const fetchVendors = useCallback(async () => {
+    try {
+      const res = await fetch("/api/vendors");
+      const data = await res.json();
+      if (data.vendors) setVendors(data.vendors);
+    } catch {
+      // silent
     }
+  }, []);
+
+  useEffect(() => {
     fetchIncidents();
     fetchVendors();
-  }, [fetchIncidents]);
+  }, [fetchIncidents, fetchVendors]);
 
   useEffect(() => {
     fetchIncidents();
   }, [fetchIncidents]);
+
+  useEffect(() => {
+    if (showAdd || editingId) fetchVendors();
+  }, [showAdd, editingId, fetchVendors]);
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -128,6 +144,42 @@ export default function IncidentLog() {
       body: JSON.stringify({ id, status: newStatus }),
     });
     fetchIncidents();
+  }
+
+  function startEdit(inc: Incident) {
+    setEditingId(inc.id);
+    setEditTitle(inc.title);
+    setEditDesc(inc.description || "");
+    setEditVendor(inc.ai_vendor_id || "");
+    setEditImpact(inc.impact_level);
+    setEditResolution(inc.resolution || "");
+  }
+
+  async function saveEdit() {
+    if (!editingId || !editTitle.trim()) return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/incidents", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: editingId,
+          title: editTitle.trim(),
+          description: editDesc.trim() || null,
+          aiVendorId: editVendor || null,
+          impactLevel: editImpact,
+          resolution: editResolution.trim() || null,
+        }),
+      });
+      if (res.ok) {
+        setEditingId(null);
+        fetchIncidents();
+      }
+    } catch {
+      // silent
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (loading) {
@@ -257,53 +309,152 @@ export default function IncidentLog() {
               key={inc.id}
               className="border border-border rounded-lg p-4 space-y-2"
             >
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <h4 className="font-medium text-sm">{inc.title}</h4>
-                  {inc.description && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {inc.description}
-                    </p>
-                  )}
+              {editingId === inc.id ? (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs text-muted-foreground mb-1">Title *</label>
+                    <input
+                      type="text"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      className="w-full border border-border rounded px-3 py-2 text-sm bg-background"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-muted-foreground mb-1">Description</label>
+                    <textarea
+                      value={editDesc}
+                      onChange={(e) => setEditDesc(e.target.value)}
+                      rows={2}
+                      className="w-full border border-border rounded px-3 py-2 text-sm bg-background"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs text-muted-foreground mb-1">AI tool involved</label>
+                      <select
+                        value={editVendor}
+                        onChange={(e) => setEditVendor(e.target.value)}
+                        className="w-full border border-border rounded px-3 py-2 text-sm bg-background"
+                      >
+                        <option value="">Select vendor...</option>
+                        {vendors.map((v) => (
+                          <option key={v.id} value={v.id}>
+                            {v.vendor_name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-muted-foreground mb-1">Impact level</label>
+                      <select
+                        value={editImpact}
+                        onChange={(e) => setEditImpact(e.target.value)}
+                        className="w-full border border-border rounded px-3 py-2 text-sm bg-background"
+                      >
+                        {IMPACT_OPTIONS.map((i) => (
+                          <option key={i} value={i}>
+                            {i.charAt(0).toUpperCase() + i.slice(1)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-muted-foreground mb-1">Resolution</label>
+                    <textarea
+                      value={editResolution}
+                      onChange={(e) => setEditResolution(e.target.value)}
+                      rows={2}
+                      className="w-full border border-border rounded px-3 py-2 text-sm bg-background"
+                      placeholder="How was this incident resolved?"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={saveEdit}
+                      disabled={saving}
+                      className="text-sm px-4 py-2 rounded bg-brand text-white hover:bg-brand-hover disabled:opacity-50"
+                    >
+                      {saving ? "Saving..." : "Save"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditingId(null)}
+                      className="text-sm px-4 py-2 rounded border border-border hover:bg-[#f5f5f5]"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
-                <div className="flex gap-1.5 shrink-0">
-                  <span
-                    className={`text-xs px-2 py-0.5 rounded-full ${
-                      IMPACT_COLOURS[inc.impact_level] ?? IMPACT_COLOURS.low
-                    }`}
-                  >
-                    {inc.impact_level}
-                  </span>
-                  <span
-                    className={`text-xs px-2 py-0.5 rounded-full ${
-                      STATUS_COLOURS[inc.status] ?? STATUS_COLOURS.open
-                    }`}
-                  >
-                    {inc.status}
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <div className="flex gap-3">
-                  {inc.ai_vendors?.vendor_name && (
-                    <span>Tool: {inc.ai_vendors.vendor_name}</span>
-                  )}
-                  <span>{new Date(inc.created_at).toLocaleDateString()}</span>
-                </div>
-                {inc.status !== "closed" && (
-                  <select
-                    value={inc.status}
-                    onChange={(e) => updateStatus(inc.id, e.target.value)}
-                    className="text-xs border border-border rounded px-2 py-0.5 bg-background"
-                  >
-                    {STATUS_OPTIONS.map((s) => (
-                      <option key={s} value={s}>
-                        {s.charAt(0).toUpperCase() + s.slice(1)}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
+              ) : (
+                <>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h4 className="font-medium text-sm">{inc.title}</h4>
+                      {inc.description && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {inc.description}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex gap-1.5 shrink-0">
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded-full ${
+                          IMPACT_COLOURS[inc.impact_level] ?? IMPACT_COLOURS.low
+                        }`}
+                      >
+                        {inc.impact_level}
+                      </span>
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded-full ${
+                          STATUS_COLOURS[inc.status] ?? STATUS_COLOURS.open
+                        }`}
+                      >
+                        {inc.status}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <div className="flex gap-3">
+                      {inc.ai_vendors?.vendor_name && (
+                        <span>Tool: {inc.ai_vendors.vendor_name}</span>
+                      )}
+                      <span>{new Date(inc.created_at).toLocaleDateString()}</span>
+                      {inc.edited_at && (
+                        <span className="text-xs text-muted-foreground italic" title={`Last edited ${new Date(inc.edited_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`}>
+                          (edited)
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {inc.status !== "closed" && (
+                        <button
+                          onClick={() => startEdit(inc)}
+                          className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                        >
+                          Edit
+                        </button>
+                      )}
+                      {inc.status !== "closed" && (
+                        <select
+                          value={inc.status}
+                          onChange={(e) => updateStatus(inc.id, e.target.value)}
+                          className="text-xs border border-border rounded px-2 py-0.5 bg-background"
+                        >
+                          {STATUS_OPTIONS.map((s) => (
+                            <option key={s} value={s}>
+                              {s.charAt(0).toUpperCase() + s.slice(1)}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           ))}
         </div>

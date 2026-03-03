@@ -171,10 +171,17 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: "id is required" }, { status: 400 });
     }
 
-    const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    const updates: Record<string, unknown> = {
+      updated_at: new Date().toISOString(),
+      edited_at: new Date().toISOString(),
+      edited_by: user.id,
+    };
     if (newStatus) updates.status = newStatus;
     if (resolution !== undefined) updates.resolution = resolution;
     if (impactLevel) updates.impact_level = impactLevel;
+    if (body.title !== undefined) updates.title = body.title;
+    if (body.description !== undefined) updates.description = body.description;
+    if (body.aiVendorId !== undefined) updates.ai_vendor_id = body.aiVendorId || null;
     if (newStatus === "resolved" || newStatus === "closed") {
       updates.resolved_at = new Date().toISOString();
     }
@@ -184,7 +191,7 @@ export async function PATCH(req: Request) {
       .update(updates)
       .eq("id", id)
       .eq("organisation_id", profile.organisation_id)
-      .select("*, ai_vendors(vendor_name)")
+      .select("*, edited_at, edited_by, ai_vendors(vendor_name)")
       .single();
 
     if (error) {
