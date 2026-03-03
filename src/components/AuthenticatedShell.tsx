@@ -126,6 +126,27 @@ function NavIcon({ icon }: { icon: string }) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 11V7a5 5 0 0110 0v4" />
         </svg>
       );
+    case "building":
+      return (
+        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0H5m14 0h2m-16 0H3m5-10h.01M12 11h.01M9 15h.01M12 15h.01M9 7h.01M12 7h.01" />
+        </svg>
+      );
+    case "server":
+      return (
+        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <rect strokeWidth={1.5} x="2" y="2" width="20" height="8" rx="2" ry="2" />
+          <rect strokeWidth={1.5} x="2" y="14" width="20" height="8" rx="2" ry="2" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 6h.01M6 18h.01" />
+        </svg>
+      );
+    case "radio":
+      return (
+        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.24 7.76a6 6 0 010 8.49m-8.48-.01a6 6 0 010-8.49m11.31-2.82a10 10 0 010 14.14m-14.14 0a10 10 0 010-14.14" />
+          <circle cx="12" cy="12" r="2" strokeWidth={1.5} />
+        </svg>
+      );
     default:
       return null;
   }
