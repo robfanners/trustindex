@@ -12,6 +12,8 @@ import NotificationBell from "@/components/header/NotificationBell";
 import UserMenu from "@/components/header/UserMenu";
 import HelpMenu from "@/components/header/HelpMenu";
 import { navSections, meetsMinTier } from "@/lib/navigation";
+import UpgradeModal from "@/components/UpgradeModal";
+import type { VersiumTier } from "@/lib/tiers";
 
 type AuthenticatedShellProps = {
   children: React.ReactNode;
@@ -133,6 +135,9 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
   const { profile } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [upgradeModalTier, setUpgradeModalTier] = useState<VersiumTier>("Assure");
+  const [upgradeModalFeature, setUpgradeModalFeature] = useState("");
 
   useEffect(() => {
     try {
@@ -303,6 +308,9 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
                           onClick={(e) => {
                             if (isLocked) {
                               e.preventDefault();
+                              setUpgradeModalTier((section.tierBadge as VersiumTier) ?? "Assure");
+                              setUpgradeModalFeature(item.label);
+                              setUpgradeModalOpen(true);
                               return;
                             }
                             setSidebarOpen(false);
@@ -369,6 +377,12 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
           </div>
         </main>
       </div>
+      <UpgradeModal
+        open={upgradeModalOpen}
+        requiredTier={upgradeModalTier}
+        featureLabel={upgradeModalFeature}
+        onClose={() => setUpgradeModalOpen(false)}
+      />
     </div>
   );
 }
