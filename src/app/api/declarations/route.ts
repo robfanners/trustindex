@@ -39,7 +39,7 @@ export async function GET() {
 
     // Fetch invite stats per token
     const tokenIds = (tokens ?? []).map((t: { id: string }) => t.id);
-    let inviteStats: Record<string, { sent: number; submitted: number }> = {};
+    const inviteStats: Record<string, { sent: number; submitted: number }> = {};
     if (tokenIds.length > 0) {
       const { data: invites } = await sb
         .from("declaration_invites")
