@@ -1,10 +1,10 @@
-# TrustGraph by Verisum — CLAUDE.md
+# Verisum — CLAUDE.md
 
 ## Project Overview
 
-AI Governance Copilot SaaS for SMEs. Helps organisations assess, monitor, and demonstrate responsible AI usage. Built by Verisum Ltd (solo founder: Rob Fanshawe).
+AI governance platform. Helps organisations measure, monitor, and prove responsible AI usage. Built by Verisum Ltd (solo founder: Rob Fanshawe).
 
-**Live URL:** https://trustindex.verisum.org
+**Live URL:** https://app.verisum.org (currently deployed at trustindex.verisum.org)
 **Repo:** github.com/robfanners/trustindex
 
 ## Tech Stack
@@ -36,7 +36,7 @@ src/
   app/                      # Next.js App Router
     api/                    # API routes (~50+ endpoints)
       stripe/               # checkout, webhook, portal
-      trustgraph/           # health, drift, escalations, reassessment
+      trustgraph/           # health, drift, escalations, reassessment (internal engine name)
       trustsys/             # system assessments
       copilot/              # policies, monthly-report
       declarations/         # staff declaration tokens + submissions
