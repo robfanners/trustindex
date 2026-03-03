@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { canManageTeam } from "@/lib/entitlements";
+import { getRoleOptions } from "@/lib/roles";
 
 // ---------------------------------------------------------------------------
 // /dashboard/settings/team — Team Management (Enterprise only)
@@ -50,18 +51,12 @@ export default function TeamSettingsPage() {
       <div className="border border-border rounded-lg p-6 space-y-4">
         <h2 className="text-lg font-semibold text-foreground">Roles</h2>
         <div className="text-sm text-muted-foreground space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-foreground">Owner</span>
-            <span>— Full access to all settings and data</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-foreground">Admin</span>
-            <span>— Can manage surveys and systems</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-foreground">Viewer</span>
-            <span className="italic">— Coming soon</span>
-          </div>
+          {getRoleOptions().map((opt) => (
+            <div key={opt.value} className="flex items-center gap-2">
+              <span className="font-medium text-foreground">{opt.label}</span>
+              <span>— {opt.description}</span>
+            </div>
+          ))}
         </div>
       </div>
 
