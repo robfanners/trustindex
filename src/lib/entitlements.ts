@@ -110,6 +110,15 @@ export function maxIncidentsPerMonth(plan: string | null | undefined): number {
   return 0;
 }
 
+/** Max AI policy generations per month */
+export function maxPolicyGenerations(plan: string | null | undefined): number {
+  const p = plan ?? "explorer";
+  if (p === "starter") return 3;
+  if (p === "pro") return 10;
+  if (p === "enterprise") return 50;
+  return 0;
+}
+
 /** Can generate AI policies? (Starter+) */
 export function canGeneratePolicy(plan: string | null | undefined): boolean {
   return isPaidPlan(plan);
