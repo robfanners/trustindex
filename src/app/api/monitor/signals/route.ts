@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { requireTier } from "@/lib/requireTier";
+import { createSignalSchema, firstZodError } from "@/lib/validations";
 
 // GET — list runtime signals for org
 export async function GET(req: Request) {
@@ -78,20 +79,11 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { system_name, signal_type, metric_name, metric_value, severity, source, context } = body;
-
-    if (!system_name) {
-      return NextResponse.json({ error: "system_name is required" }, { status: 400 });
+    const parsed = createSignalSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: firstZodError(parsed.error) }, { status: 400 });
     }
-    if (!signal_type) {
-      return NextResponse.json({ error: "signal_type is required" }, { status: 400 });
-    }
-    if (!metric_name) {
-      return NextResponse.json({ error: "metric_name is required" }, { status: 400 });
-    }
-    if (metric_value === undefined || metric_value === null) {
-      return NextResponse.json({ error: "metric_value is required" }, { status: 400 });
-    }
+    const { system_name, signal_type, metric_name, metric_value, severity, source, context } = parsed.data;
 
     const sb = supabaseServer();
     const { data: signal, error } = await sb

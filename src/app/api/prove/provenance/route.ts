@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireTier } from "@/lib/requireTier";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { hashPayload, generateVerificationId, anchorOnChain } from "@/lib/prove/chain";
+import { createProvenanceSchema, firstZodError } from "@/lib/validations";
 
 export async function GET(req: NextRequest) {
   const check = await requireTier("Verify");
@@ -31,9 +32,11 @@ export async function POST(req: NextRequest) {
   if (!check.orgId) return NextResponse.json({ error: "No organisation linked" }, { status: 400 });
 
   const body = await req.json();
-  const { title, ai_system, model_version, output_description, data_sources, review_note } = body;
-
-  if (!title) return NextResponse.json({ error: "title is required" }, { status: 400 });
+  const parsed = createProvenanceSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: firstZodError(parsed.error) }, { status: 400 });
+  }
+  const { title, ai_system, model_version, output_description, data_sources, review_note } = parsed.data;
 
   const now = new Date().toISOString();
 

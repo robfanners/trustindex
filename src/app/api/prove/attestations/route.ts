@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireTier } from "@/lib/requireTier";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { hashPayload, generateVerificationId, anchorOnChain } from "@/lib/prove/chain";
+import { createAttestationSchema, firstZodError } from "@/lib/validations";
 
 export async function GET(req: NextRequest) {
   const check = await requireTier("Verify");
@@ -31,11 +32,11 @@ export async function POST(req: NextRequest) {
   if (!check.orgId) return NextResponse.json({ error: "No organisation linked" }, { status: 400 });
 
   const body = await req.json();
-  const { title, statement, posture_snapshot } = body;
-
-  if (!title || !statement) {
-    return NextResponse.json({ error: "title and statement are required" }, { status: 400 });
+  const parsed = createAttestationSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: firstZodError(parsed.error) }, { status: 400 });
   }
+  const { title, statement, posture_snapshot } = parsed.data;
 
   const now = new Date().toISOString();
 

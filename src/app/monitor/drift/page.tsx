@@ -16,6 +16,7 @@ export default function DriftPage() {
   const [events, setEvents] = useState<DriftEvent[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [runType, setRunType] = useState<string>("");
   const [days, setDays] = useState(90);
   const [page, setPage] = useState(1);
@@ -23,6 +24,7 @@ export default function DriftPage() {
 
   const fetchDrift = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const params = new URLSearchParams({
         days: String(days),
@@ -35,6 +37,9 @@ export default function DriftPage() {
         const data = await res.json();
         setEvents(data.drift_events ?? []);
         setTotal(data.total ?? 0);
+      } else {
+        const d = await res.json().catch(() => ({}));
+        setError(d.error || "Failed to load drift events");
       }
     } finally {
       setLoading(false);
@@ -92,6 +97,13 @@ export default function DriftPage() {
             <option value={365}>Last year</option>
           </select>
         </div>
+
+        {/* Error */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 text-sm">
+            {error}
+          </div>
+        )}
 
         {/* Content */}
         {loading ? (

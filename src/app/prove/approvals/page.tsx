@@ -50,6 +50,7 @@ export default function ApprovalsPage() {
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string>("");
   const [riskLevel, setRiskLevel] = useState<string>("");
   const [page, setPage] = useState(1);
@@ -70,6 +71,7 @@ export default function ApprovalsPage() {
 
   const fetchApprovals = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const params = new URLSearchParams({
         page: String(page),
@@ -82,6 +84,9 @@ export default function ApprovalsPage() {
         const data = await res.json();
         setApprovals(data.approvals ?? []);
         setTotal(data.total ?? 0);
+      } else {
+        const d = await res.json().catch(() => ({}));
+        setError(d.error || "Failed to load approvals");
       }
     } finally {
       setLoading(false);
@@ -260,6 +265,13 @@ export default function ApprovalsPage() {
             <option value="critical">Critical</option>
           </select>
         </div>
+
+        {/* Error */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 text-sm">
+            {error}
+          </div>
+        )}
 
         {/* Content */}
         {loading ? (
