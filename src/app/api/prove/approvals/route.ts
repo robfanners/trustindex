@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireTier } from "@/lib/requireTier";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { hashPayload, anchorOnChain } from "@/lib/prove/chain";
+import { createApprovalSchema, approvalDecisionSchema, firstZodError } from "@/lib/validations";
 
 // ---------------------------------------------------------------------------
 // Helper: authenticate + check Verify tier + get org_id
@@ -73,12 +74,11 @@ export async function POST(req: NextRequest) {
     const { user, orgId } = result;
     const db = supabaseServer();
     const body = await req.json();
-
-    const { title, description, risk_level, assigned_to } = body;
-
-    if (!title) {
-      return NextResponse.json({ error: "title is required" }, { status: 400 });
+    const parsed = createApprovalSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: firstZodError(parsed.error) }, { status: 400 });
     }
+    const { title, description, risk_level, assigned_to } = parsed.data;
 
     const { data, error } = await db
       .from("prove_approvals")
@@ -115,14 +115,11 @@ export async function PATCH(req: NextRequest) {
     const db = supabaseServer();
     const body = await req.json();
 
-    const { approval_id, decision, decision_note } = body;
-
-    if (!approval_id || !decision) {
-      return NextResponse.json({ error: "approval_id and decision are required" }, { status: 400 });
+    const parsed = approvalDecisionSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: firstZodError(parsed.error) }, { status: 400 });
     }
-    if (!["approved", "rejected"].includes(decision)) {
-      return NextResponse.json({ error: "decision must be approved or rejected" }, { status: 400 });
-    }
+    const { approval_id, decision, decision_note } = parsed.data;
 
     // Verify the approval belongs to this org and is pending
     const { data: existing } = await db

@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireTier } from "@/lib/requireTier";
 import { supabaseServer } from "@/lib/supabaseServer";
-
-const VALID_PROOF_TYPES = ["attestation", "provenance", "incident_lock"] as const;
-type ProofType = (typeof VALID_PROOF_TYPES)[number];
+import { createExchangeSchema, firstZodError } from "@/lib/validations";
 
 export async function GET(req: NextRequest) {
   try {
@@ -34,8 +32,8 @@ export async function GET(req: NextRequest) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ exchanges: data ?? [], total: count ?? 0 });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message ?? "Internal server error" }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Internal server error" }, { status: 500 });
   }
 }
 
@@ -47,21 +45,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No organisation linked" }, { status: 400 });
 
     const body = await req.json();
-    const { proof_type, proof_id, shared_with_name, shared_with_email, note } = body;
-
-    if (!proof_type || !proof_id || !shared_with_name) {
-      return NextResponse.json(
-        { error: "proof_type, proof_id, and shared_with_name are required" },
-        { status: 400 }
-      );
+    const parsed = createExchangeSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: firstZodError(parsed.error) }, { status: 400 });
     }
-
-    if (!VALID_PROOF_TYPES.includes(proof_type as ProofType)) {
-      return NextResponse.json(
-        { error: `proof_type must be one of: ${VALID_PROOF_TYPES.join(", ")}` },
-        { status: 400 }
-      );
-    }
+    const { proof_type, proof_id, shared_with_name, shared_with_email, note } = parsed.data;
 
     const sb = supabaseServer();
 
@@ -126,7 +114,7 @@ export async function POST(req: NextRequest) {
       { ...exchange, verify_url: `/verify/${verificationId}` },
       { status: 201 }
     );
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message ?? "Internal server error" }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Internal server error" }, { status: 500 });
   }
 }

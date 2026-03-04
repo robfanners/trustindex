@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireTier } from "@/lib/requireTier";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { hashPayload, generateVerificationId, anchorOnChain } from "@/lib/prove/chain";
+import { createIncidentLockSchema, firstZodError } from "@/lib/validations";
 
 // ---------------------------------------------------------------------------
 // GET /api/prove/incident-locks — list incident locks for the user's org
@@ -57,14 +58,11 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { incident_id, lock_reason } = body;
-
-    if (!incident_id || !lock_reason) {
-      return NextResponse.json(
-        { error: "incident_id and lock_reason are required" },
-        { status: 400 }
-      );
+    const parsed = createIncidentLockSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: firstZodError(parsed.error) }, { status: 400 });
     }
+    const { incident_id, lock_reason } = parsed.data;
 
     const db = supabaseServer();
 

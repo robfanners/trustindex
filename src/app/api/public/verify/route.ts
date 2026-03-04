@@ -1,7 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
+import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 
 export async function GET(req: NextRequest) {
+  // Rate limiting
+  const ip = getClientIp(req.headers);
+  const limit = checkRateLimit(ip, { windowMs: 60_000, maxRequests: 30 });
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(Math.ceil(limit.retryAfterMs / 1000)) } }
+    );
+  }
+
   const verificationId = req.nextUrl.searchParams.get("id");
   if (!verificationId) {
     return NextResponse.json({ error: "id parameter is required" }, { status: 400 });
