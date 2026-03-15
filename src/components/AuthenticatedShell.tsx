@@ -166,6 +166,7 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
   const { profile } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [upgradeModalTier, setUpgradeModalTier] = useState<VersiumTier>("Assure");
   const [upgradeModalFeature, setUpgradeModalFeature] = useState("");
@@ -174,24 +175,12 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
     try {
       const stored = localStorage.getItem(SIDEBAR_KEY);
       if (stored === "true") setSidebarCollapsed(true);
+      const navStored = localStorage.getItem("verisum_nav_expanded");
+      if (navStored) setExpandedSections(JSON.parse(navStored));
     } catch {
       // localStorage unavailable
     }
   }, []);
-
-  const toggleCollapsed = useCallback(() => {
-    setSidebarCollapsed((prev) => {
-      const next = !prev;
-      try {
-        localStorage.setItem(SIDEBAR_KEY, String(next));
-      } catch {
-        // localStorage unavailable
-      }
-      return next;
-    });
-  }, []);
-
-  const currentYear = new Date().getFullYear();
 
   const activeNav = useMemo(() => {
     // Exact matches first
@@ -210,6 +199,43 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
     if (pathname.startsWith("/systems")) return "/trustsys";
     return pathname;
   }, [pathname]);
+
+  // Auto-expand the section containing the active nav item
+  useEffect(() => {
+    const activeSection = navSections.find((s) =>
+      s.items.some((item) => activeNav === item.href)
+    );
+    if (activeSection?.label) {
+      setExpandedSections((prev) => {
+        if (prev[activeSection.id]) return prev; // already expanded
+        const next = { ...prev, [activeSection.id]: true };
+        try { localStorage.setItem("verisum_nav_expanded", JSON.stringify(next)); } catch {}
+        return next;
+      });
+    }
+  }, [activeNav]);
+
+  const toggleSection = useCallback((sectionId: string) => {
+    setExpandedSections((prev) => {
+      const next = { ...prev, [sectionId]: !prev[sectionId] };
+      try { localStorage.setItem("verisum_nav_expanded", JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }, []);
+
+  const toggleCollapsed = useCallback(() => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(SIDEBAR_KEY, String(next));
+      } catch {
+        // localStorage unavailable
+      }
+      return next;
+    });
+  }, []);
+
+  const currentYear = new Date().getFullYear();
 
   return (
     <div className="min-h-screen bg-muted flex flex-col">
@@ -300,22 +326,51 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
             {navSections.filter((section) => canSeeSection(profile?.role, section.id)).map((section) => {
               const isLocked = !meetsMinTier(profile?.plan, section.minTier);
 
+              const isCollapsible = section.label && section.items.length > 1;
+              const isExpanded = !isCollapsible || expandedSections[section.id] !== false;
+
               return (
                 <div key={section.id} className={section.label ? "mt-5 first:mt-0" : ""}>
                   {/* Section header */}
                   {section.label && !sidebarCollapsed && (
-                    <div className="flex items-center justify-between px-3 mb-1">
-                      <span className={`text-[10px] font-semibold tracking-widest ${
-                        isLocked ? "text-muted-foreground/50" : "text-muted-foreground"
-                      }`}>
-                        {section.label}
-                      </span>
-                      {isLocked && section.tierBadge && (
-                        <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-brand/10 text-brand">
-                          {section.tierBadge}
+                    isCollapsible ? (
+                      <button
+                        type="button"
+                        onClick={() => toggleSection(section.id)}
+                        className="w-full flex items-center justify-between px-3 mb-1 group"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <svg
+                            className={`w-3 h-3 transition-transform duration-200 ${
+                              isExpanded ? "rotate-90" : ""
+                            } ${isLocked ? "text-muted-foreground/40" : "text-muted-foreground/60 group-hover:text-muted-foreground"}`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                          <span className={`text-[10px] font-semibold tracking-widest ${
+                            isLocked ? "text-muted-foreground/50" : "text-muted-foreground"
+                          }`}>
+                            {section.label}
+                          </span>
+                        </div>
+                        {isLocked && section.tierBadge && (
+                          <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-brand/10 text-brand">
+                            {section.tierBadge}
+                          </span>
+                        )}
+                      </button>
+                    ) : (
+                      <div className="flex items-center justify-between px-3 mb-1">
+                        <span className={`text-[10px] font-semibold tracking-widest ${
+                          isLocked ? "text-muted-foreground/50" : "text-muted-foreground"
+                        }`}>
+                          {section.label}
                         </span>
-                      )}
-                    </div>
+                      </div>
+                    )
                   )}
 
                   {/* Collapsed section indicator */}
@@ -326,7 +381,11 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
                   )}
 
                   {/* Nav items */}
-                  <div className="space-y-0.5">
+                  <div
+                    className={`space-y-0.5 transition-all duration-200 ease-in-out overflow-hidden ${
+                      !sidebarCollapsed && isCollapsible && !isExpanded ? "max-h-0" : "max-h-[500px]"
+                    }`}
+                  >
                     {section.items.map((item) => {
                       const isActive = activeNav === item.href;
                       const href = isLocked ? "#" : item.href;

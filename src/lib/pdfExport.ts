@@ -59,3 +59,43 @@ export async function exportElementToPdf(
   pdf.save(filename);
   onProgress?.("done");
 }
+
+// ---------------------------------------------------------------------------
+// PNG export — captures an element as a PNG image
+// ---------------------------------------------------------------------------
+
+export async function exportElementToPng(
+  elementId: string,
+  filename: string,
+  onProgress?: (stage: "capturing" | "done") => void
+): Promise<void> {
+  const element = document.getElementById(elementId);
+  if (!element) {
+    throw new Error(`Element #${elementId} not found`);
+  }
+
+  onProgress?.("capturing");
+
+  const { default: html2canvas } = await import("html2canvas");
+
+  const canvas = await html2canvas(element, {
+    scale: 2,
+    useCORS: true,
+    logging: false,
+    backgroundColor: "#ffffff",
+  });
+
+  // Convert canvas to blob and trigger download
+  canvas.toBlob((blob) => {
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename.endsWith(".png") ? filename : `${filename}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    onProgress?.("done");
+  }, "image/png");
+}

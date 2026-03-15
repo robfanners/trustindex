@@ -335,7 +335,7 @@ export default function AdminRunPage() {
     return (
       <AppShell>
         <div className="p-4 md:p-6 lg:p-10 space-y-3">
-          <h1 className="text-2xl font-bold">Survey Dashboard</h1>
+          <h1 className="text-2xl font-bold">Manage Survey</h1>
           <div className="text-destructive">{error || "Missing runId"}</div>
         </div>
       </AppShell>
@@ -361,7 +361,7 @@ export default function AdminRunPage() {
   .join("\n");
   const adminUrl = `${window.location.origin}/admin/run/${runId}`;
   const resultsUrl = `${window.location.origin}${dashboardHref}`;
-  const linkPack = `Survey Dashboard: ${adminUrl}\nResults: ${resultsUrl}\n\nSurvey links:\n${surveyLinks}`;
+  const linkPack = `Manage Survey: ${adminUrl}\nResults: ${resultsUrl}\n\nSurvey links:\n${surveyLinks}`;
 
   const formatCounts = (items: Array<string | null | undefined>) => {
     const counts = new Map<string, number>();
@@ -625,7 +625,7 @@ export default function AdminRunPage() {
   return (
     <AppShell>
       <div className="p-4 md:p-6 lg:p-10 space-y-6">
-        <h1 className="text-2xl md:text-3xl font-bold">Survey Dashboard</h1>
+        <h1 className="text-2xl md:text-3xl font-bold">Manage Survey</h1>
 
       <div className="border border-border rounded-lg p-6 space-y-2">
         <div>
@@ -738,13 +738,13 @@ export default function AdminRunPage() {
                       <button
                         className="px-3 py-2 border border-border rounded text-sm opacity-50 cursor-not-allowed bg-[#f5f5f5]"
                         disabled
-                        title="You're already viewing the Survey Dashboard for this survey"
+                        title="You're already viewing Manage Survey for this survey"
                       >
-                        Open Survey Dashboard
+                        Manage Survey
                       </button>
                     ) : (
                       <a className="px-3 py-2 border border-border rounded hover:bg-[#f5f5f5] text-sm" href={`/admin/run/${r.runId}`}>
-                        Open Survey Dashboard
+                        Manage Survey
                       </a>
                     )}
                   </div>

@@ -66,5 +66,29 @@ export async function GET(req: NextRequest) {
     });
   }
 
+  // Search incident locks
+  const { data: incidentLock } = await db
+    .from("prove_incident_locks")
+    .select("id, incident_id, lock_reason, snapshot, locked_by, locked_at, verification_id, event_hash, chain_tx_hash, chain_status, organisation_id, created_at")
+    .eq("verification_id", verificationId)
+    .single();
+
+  if (incidentLock) {
+    const { data: org } = await db
+      .from("organisations")
+      .select("name")
+      .eq("id", incidentLock.organisation_id)
+      .single();
+
+    return NextResponse.json({
+      found: true,
+      type: "incident_lock",
+      record: {
+        ...incidentLock,
+        organisation_name: org?.name ?? "Unknown",
+      },
+    });
+  }
+
   return NextResponse.json({ found: false });
 }

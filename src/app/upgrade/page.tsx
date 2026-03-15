@@ -7,82 +7,56 @@ import { useAuth } from "@/context/AuthContext";
 import type { VersiumTier } from "@/lib/tiers";
 
 // ---------------------------------------------------------------------------
-// Plan data
+// Plan data — 3 Verisum tiers
 // ---------------------------------------------------------------------------
 
 type PlanTier = {
   name: string;
-  slug: "explorer" | "starter" | "pro" | "enterprise";
+  slug: "starter" | "pro" | "enterprise";
   tier: VersiumTier;
   tierTagline: string;
   price: string;
   period: string;
   yearlyNote?: string;
   description: string;
+  sectionLabel: string;
   features: string[];
-  copilotFeatures: { label: string; available: boolean }[];
-  highlighted?: boolean;
+  bannerText?: string;
+  bannerColor?: string;
   cta: string;
   ctaStyle: "primary" | "secondary" | "outline";
 };
 
 const tiers: PlanTier[] = [
   {
-    name: "Explorer",
-    slug: "explorer",
-    tier: "Core",
-    tierTagline: "Governance Intelligence Foundation",
-    price: "Free",
-    period: "",
-    description:
-      "Try a private self-assessment to see how trust is experienced in your organisation.",
-    features: [
-      "1 self-assessment",
-      "Instant results with radar chart",
-      "Band interpretation and actions",
-      "No sign-up required to start",
-    ],
-    copilotFeatures: [
-      { label: "AI Policy Generator", available: false },
-      { label: "Staff Declaration Portal", available: false },
-      { label: "AI Vendor Register", available: false },
-      { label: "Monthly Compliance PDF", available: false },
-      { label: "Incident Logging", available: false },
-      { label: "Regulatory Feed", available: false },
-    ],
-    cta: "Get started free",
-    ctaStyle: "outline",
-  },
-  {
-    name: "Starter",
+    name: "Verisum Core",
     slug: "starter",
     tier: "Core",
     tierTagline: "Governance Intelligence Foundation",
-    price: "\u00a379",
-    period: "/month",
-    yearlyNote: "or \u00a3711/year (save \u00a3237)",
+    price: "Free to try",
+    period: "",
+    yearlyNote: "then \u00a379/month or \u00a3711/year",
     description:
-      "Get your AI governance sorted in 30 minutes. Guided setup, instant governance pack, ongoing compliance tools.",
+      "Get your AI governance sorted in 30 minutes. Start with a free self-assessment, then unlock the full governance suite.",
+    sectionLabel: "Govern",
     features: [
+      "Free self-assessment with instant results",
       "AI Governance Setup Wizard",
       "Governance Pack (3 PDF documents)",
-      "Instant gap analysis & recommendations",
-      "1 org assessment (TrustOrg)",
+      "1 TrustOrg assessment",
+      "AI Policy Generator",
+      "Staff Declaration Portal (50 staff)",
+      "AI Vendor Register (10 vendors)",
+      "Incident Logging (5/month)",
+      "Regulatory Feed (UK/EU)",
     ],
-    copilotFeatures: [
-      { label: "AI Policy Generator (1 auto-generated)", available: true },
-      { label: "Staff Declaration Portal (50 staff)", available: true },
-      { label: "AI Vendor Register (10 vendors)", available: true },
-      { label: "Monthly Compliance PDF (basic)", available: true },
-      { label: "Incident Logging (5/month)", available: true },
-      { label: "Regulatory Feed (UK/EU)", available: true },
-    ],
-    highlighted: true,
-    cta: "Get started",
+    bannerText: "Most Popular For Startups",
+    bannerColor: "brand",
+    cta: "Start free",
     ctaStyle: "primary",
   },
   {
-    name: "Pro",
+    name: "Verisum Assure",
     slug: "pro",
     tier: "Assure",
     tierTagline: "Continuous Alignment & Runtime Governance",
@@ -90,85 +64,91 @@ const tiers: PlanTier[] = [
     period: "/month",
     yearlyNote: "or \u00a31,788/year (save \u00a3600)",
     description:
-      "Full AI governance suite with system assessments, editable policies, and board-ready reports.",
+      "Full AI governance suite with continuous monitoring, escalation workflows, and board-ready reports.",
+    sectionLabel: "Govern + Monitor",
     features: [
-      "Everything in Starter, plus:",
-      "5 org assessments (TrustOrg)",
-      "2 AI system assessments",
-      "Basic team management (up to 5 users)",
+      "Everything in Core, plus:",
+      "5 TrustOrg assessments",
+      "2 AI system assessments (TrustSys)",
+      "Drift detection & alerts",
+      "Escalation workflows",
+      "Incident management (unlimited)",
+      "Runtime signals monitoring",
+      "Team management (5 users)",
       "CSV data export",
-      "Historical tracking",
-      "Dimension-level insights",
+      "Advanced policy generation",
+      "Staff Declarations (250)",
       "Priority support",
     ],
-    copilotFeatures: [
-      { label: "AI Policy Generator (editable)", available: true },
-      { label: "Staff Declaration Portal (250 staff)", available: true },
-      { label: "AI Vendor Register (unlimited)", available: true },
-      { label: "Monthly Compliance PDF (full board report)", available: true },
-      { label: "Incident Logging (unlimited)", available: true },
-      { label: "Regulatory Feed (UK/EU + sector)", available: true },
-    ],
-    cta: "Upgrade to Pro",
-    ctaStyle: "outline",
+    bannerText: "Advanced Governance",
+    bannerColor: "teal",
+    cta: "Upgrade to Assure",
+    ctaStyle: "primary",
   },
   {
-    name: "Enterprise",
+    name: "Verisum Verify",
     slug: "enterprise",
     tier: "Verify",
     tierTagline: "Cryptographic Proof & Trust Portability",
     price: "Custom",
     period: "",
     description:
-      "For organisations that need unlimited capacity, governance tooling, and API access.",
+      "For organisations that need cryptographic proof, unlimited capacity, and full API access.",
+    sectionLabel: "Govern + Monitor + Prove",
     features: [
-      "Unlimited org assessments",
-      "Unlimited system assessments",
-      "Full CSV export",
-      "Historical tracking",
-      "Governance & audit trail",
+      "Everything in Assure, plus:",
+      "Unlimited assessments",
+      "Human-verified approvals",
+      "Governance attestations",
+      "Provenance certificates",
+      "Incident lock & forensic freeze",
+      "Cross-org trust exchange",
+      "On-chain anchoring",
       "API access",
       "SSO / SAML",
       "Dedicated account manager",
-    ],
-    copilotFeatures: [
-      { label: "AI Policy Generator (custom templates)", available: true },
-      { label: "Staff Declaration Portal (unlimited + SSO)", available: true },
-      { label: "AI Vendor Register (+ risk scoring)", available: true },
-      { label: "Monthly Compliance PDF (custom branding)", available: true },
-      { label: "Incident Logging (+ workflow routing)", available: true },
-      { label: "Regulatory Feed (custom jurisdictions)", available: true },
     ],
     cta: "Contact us",
     ctaStyle: "secondary",
   },
 ];
 
-// Feature comparison matrix
+// Feature comparison matrix — 3 columns grouped by workflow
 type MatrixRow = {
   feature: string;
-  explorer: string;
-  starter: string;
-  pro: string;
-  enterprise: string;
-  isCopilot?: boolean;
+  core: string;
+  assure: string;
+  verify: string;
+  section?: string; // section header label
 };
 
 const featureMatrix: MatrixRow[] = [
-  { feature: "Governance Wizard + Pack", explorer: "\u2014", starter: "\u2713", pro: "\u2713", enterprise: "\u2713" },
-  { feature: "Org assessments", explorer: "Self", starter: "1", pro: "5", enterprise: "Unlimited" },
-  { feature: "System assessments", explorer: "\u2014", starter: "\u2014", pro: "2", enterprise: "Unlimited" },
-  { feature: "CSV export", explorer: "\u2014", starter: "\u2014", pro: "\u2713", enterprise: "\u2713" },
-  { feature: "Historical tracking", explorer: "\u2014", starter: "\u2014", pro: "\u2713", enterprise: "\u2713" },
-  { feature: "AI Policy Generator", explorer: "\u2014", starter: "1 (auto)", pro: "Editable", enterprise: "Custom", isCopilot: true },
-  { feature: "Staff Declarations", explorer: "\u2014", starter: "50 staff", pro: "250 staff", enterprise: "Unlimited", isCopilot: true },
-  { feature: "AI Vendor Register", explorer: "\u2014", starter: "10", pro: "Unlimited", enterprise: "Unlimited", isCopilot: true },
-  { feature: "Monthly Compliance PDF", explorer: "\u2014", starter: "Basic", pro: "Full report", enterprise: "Custom", isCopilot: true },
-  { feature: "Incident Logging", explorer: "\u2014", starter: "5/month", pro: "Unlimited", enterprise: "Unlimited", isCopilot: true },
-  { feature: "Regulatory Feed", explorer: "\u2014", starter: "UK/EU", pro: "UK/EU + sector", enterprise: "Custom", isCopilot: true },
-  { feature: "Team management", explorer: "\u2014", starter: "\u2014", pro: "5 users", enterprise: "Unlimited" },
-  { feature: "API access", explorer: "\u2014", starter: "\u2014", pro: "\u2014", enterprise: "\u2713" },
-  { feature: "SSO / SAML", explorer: "\u2014", starter: "\u2014", pro: "\u2014", enterprise: "\u2713" },
+  // Govern
+  { feature: "Self-assessment", core: "\u2713", assure: "\u2713", verify: "\u2713", section: "Govern" },
+  { feature: "Governance Wizard + Pack", core: "\u2713", assure: "\u2713", verify: "\u2713" },
+  { feature: "TrustOrg assessments", core: "1", assure: "5", verify: "Unlimited" },
+  { feature: "TrustSys assessments", core: "\u2014", assure: "2", verify: "Unlimited" },
+  { feature: "AI Policy Generator", core: "1 (auto)", assure: "Editable", verify: "Custom templates" },
+  { feature: "Staff Declarations", core: "50 staff", assure: "250 staff", verify: "Unlimited" },
+  { feature: "AI Vendor Register", core: "10", assure: "Unlimited", verify: "Unlimited + risk scoring" },
+  { feature: "Incident Logging", core: "5/month", assure: "Unlimited", verify: "Unlimited + routing" },
+  { feature: "Regulatory Feed", core: "UK/EU", assure: "UK/EU + sector", verify: "Custom jurisdictions" },
+  // Monitor
+  { feature: "Drift detection & alerts", core: "\u2014", assure: "\u2713", verify: "\u2713", section: "Monitor" },
+  { feature: "Escalation workflows", core: "\u2014", assure: "\u2713", verify: "\u2713" },
+  { feature: "Runtime signals", core: "\u2014", assure: "\u2713", verify: "\u2713" },
+  { feature: "Team management", core: "\u2014", assure: "5 users", verify: "Unlimited" },
+  { feature: "CSV export", core: "\u2014", assure: "\u2713", verify: "\u2713" },
+  { feature: "Historical tracking", core: "\u2014", assure: "\u2713", verify: "\u2713" },
+  // Prove
+  { feature: "Human-verified approvals", core: "\u2014", assure: "\u2014", verify: "\u2713", section: "Prove" },
+  { feature: "Governance attestations", core: "\u2014", assure: "\u2014", verify: "\u2713" },
+  { feature: "Provenance certificates", core: "\u2014", assure: "\u2014", verify: "\u2713" },
+  { feature: "Incident lock & forensic freeze", core: "\u2014", assure: "\u2014", verify: "\u2713" },
+  { feature: "Cross-org trust exchange", core: "\u2014", assure: "\u2014", verify: "\u2713" },
+  { feature: "On-chain anchoring", core: "\u2014", assure: "\u2014", verify: "\u2713" },
+  { feature: "API access", core: "\u2014", assure: "\u2014", verify: "\u2713" },
+  { feature: "SSO / SAML", core: "\u2014", assure: "\u2014", verify: "\u2713" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -193,20 +173,13 @@ function UpgradeContent() {
       return { label: tier.cta, href: "#", disabled: true, checkoutPlan: null as string | null };
     }
 
-    if (tier.slug === "explorer") {
-      if (!user) return { label: "Try free", href: "/try", disabled: false, checkoutPlan: null };
-      if (currentPlan === "explorer")
-        return { label: "Current plan", href: "#", disabled: true, checkoutPlan: null };
-      return { label: "Explorer", href: "/dashboard", disabled: true, checkoutPlan: null };
-    }
-
     if (tier.slug === "starter") {
-      if (!user) return { label: "Sign in to upgrade", href: "/auth/login", disabled: false, checkoutPlan: null };
+      if (!user) return { label: "Start free", href: "/try", disabled: false, checkoutPlan: null };
       if (currentPlan === "starter")
         return { label: "Current plan", href: "#", disabled: true, checkoutPlan: null };
       if (currentPlan === "pro" || currentPlan === "enterprise")
         return { label: "Current plan is higher", href: "#", disabled: true, checkoutPlan: null };
-      return { label: "Start with Starter", href: "#checkout", disabled: false, checkoutPlan: "starter" };
+      return { label: "Upgrade to Core", href: "#checkout", disabled: false, checkoutPlan: "starter" };
     }
 
     if (tier.slug === "pro") {
@@ -216,14 +189,14 @@ function UpgradeContent() {
       if (currentPlan === "enterprise")
         return { label: "Current plan is higher", href: "#", disabled: true, checkoutPlan: null };
       if (currentPlan === "starter")
-        return { label: "Upgrade to Pro", href: "#portal", disabled: false, checkoutPlan: null };
-      return { label: "Upgrade to Pro", href: "#checkout", disabled: false, checkoutPlan: "pro" };
+        return { label: "Upgrade to Assure", href: "#portal", disabled: false, checkoutPlan: null };
+      return { label: "Upgrade to Assure", href: "#checkout", disabled: false, checkoutPlan: "pro" };
     }
 
-    // Enterprise
+    // Verify (enterprise)
     return {
       label: "Contact us",
-      href: "mailto:hello@verisum.org?subject=Verisum%20Enterprise%20enquiry",
+      href: "mailto:hello@verisum.org?subject=Verisum%20Verify%20enquiry",
       disabled: false,
       checkoutPlan: null,
     };
@@ -258,7 +231,7 @@ function UpgradeContent() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8 py-12 space-y-12">
+    <div className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 py-12 space-y-12">
       {/* Success / cancelled banners */}
       {success && (
         <div className="border border-success rounded-lg p-4 bg-green-50 text-sm">
@@ -288,34 +261,45 @@ function UpgradeContent() {
         </p>
       </div>
 
-      {/* Pricing cards */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Pricing cards — 3 tiers */}
+      <div className="grid md:grid-cols-3 gap-6">
         {tiers.map((tier) => {
           const cta = ctaFor(tier);
+          const isBrand = tier.bannerColor === "brand";
+          const isTeal = tier.bannerColor === "teal";
+          const hasBanner = !!tier.bannerText;
+
           return (
             <div
               key={tier.name}
-              className={`border rounded-lg p-6 flex flex-col justify-between space-y-6 ${
-                tier.highlighted
-                  ? "border-brand border-2 relative"
+              className={`border rounded-xl p-6 flex flex-col justify-between space-y-6 ${
+                hasBanner
+                  ? isTeal
+                    ? "border-teal-500 border-2 relative"
+                    : "border-brand border-2 relative"
                   : highlightTier === tier.tier
                     ? "border-brand/50 border-2"
                     : "border-border"
               }`}
             >
-              {tier.highlighted && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand text-white text-xs font-semibold px-3 py-1 rounded-full">
-                  Most popular
+              {hasBanner && (
+                <div className={`absolute -top-3 left-1/2 -translate-x-1/2 text-white text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap ${
+                  isTeal ? "bg-teal-500" : "bg-brand"
+                }`}>
+                  {tier.bannerText}
                 </div>
               )}
 
               <div className="space-y-4">
                 <div>
-                  <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-brand/10 text-brand">
-                    Verisum {tier.tier}
+                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                    isTeal ? "bg-teal-500/10 text-teal-600" : "bg-brand/10 text-brand"
+                  }`}>
+                    {tier.sectionLabel}
                   </span>
                   <h2 className="text-xl font-bold mt-2">{tier.name}</h2>
-                  <div className="mt-2">
+                  <p className="text-xs text-muted-foreground mt-0.5">{tier.tierTagline}</p>
+                  <div className="mt-3">
                     <span className="text-3xl font-bold">{tier.price}</span>
                     {tier.period && (
                       <span className="text-muted-foreground text-sm">
@@ -331,48 +315,21 @@ function UpgradeContent() {
                 </div>
                 <p className="text-sm text-muted-foreground">{tier.description}</p>
 
-                {/* Core features */}
+                {/* Features */}
                 <ul className="space-y-2">
                   {tier.features.map((f) => (
                     <li key={f} className="flex items-start gap-2 text-sm">
-                      <span className="text-success mt-0.5">&#10003;</span>
-                      <span>{f}</span>
+                      {f.endsWith(":") ? (
+                        <span className="text-muted-foreground font-medium">{f}</span>
+                      ) : (
+                        <>
+                          <span className="text-success mt-0.5 shrink-0">&#10003;</span>
+                          <span>{f}</span>
+                        </>
+                      )}
                     </li>
                   ))}
                 </ul>
-
-                {/* Copilot features */}
-                {tier.copilotFeatures.length > 0 && (
-                  <>
-                    <div className="border-t border-border/30 pt-3">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                        AI Governance Copilot
-                      </p>
-                      <ul className="space-y-2">
-                        {tier.copilotFeatures.map((f) => (
-                          <li
-                            key={f.label}
-                            className={`flex items-start gap-2 text-sm ${
-                              f.available ? "" : "text-muted-foreground/50"
-                            }`}
-                          >
-                            {f.available ? (
-                              <span className="text-success mt-0.5">&#10003;</span>
-                            ) : (
-                              <span className="mt-0.5">&#128274;</span>
-                            )}
-                            <span>{f.available ? f.label : f.label}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      {tier.slug === "explorer" && (
-                        <p className="text-xs text-brand mt-2 font-medium">
-                          Upgrade to unlock Copilot features &rarr;
-                        </p>
-                      )}
-                    </div>
-                  </>
-                )}
               </div>
 
               {/* CTA */}
@@ -380,10 +337,10 @@ function UpgradeContent() {
                 <button
                   onClick={() => handleCheckout(cta.checkoutPlan as "starter" | "pro")}
                   disabled={cta.disabled}
-                  className={`w-full text-center px-5 py-3 rounded font-semibold text-sm transition-colors ${
-                    tier.ctaStyle === "primary"
-                      ? "bg-brand text-white hover:bg-brand-hover"
-                      : "border border-brand text-brand hover:bg-brand hover:text-white"
+                  className={`w-full text-center px-5 py-3 rounded-lg font-semibold text-sm transition-colors ${
+                    isTeal
+                      ? "bg-teal-500 text-white hover:bg-teal-600"
+                      : "bg-brand text-white hover:bg-brand-hover"
                   } disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   {cta.label}
@@ -392,16 +349,22 @@ function UpgradeContent() {
                 <button
                   onClick={handlePortal}
                   disabled={cta.disabled}
-                  className="w-full text-center px-5 py-3 rounded font-semibold text-sm transition-colors bg-brand text-white hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed"
+                  className={`w-full text-center px-5 py-3 rounded-lg font-semibold text-sm transition-colors ${
+                    isTeal
+                      ? "bg-teal-500 text-white hover:bg-teal-600"
+                      : "bg-brand text-white hover:bg-brand-hover"
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   {cta.label}
                 </button>
               ) : (
                 <a
                   href={cta.disabled ? undefined : cta.href}
-                  className={`w-full text-center block px-5 py-3 rounded font-semibold text-sm transition-colors ${
+                  className={`w-full text-center block px-5 py-3 rounded-lg font-semibold text-sm transition-colors ${
                     tier.ctaStyle === "primary"
-                      ? "bg-brand text-white hover:bg-brand-hover"
+                      ? isTeal
+                        ? "bg-teal-500 text-white hover:bg-teal-600"
+                        : "bg-brand text-white hover:bg-brand-hover"
                       : tier.ctaStyle === "secondary"
                         ? "bg-foreground text-white hover:bg-[#333]"
                         : "border border-border text-foreground hover:bg-[#f5f5f5]"
@@ -427,54 +390,44 @@ function UpgradeContent() {
         </div>
       )}
 
-      {/* Feature matrix */}
+      {/* Feature comparison matrix */}
       <div className="space-y-4">
-        <h2 className="text-xl font-bold text-center">Compare plans</h2>
+        <h2 className="text-xl font-bold text-center">Compare tiers</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm border-collapse">
             <thead>
               <tr className="border-b border-border">
                 <th className="text-left py-3 px-4 font-semibold">Feature</th>
                 <th className="text-center py-3 px-4">
-                  <div className="font-semibold">Explorer</div>
-                  <div className="text-[10px] text-muted-foreground font-normal">Core</div>
+                  <div className="font-semibold text-brand">Core</div>
                 </th>
                 <th className="text-center py-3 px-4">
-                  <div className="font-semibold">Starter</div>
-                  <div className="text-[10px] text-muted-foreground font-normal">Core</div>
-                </th>
-                <th className="text-center py-3 px-4 text-brand">
-                  <div className="font-semibold">Pro</div>
-                  <div className="text-[10px] font-normal">Assure</div>
+                  <div className="font-semibold text-teal-600">Assure</div>
                 </th>
                 <th className="text-center py-3 px-4">
-                  <div className="font-semibold">Enterprise</div>
-                  <div className="text-[10px] text-muted-foreground font-normal">Verify</div>
+                  <div className="font-semibold">Verify</div>
                 </th>
               </tr>
             </thead>
             <tbody>
-              {featureMatrix.map((row, i) => (
+              {featureMatrix.map((row) => (
                 <tr
                   key={row.feature}
                   className={`border-b border-border/30 ${
-                    row.isCopilot && i === featureMatrix.findIndex((r) => r.isCopilot)
-                      ? "border-t-2 border-t-border"
-                      : ""
+                    row.section ? "border-t-2 border-t-border" : ""
                   }`}
                 >
                   <td className="py-3 px-4 text-muted-foreground">
-                    {row.isCopilot && i === featureMatrix.findIndex((r) => r.isCopilot) && (
+                    {row.section && (
                       <span className="text-[10px] uppercase tracking-wide font-semibold text-brand block mb-1">
-                        Copilot
+                        {row.section}
                       </span>
                     )}
                     {row.feature}
                   </td>
-                  <td className="py-3 px-4 text-center">{row.explorer}</td>
-                  <td className="py-3 px-4 text-center">{row.starter}</td>
-                  <td className="py-3 px-4 text-center font-medium">{row.pro}</td>
-                  <td className="py-3 px-4 text-center">{row.enterprise}</td>
+                  <td className="py-3 px-4 text-center">{row.core}</td>
+                  <td className="py-3 px-4 text-center font-medium">{row.assure}</td>
+                  <td className="py-3 px-4 text-center">{row.verify}</td>
                 </tr>
               ))}
             </tbody>
@@ -501,7 +454,7 @@ export default function UpgradePage() {
     <AppShell>
       <Suspense
         fallback={
-          <div className="max-w-6xl mx-auto p-12 text-center text-muted-foreground">
+          <div className="max-w-5xl mx-auto p-12 text-center text-muted-foreground">
             Loading pricing...
           </div>
         }

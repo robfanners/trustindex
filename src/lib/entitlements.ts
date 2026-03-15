@@ -154,6 +154,21 @@ export function getReportLevel(plan: string | null | undefined): "none" | "basic
 }
 
 // ---------------------------------------------------------------------------
+// Intent-Based Governance (IBG) entitlements
+// ---------------------------------------------------------------------------
+
+/** Can the user view IBG specifications? (Starter+ — read-only preview) */
+export function canViewIBG(plan: string | null | undefined): boolean {
+  return isPaidPlan(plan);
+}
+
+/** Can the user create/edit IBG specifications? (Pro+) */
+export function canManageIBG(plan: string | null | undefined): boolean {
+  const p = plan ?? "explorer";
+  return p === "pro" || p === "enterprise";
+}
+
+// ---------------------------------------------------------------------------
 // Server-only helpers (use supabaseServer — service role, bypasses RLS)
 // ---------------------------------------------------------------------------
 

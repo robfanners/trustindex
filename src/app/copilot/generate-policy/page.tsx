@@ -230,7 +230,7 @@ function GeneratePolicyContent() {
 
           {!canEditPolicy(plan) && (
             <div className="mb-4 p-3 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-800">
-              Upgrade to Pro to edit generated policies.
+              Upgrade to Verisum Assure to edit generated policies.
             </div>
           )}
 

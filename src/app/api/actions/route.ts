@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
 import { supabaseServer } from "@/lib/supabaseServer";
+import { writeAuditLog } from "@/lib/audit";
 
 // ---------------------------------------------------------------------------
 // Helper: authenticate + get org_id
@@ -168,6 +169,15 @@ export async function POST(req: NextRequest) {
       previous_value: null,
       new_value: { title, severity, status: "open" },
       updated_by: user.id,
+    });
+
+    await writeAuditLog({
+      organisationId: orgId,
+      entityType: "action",
+      entityId: action.id,
+      actionType: "created",
+      performedBy: user.id,
+      metadata: { title, severity, source_type: sourceType },
     });
 
     return NextResponse.json({ action }, { status: 201 });

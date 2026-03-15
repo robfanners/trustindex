@@ -29,7 +29,7 @@ export default function AppShell({ children }: AppShellProps) {
     if (isAdminOrDashboard) {
       items.push(
         {
-          label: "Survey Dashboard",
+          label: "Manage Survey",
           href: runId ? `/admin/run/${runId}` : "/?resume=admin",
           isActive: runId ? pathname === `/admin/run/${runId}` : false,
         },

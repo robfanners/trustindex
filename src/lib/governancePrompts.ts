@@ -20,6 +20,8 @@ export type WizardResponses = {
     incidentProcess: string;
     vendorAssessment: string;
     namedResponsible: string;
+    hasDefinedIntents: string;
+    definesBlastRadius: string;
   };
 };
 
@@ -70,6 +72,7 @@ The statement should include:
 4. Planned improvements (based on "no" or "partial" answers — frame positively)
 5. Named governance responsibility status
 6. Regulatory alignment note (${w.company.jurisdiction} framework)
+7. Intent-Based Governance\u2122 posture — whether authorised goals, decision authorities, and blast radius constraints have been defined for AI systems (based on: intents defined = ${w.controls.hasDefinedIntents || "not assessed"}, blast radius defined = ${w.controls.definesBlastRadius || "not assessed"})
 
 End with the version number and date.`;
 }
@@ -107,6 +110,10 @@ Handles personal/sensitive data: ${hasHighRiskData ? "Yes" : "No"}
 Current Control Posture:
 ${controlSummary}
 
+Additional context:
+- Intent-Based Governance\u2122 defined: ${w.controls.hasDefinedIntents || "not assessed"}
+- Blast radius constraints defined: ${w.controls.definesBlastRadius || "not assessed"}
+
 For each gap:
 1. Name the gap (e.g., "No formal AI usage policy")
 2. Classify as RED (critical), AMBER (important), or GREEN (adequate)
@@ -114,7 +121,13 @@ For each gap:
 4. Provide a specific, practical recommendation achievable in 30 days
 5. Note the relevant regulatory reference (EU AI Act article or UK framework section)
 
-Format as a numbered list with clear headings. Include a summary table at the top showing area → status (RED/AMBER/GREEN).`;
+Include an assessment of Intent-Based Governance\u2122 maturity:
+- Flag as RED if no authorised goals or blast radius constraints are defined for any AI systems
+- Flag as AMBER if partially defined (some systems covered, or only some IBG components defined)
+- Flag as GREEN if all active AI systems have complete IBG specifications with authorised goals, decision authorities, and blast radius constraints
+- Reference EU AI Act Article 9 (risk management) and Article 11 (technical documentation) as regulatory drivers for IBG
+
+Format as a numbered list with clear headings. Include a summary table at the top showing area \u2192 status (RED/AMBER/GREEN).`;
 }
 
 function formatControlKey(key: string): string {
@@ -127,6 +140,8 @@ function formatControlKey(key: string): string {
     incidentProcess: "Incident response process",
     vendorAssessment: "Vendor assessment before adoption",
     namedResponsible: "Named person responsible for AI governance",
+    hasDefinedIntents: "Intent-Based Governance\u2122 (authorised goals and boundaries defined)",
+    definesBlastRadius: "Blast radius constraints defined for AI systems",
   };
   return labels[key] ?? key;
 }

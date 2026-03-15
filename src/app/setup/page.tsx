@@ -131,6 +131,28 @@ const CONTROL_QUESTIONS = [
       { value: "no", label: "No" },
     ],
   },
+  {
+    key: "hasDefinedIntents",
+    question:
+      "Have you defined authorised goals and boundaries (Intent-Based Governance\u2122) for your AI systems?",
+    shortLabel: "Intent-Based Governance\u2122",
+    options: [
+      { value: "yes", label: "Yes \u2014 goals, action spaces, and blast radius defined" },
+      { value: "partial", label: "Partially \u2014 some elements defined" },
+      { value: "no", label: "No" },
+    ],
+  },
+  {
+    key: "definesBlastRadius",
+    question:
+      "Have you defined blast radius constraints (how far each AI system\u2019s effects can propagate)?",
+    shortLabel: "Blast radius constraints",
+    options: [
+      { value: "yes", label: "Yes" },
+      { value: "partial", label: "For some systems" },
+      { value: "no", label: "No" },
+    ],
+  },
 ];
 
 export default function SetupPage() {
@@ -139,6 +161,8 @@ export default function SetupPage() {
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [generateStatus, setGenerateStatus] = useState("");
+  const [generateError, setGenerateError] = useState("");
   const [wizardId, setWizardId] = useState<string | null>(null);
 
   // Step 1: Company profile
@@ -164,6 +188,8 @@ export default function SetupPage() {
     incidentProcess: "",
     vendorAssessment: "",
     namedResponsible: "",
+    hasDefinedIntents: "",
+    definesBlastRadius: "",
   });
 
   // Load existing wizard data on mount
@@ -213,9 +239,17 @@ export default function SetupPage() {
     );
   }
 
-  if (!user || !profile) {
+  if (!user) {
     router.push("/auth/login");
     return null;
+  }
+  if (!profile) {
+    // Profile still loading after auth — show spinner, don't redirect
+    return (
+      <AuthenticatedShell>
+        <div className="max-w-2xl mx-auto p-8 text-center text-muted-foreground">Loading...</div>
+      </AuthenticatedShell>
+    );
   }
 
   if (!canAccessWizard(profile.plan)) {
@@ -276,38 +310,57 @@ export default function SetupPage() {
   }
 
   async function handleGenerate() {
-    if (!wizardId) {
-      await saveProgress();
-    }
     setGenerating(true);
+    setGenerateError("");
+    setGenerateStatus("Saving your responses...");
     try {
+      // Ensure wizard is saved first
+      let currentWizardId = wizardId;
+      if (!currentWizardId) {
+        const saveRes = await fetch("/api/wizard", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ responses: buildResponses() }),
+        });
+        if (!saveRes.ok) {
+          setGenerateError("Failed to save your responses. Please try again.");
+          return;
+        }
+        const saveData = await saveRes.json();
+        currentWizardId = saveData.wizard.id;
+        setWizardId(currentWizardId);
+      }
+
       // Complete the wizard
+      setGenerateStatus("Completing setup...");
       const completeRes = await fetch("/api/wizard/complete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ wizardId }),
+        body: JSON.stringify({ wizardId: currentWizardId }),
       });
       if (!completeRes.ok) {
-        alert("Failed to complete wizard. Please try again.");
+        setGenerateError("Failed to complete wizard. Please try again.");
         return;
       }
 
-      // Trigger pack generation
+      // Trigger pack generation (this is the slow step — AI generation)
+      setGenerateStatus("Generating your governance pack — this may take a minute or two. Please do not navigate away.");
       const packRes = await fetch("/api/governance-pack/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ wizardId }),
+        body: JSON.stringify({ wizardId: currentWizardId }),
       });
       if (packRes.ok) {
         router.push("/dashboard#copilot");
       } else {
-        const err = await packRes.json();
-        alert(err.error || "Pack generation failed. Please try again.");
+        const err = await packRes.json().catch(() => ({ error: "Pack generation failed." }));
+        setGenerateError(err.error || "Pack generation failed. Please try again.");
       }
     } catch {
-      alert("Something went wrong. Please try again.");
+      setGenerateError("Something went wrong. Please check your connection and try again.");
     } finally {
       setGenerating(false);
+      setGenerateStatus("");
     }
   }
 
@@ -582,8 +635,15 @@ export default function SetupPage() {
             {generating && (
               <div className="text-center py-8 space-y-3">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand mx-auto" />
-                <p className="text-sm text-muted-foreground">Generating your governance pack...</p>
-                <p className="text-xs text-muted-foreground">This may take 30-60 seconds</p>
+                <p className="text-sm text-muted-foreground">
+                  {generateStatus || "Preparing..."}
+                </p>
+              </div>
+            )}
+
+            {generateError && !generating && (
+              <div className="mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
+                {generateError}
               </div>
             )}
           </div>

@@ -3,6 +3,7 @@ import { requireTier } from "@/lib/requireTier";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { hashPayload, anchorOnChain } from "@/lib/prove/chain";
 import { createApprovalSchema, approvalDecisionSchema, firstZodError } from "@/lib/validations";
+import { writeAuditLog } from "@/lib/audit";
 
 // ---------------------------------------------------------------------------
 // Helper: authenticate + check Verify tier + get org_id
@@ -94,6 +95,16 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    await writeAuditLog({
+      organisationId: orgId,
+      entityType: "approval",
+      entityId: data.id,
+      actionType: "created",
+      performedBy: user.id,
+      metadata: { title, risk_level: risk_level || "medium" },
+    });
+
     return NextResponse.json(data, { status: 201 });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Unknown error";
@@ -164,6 +175,16 @@ export async function PATCH(req: NextRequest) {
       .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    await writeAuditLog({
+      organisationId: orgId,
+      entityType: "approval",
+      entityId: approval_id,
+      actionType: "decided",
+      performedBy: user.id,
+      metadata: { decision, decision_note: decision_note || null },
+    });
+
     return NextResponse.json(data);
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Unknown error";

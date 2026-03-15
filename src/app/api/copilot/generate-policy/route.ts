@@ -79,6 +79,49 @@ export async function POST(req: Request) {
       );
     }
 
+    // Fetch active IBG specs for the org's systems to enrich policy context
+    const { data: ibgSpecs } = await sb
+      .from("ibg_specifications")
+      .select("authorised_goals, decision_authorities, blast_radius, assessment_id")
+      .eq("organisation_id", profile.organisation_id)
+      .eq("status", "active");
+
+    if (ibgSpecs && ibgSpecs.length > 0) {
+      // Fetch system names for the IBG specs
+      const assessmentIds = ibgSpecs.map((s) => s.assessment_id);
+      const { data: assessments } = await sb
+        .from("trustsys_assessments")
+        .select("id, name, type")
+        .in("id", assessmentIds);
+
+      const assessmentMap = new Map(
+        (assessments ?? []).map((a) => [a.id, a])
+      );
+
+      questionnaire.ibgSpecs = ibgSpecs.map((s) => {
+        const assessment = assessmentMap.get(s.assessment_id);
+        const goals = (s.authorised_goals as { goal: string }[]) ?? [];
+        const authorities = (s.decision_authorities as { authority: string }[]) ?? [];
+        const br = (s.blast_radius as Record<string, unknown>) ?? {};
+        const fin = br.financial_scope as { max_value?: number; currency?: string; period?: string } | undefined;
+        return {
+          systemName: assessment?.name ?? "Unknown System",
+          systemType: assessment?.type ?? "AI System",
+          authorisedGoals: goals.map((g) => g.goal),
+          decisionAuthorities: authorities.map((d) => d.authority),
+          blastRadius: {
+            entityScope: (br.entity_scope as string) || undefined,
+            financialScope: fin?.max_value
+              ? `${fin.currency ?? "GBP"} ${fin.max_value} ${fin.period ?? ""}`
+              : undefined,
+            dataScope: (br.data_scope as string[]) || undefined,
+            temporalScope: (br.temporal_scope as string) || undefined,
+            cascadeScope: (br.cascade_scope as string) || undefined,
+          },
+        };
+      });
+    }
+
     // Generate policy via LLM
     let content: string;
     try {

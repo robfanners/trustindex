@@ -39,7 +39,7 @@ export async function GET() {
 
     return NextResponse.json({
       vendors: vendors ?? [],
-      limit,
+      limit: limit === Infinity ? -1 : limit,
       count: vendors?.length ?? 0,
     });
   } catch (err: unknown) {

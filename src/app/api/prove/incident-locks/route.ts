@@ -3,6 +3,7 @@ import { requireTier } from "@/lib/requireTier";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { hashPayload, generateVerificationId, anchorOnChain } from "@/lib/prove/chain";
 import { createIncidentLockSchema, firstZodError } from "@/lib/validations";
+import { writeAuditLog } from "@/lib/audit";
 
 // ---------------------------------------------------------------------------
 // GET /api/prove/incident-locks — list incident locks for the user's org
@@ -136,6 +137,16 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    await writeAuditLog({
+      organisationId: check.orgId,
+      entityType: "incident_lock",
+      entityId: data.id,
+      actionType: "created",
+      performedBy: check.userId,
+      metadata: { incident_id, lock_reason, verification_id: verificationId },
+    });
+
     return NextResponse.json(data, { status: 201 });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Unknown error";

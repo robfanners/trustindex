@@ -2,6 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import TierGate from "@/components/TierGate";
+import PageHeader from "@/components/ui/PageHeader";
+import EmptyState from "@/components/ui/EmptyState";
+import DetailPanel from "@/components/ui/DetailPanel";
+import OnboardingTour from "@/components/ui/OnboardingTour";
+import { showActionToast } from "@/components/ui/Toast";
 
 type Approval = {
   id: string;
@@ -46,6 +51,19 @@ function capitalize(s: string) {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+const headerIcon = (
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4" />
+  </svg>
+);
+
+const tourSteps = [
+  { target: "[data-tour='page-header']", title: "Governance Approvals", content: "Create and manage sign-off gates for governance decisions with cryptographic proof." },
+  { target: "[data-tour='new-approval']", title: "Create an Approval", content: "Request governance sign-off on AI deployments, policy changes, or risk decisions." },
+  { target: "[data-tour='approvals-table']", title: "Approval History", content: "Click any row to see the full approval details and take action on pending requests." },
+];
+
 export default function ApprovalsPage() {
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [total, setTotal] = useState(0);
@@ -68,6 +86,9 @@ export default function ApprovalsPage() {
   const [newDescription, setNewDescription] = useState("");
   const [newRiskLevel, setNewRiskLevel] = useState("medium");
   const [creating, setCreating] = useState(false);
+
+  // Detail panel state
+  const [selectedItem, setSelectedItem] = useState<Approval | null>(null);
 
   const fetchApprovals = useCallback(async () => {
     setLoading(true);
@@ -110,24 +131,31 @@ export default function ApprovalsPage() {
     }
   };
 
-  const submitDecision = async () => {
-    if (!decidingId || !decidingAction) return;
+  const submitDecision = async (fromPanel?: boolean) => {
+    const targetId = fromPanel && selectedItem ? selectedItem.id : decidingId;
+    const targetAction = fromPanel ? decidingAction : decidingAction;
+    if (!targetId || !targetAction) return;
     setSubmitting(true);
     try {
       const res = await fetch("/api/prove/approvals", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          approval_id: decidingId,
-          decision: decidingAction,
+          approval_id: targetId,
+          decision: targetAction,
           decision_note: decisionNote || undefined,
         }),
       });
       if (res.ok) {
+        showActionToast("Approval " + targetAction);
         setDecidingId(null);
         setDecidingAction(null);
         setDecisionNote("");
+        setSelectedItem(null);
         await fetchApprovals();
+      } else {
+        const d = await res.json().catch(() => ({}));
+        setError(d.error || `Failed to submit decision (${res.status})`);
       }
     } finally {
       setSubmitting(false);
@@ -153,6 +181,9 @@ export default function ApprovalsPage() {
         setNewRiskLevel("medium");
         setShowNewForm(false);
         await fetchApprovals();
+      } else {
+        const d = await res.json().catch(() => ({}));
+        setError(d.error || `Failed to create approval (${res.status})`);
       }
     } finally {
       setCreating(false);
@@ -165,25 +196,22 @@ export default function ApprovalsPage() {
     <TierGate requiredTier="Verify" featureLabel="Approval Inbox">
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-brand/10 text-brand">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4" />
-              </svg>
-            </div>
-            <div>
-              <h1 className="text-2xl font-semibold">Approval Inbox</h1>
-              <p className="text-sm text-muted-foreground">Review and cryptographically sign high-risk AI actions</p>
-            </div>
-          </div>
-          <button
-            onClick={() => setShowNewForm((v) => !v)}
-            className="px-3 py-1.5 text-sm font-medium rounded-lg bg-brand text-white hover:bg-brand/90 transition-colors"
-          >
-            {showNewForm ? "Cancel" : "New Approval"}
-          </button>
+        <div data-tour="page-header">
+          <PageHeader
+            icon={headerIcon}
+            title="Approvals"
+            description="Sign-off gates for governance decisions — human-verified approvals with cryptographic proof"
+            workflowHint={[{ label: "Approvals", href: "/prove/approvals" }]}
+            actions={
+              <button
+                data-tour="new-approval"
+                onClick={() => setShowNewForm((v) => !v)}
+                className="px-3 py-1.5 text-sm font-medium rounded-lg bg-brand text-white hover:bg-brand/90 transition-colors"
+              >
+                {showNewForm ? "Cancel" : "New Approval"}
+              </button>
+            }
+          />
         </div>
 
         {/* New Approval Form */}
@@ -277,12 +305,16 @@ export default function ApprovalsPage() {
         {loading ? (
           <div className="text-sm text-muted-foreground py-8 text-center">Loading approvals...</div>
         ) : approvals.length === 0 ? (
-          <div className="border border-dashed border-border rounded-xl p-12 text-center">
-            <p className="text-sm text-muted-foreground">No approvals found</p>
-          </div>
+          <EmptyState
+            icon={headerIcon}
+            title="No approval requests yet"
+            description="Create an approval request to get governance sign-off on AI deployments, policy changes, or risk decisions."
+            ctaLabel="Create an approval request"
+            ctaAction={() => setShowNewForm(true)}
+          />
         ) : (
           <>
-            <div className="border border-border rounded-lg overflow-hidden">
+            <div className="border border-border rounded-lg overflow-hidden" data-tour="approvals-table">
               <table className="w-full text-sm">
                 <thead className="bg-muted/50">
                   <tr>
@@ -296,7 +328,7 @@ export default function ApprovalsPage() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {approvals.map((approval) => (
-                    <tr key={approval.id} className="hover:bg-muted/30 transition-colors">
+                    <tr key={approval.id} className="hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => setSelectedItem(approval)}>
                       <td className="px-4 py-3 align-top">
                         {new Date(approval.created_at).toLocaleDateString()}
                       </td>
@@ -337,7 +369,7 @@ export default function ApprovalsPage() {
                           <span className="text-xs text-muted-foreground">{"\u2014"}</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 align-top">
+                      <td className="px-4 py-3 align-top" onClick={(e) => e.stopPropagation()}>
                         {approval.status === "pending" ? (
                           <div className="space-y-2">
                             <div className="flex gap-1.5">
@@ -372,7 +404,7 @@ export default function ApprovalsPage() {
                                   className="flex-1 px-2 py-1 text-xs rounded border border-border bg-background"
                                 />
                                 <button
-                                  onClick={submitDecision}
+                                  onClick={() => submitDecision()}
                                   disabled={submitting}
                                   className="px-2.5 py-1 text-xs font-medium rounded bg-brand text-white hover:bg-brand/90 transition-colors disabled:opacity-40"
                                 >
@@ -419,6 +451,116 @@ export default function ApprovalsPage() {
             )}
           </>
         )}
+
+        {/* Detail Panel */}
+        <DetailPanel
+          open={!!selectedItem}
+          onClose={() => setSelectedItem(null)}
+          title={selectedItem?.title ?? ""}
+          subtitle="Approval Request"
+          badge={
+            selectedItem ? (
+              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${riskBadge[selectedItem.risk_level] ?? "bg-gray-100 text-gray-800"}`}>
+                {capitalize(selectedItem.risk_level)}
+              </span>
+            ) : undefined
+          }
+          actions={
+            selectedItem?.status === "pending" ? (
+              <div className="flex items-center gap-2 w-full">
+                <input
+                  type="text"
+                  value={decisionNote}
+                  onChange={(e) => setDecisionNote(e.target.value)}
+                  placeholder="Decision note (optional)"
+                  className="flex-1 px-3 py-1.5 text-sm rounded-lg border border-border bg-background"
+                />
+                <button
+                  onClick={() => { setDecidingAction("approved"); setDecidingId(selectedItem.id); setTimeout(() => submitDecision(true), 0); }}
+                  disabled={submitting}
+                  className="px-3 py-1.5 text-sm font-medium rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors disabled:opacity-40"
+                >
+                  Approve
+                </button>
+                <button
+                  onClick={() => { setDecidingAction("rejected"); setDecidingId(selectedItem.id); setTimeout(() => submitDecision(true), 0); }}
+                  disabled={submitting}
+                  className="px-3 py-1.5 text-sm font-medium rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-40"
+                >
+                  Reject
+                </button>
+              </div>
+            ) : undefined
+          }
+        >
+          {selectedItem && (
+            <div className="space-y-4">
+              {selectedItem.description && (
+                <div>
+                  <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Description</dt>
+                  <dd className="text-sm">{selectedItem.description}</dd>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Risk Level</dt>
+                  <dd>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${riskBadge[selectedItem.risk_level] ?? "bg-gray-100 text-gray-800"}`}>
+                      {capitalize(selectedItem.risk_level)}
+                    </span>
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Status</dt>
+                  <dd>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusBadge[selectedItem.status] ?? "bg-gray-100 text-gray-800"}`}>
+                      {capitalize(selectedItem.status)}
+                    </span>
+                  </dd>
+                </div>
+                {selectedItem.requested_by && (
+                  <div>
+                    <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Requested By</dt>
+                    <dd className="text-sm font-mono text-xs">{selectedItem.requested_by}</dd>
+                  </div>
+                )}
+                <div>
+                  <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Created At</dt>
+                  <dd className="text-sm">{new Date(selectedItem.created_at).toLocaleString()}</dd>
+                </div>
+              </div>
+
+              {selectedItem.decided_at && (
+                <div className="border-t border-border pt-4 space-y-3">
+                  <h4 className="text-sm font-medium">Decision</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Decision</dt>
+                      <dd>
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusBadge[selectedItem.status] ?? "bg-gray-100 text-gray-800"}`}>
+                          {capitalize(selectedItem.status)}
+                        </span>
+                      </dd>
+                    </div>
+                    {selectedItem.decision_note && (
+                      <div>
+                        <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Decision Note</dt>
+                        <dd className="text-sm">{selectedItem.decision_note}</dd>
+                      </div>
+                    )}
+                    <div>
+                      <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Decided At</dt>
+                      <dd className="text-sm">{new Date(selectedItem.decided_at).toLocaleString()}</dd>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </DetailPanel>
+
+        <OnboardingTour tourId="approvals" steps={tourSteps} />
       </div>
     </TierGate>
   );

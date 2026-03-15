@@ -495,7 +495,7 @@ function SurveyManageContent() {
     .join("\n");
   const manageUrl = `${window.location.origin}/dashboard/surveys/${runId}`;
   const resultsUrl = `${window.location.origin}${resultsHref}`;
-  const linkPack = `Survey Dashboard: ${manageUrl}\nResults: ${resultsUrl}\n\nSurvey links:\n${surveyLinks}`;
+  const linkPack = `Manage Survey: ${manageUrl}\nResults: ${resultsUrl}\n\nSurvey links:\n${surveyLinks}`;
 
   const formatCounts = (items: Array<string | null | undefined>) => {
     const counts = new Map<string, number>();
@@ -528,7 +528,7 @@ function SurveyManageContent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl md:text-3xl font-bold">Survey Dashboard</h1>
+      <h1 className="text-2xl md:text-3xl font-bold">Manage Survey</h1>
 
       {/* Survey info */}
       <div className="border border-border rounded-lg p-6 space-y-2">
@@ -896,7 +896,7 @@ function SurveyManageContent() {
               className="inline-block px-4 py-2 rounded bg-brand text-white text-sm font-semibold hover:bg-brand-hover"
               href="/upgrade"
             >
-              Upgrade to Pro
+              Upgrade to Verisum Assure
             </a>
           </>
         )}

@@ -18,6 +18,7 @@ import {
   type DriftResult,
   type StabilityStatus,
 } from "@/lib/assessmentLifecycle";
+import ExportMenu from "@/components/ui/ExportMenu";
 import {
   Radar,
   RadarChart,
@@ -250,7 +251,7 @@ function ResultsContent() {
   }));
 
   return (
-    <div className="max-w-4xl space-y-8">
+    <div id="trustsys-results-content" className="max-w-4xl space-y-8">
       {/* Header with version selector */}
       <header className="space-y-3">
         <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -556,7 +557,7 @@ function ResultsContent() {
         </div>
       </div>
 
-      {/* Actions bar */}
+      {/* Actions & Export bar */}
       <div className="flex items-center gap-3 flex-wrap">
         <Link
           href={`/trustsys/${assessmentId}/assess`}
@@ -570,56 +571,50 @@ function ResultsContent() {
         >
           Back to assessments
         </Link>
-        {exportAllowed && (
-          <button
-            type="button"
-            className="px-4 py-2 rounded-lg border border-border text-sm font-medium text-muted-foreground hover:text-foreground hover:border-foreground transition-colors"
-            onClick={() => {
-              if (!currentRun || !assessment) return;
+        <div className="ml-auto">
+          <ExportMenu
+            elementId="trustsys-results-content"
+            filename={`trustsys_${assessment?.name.replace(/\s+/g, "_") ?? "assessment"}_v${currentRun?.version_number ?? 1}`}
+            planAllowsExport={exportAllowed}
+            csvData={
+              currentRun && assessment
+                ? () => {
+                    const dimScoresLocal = currentRun.dimension_scores ?? {};
+                    const flagsLocal = (currentRun.risk_flags ?? []) as RiskFlag[];
 
-              const dimScoresLocal = currentRun.dimension_scores ?? {};
-              const flagsLocal = (currentRun.risk_flags ?? []) as RiskFlag[];
+                    const rows: string[][] = [
+                      ["TrustSys Assessment Export"],
+                      ["Assessment", assessment.name],
+                      ["Version", `v${currentRun.version_number}`],
+                      ["Status", currentRun.status],
+                      ["Overall Score", String(currentRun.overall_score ?? "N/A")],
+                      ["Stability", currentRun.stability_status || "provisional"],
+                      ["Completed", currentRun.completed_at ? new Date(currentRun.completed_at).toLocaleDateString("en-GB") : "N/A"],
+                      [],
+                      ["Dimension Scores"],
+                      ["Dimension", "Score"],
+                      ...SYSTEM_DIMENSIONS.map((dim) => [dim, String(dimScoresLocal[dim] ?? 0)]),
+                      [],
+                      ["Risk Flags"],
+                      ["Code", "Label", "Description"],
+                      ...flagsLocal.map((f) => [f.code, f.label, f.description]),
+                      [],
+                      ["Recommendations"],
+                      ["Dimension", "Control", "Priority", "Recommendation"],
+                      ...recommendations.map((r) => [r.dimension, r.control, r.priority, r.recommendation]),
+                    ];
 
-              const rows: string[][] = [
-                ["TrustSys Assessment Export"],
-                ["Assessment", assessment.name],
-                ["Version", `v${currentRun.version_number}`],
-                ["Status", currentRun.status],
-                ["Overall Score", String(currentRun.overall_score ?? "N/A")],
-                ["Stability", currentRun.stability_status || "provisional"],
-                ["Completed", currentRun.completed_at ? new Date(currentRun.completed_at).toLocaleDateString("en-GB") : "N/A"],
-                [],
-                ["Dimension Scores"],
-                ["Dimension", "Score"],
-                ...SYSTEM_DIMENSIONS.map((dim) => [dim, String(dimScoresLocal[dim] ?? 0)]),
-                [],
-                ["Risk Flags"],
-                ["Code", "Label", "Description"],
-                ...flagsLocal.map((f) => [f.code, f.label, f.description]),
-                [],
-                ["Recommendations"],
-                ["Dimension", "Control", "Priority", "Recommendation"],
-                ...recommendations.map((r) => [r.dimension, r.control, r.priority, r.recommendation]),
-              ];
-
-              const csv = rows
-                .map((row) =>
-                  row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")
-                )
-                .join("\n");
-
-              const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement("a");
-              a.href = url;
-              a.download = `trustsys_${assessment.name.replace(/\s+/g, "_")}_v${currentRun.version_number}.csv`;
-              a.click();
-              URL.revokeObjectURL(url);
-            }}
-          >
-            Export CSV
-          </button>
-        )}
+                    return rows
+                      .map((row) =>
+                        row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")
+                      )
+                      .join("\n");
+                  }
+                : undefined
+            }
+            emailSubject={`Verisum TrustSys Report — ${assessment?.name ?? "Assessment"}`}
+          />
+        </div>
       </div>
     </div>
   );

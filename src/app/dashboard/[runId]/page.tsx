@@ -377,11 +377,11 @@ setInvites((inviteData as InviteRow[]) || []);
           <div className="text-sm text-muted-foreground">
             <span className="font-medium">Need to share or chase responses?</span>{" "}
             <a className="text-brand underline" href={adminHref}>
-              Open Survey Dashboard
+              Manage Survey
             </a>
           </div>
           <a className="text-brand underline" href={adminHref}>
-            Back to Survey Dashboard
+            Back to Manage Survey
           </a>
         </div>
       </AppShell>
@@ -437,12 +437,12 @@ if (!trust) {
         <div className="text-sm text-muted-foreground">
           <span className="font-medium">Need to share or chase responses?</span>{" "}
           <a className="text-brand underline" href={adminHref}>
-            Open Survey Dashboard
+            Manage Survey
           </a>
         </div>
 
 	<a className="text-brand underline" href={adminHref}>
-          Back to Survey Dashboard
+          Back to Manage Survey
         </a>
       </div>
     </AppShell>
@@ -587,7 +587,7 @@ if (!trust) {
               Mode: {run?.mode ?? "—"} · Respondents: {counts?.respondents ?? 0}
             </div>
             <a className="text-brand underline whitespace-nowrap" href={adminHref}>
-              Back to Survey Dashboard
+              Back to Manage Survey
             </a>
           </div>
         </header>
@@ -691,7 +691,7 @@ if (!trust) {
             </button>
             {exportStatus && <div className="text-sm text-muted-foreground">{exportStatus}</div>}
             <div className="text-xs text-muted-foreground">
-              Admin view only (set when opened from Survey Dashboard).
+              Admin view only (set when opened from Manage Survey).
             </div>
           </div>
         )}
@@ -941,7 +941,7 @@ if (!trust) {
         <div className="text-sm text-muted-foreground">
           <span className="font-medium">Need to share or chase responses?</span>{" "}
           <a className="text-brand underline" href={adminHref}>
-            Open Survey Dashboard
+            Manage Survey
           </a>
         </div>
       </div>

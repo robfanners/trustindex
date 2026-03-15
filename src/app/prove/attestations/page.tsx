@@ -2,6 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import TierGate from "@/components/TierGate";
+import PageHeader from "@/components/ui/PageHeader";
+import EmptyState from "@/components/ui/EmptyState";
+import DetailPanel from "@/components/ui/DetailPanel";
+import OnboardingTour from "@/components/ui/OnboardingTour";
+import { showActionToast } from "@/components/ui/Toast";
 
 type Attestation = {
   id: string;
@@ -25,16 +30,31 @@ const chainStatusBadge: Record<string, string> = {
   pending: "bg-amber-100 text-amber-800",
 };
 
+const headerIcon = (
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 21h14M12 17V9m-3 8h6l1-4H8l1 4zM9 9a3 3 0 116 0" />
+  </svg>
+);
+
+const tourSteps = [
+  { target: "[data-tour='page-header']", title: "Governance Attestations", content: "Create cryptographically signed governance statements that prove your compliance posture at a point in time." },
+  { target: "[data-tour='new-attestation']", title: "Issue an Attestation", content: "Sign a governance statement. It will receive a unique verification ID and event hash." },
+  { target: "[data-tour='attestations-table']", title: "Attestation History", content: "Click any row to see the full statement, posture snapshot, and chain status." },
+  { target: "[data-tour='workflow-hint']", title: "Share & Verify", content: "Share attestations with third parties via Trust Exchange, who can verify them in the Verification Portal." },
+];
+
 export default function AttestationsPage() {
   const [attestations, setAttestations] = useState<Attestation[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [statement, setStatement] = useState("");
   const [page, setPage] = useState(1);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [selectedItem, setSelectedItem] = useState<Attestation | null>(null);
   const perPage = 20;
 
   const fetchAttestations = useCallback(async () => {
@@ -62,6 +82,7 @@ export default function AttestationsPage() {
   const handleSubmit = async () => {
     if (!title.trim() || !statement.trim()) return;
     setSubmitting(true);
+    setError(null);
     try {
       const res = await fetch("/api/prove/attestations", {
         method: "POST",
@@ -69,12 +90,19 @@ export default function AttestationsPage() {
         body: JSON.stringify({ title: title.trim(), statement: statement.trim() }),
       });
       if (res.ok) {
+        const data = await res.json();
         setTitle("");
         setStatement("");
         setShowForm(false);
         setPage(1);
         await fetchAttestations();
+        showActionToast("Attestation issued — " + (data.verification_id ?? ""));
+      } else {
+        const d = await res.json().catch(() => ({}));
+        setError(d.error || `Failed to issue attestation (${res.status})`);
       }
+    } catch {
+      setError("Network error — please try again");
     } finally {
       setSubmitting(false);
     }
@@ -96,26 +124,28 @@ export default function AttestationsPage() {
     <TierGate requiredTier="Verify" featureLabel="Attestations">
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-brand/10 text-brand">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 21h14M12 17V9m-3 8h6l1-4H8l1 4zM9 9a3 3 0 116 0" />
-              </svg>
-            </div>
-            <div>
-              <h1 className="text-2xl font-semibold">Attestations</h1>
-              <p className="text-sm text-muted-foreground">Build and issue signed governance attestations</p>
-            </div>
-          </div>
-          {!showForm && (
-            <button
-              onClick={() => setShowForm(true)}
-              className="px-4 py-2 text-sm font-medium rounded-lg bg-brand text-white hover:bg-brand/90 transition-colors"
-            >
-              New Attestation
-            </button>
-          )}
+        <div data-tour="page-header">
+          <PageHeader
+            icon={headerIcon}
+            title="Attestations"
+            description="Governance statements with cryptographic proof — signed declarations of your compliance posture"
+            workflowHint={[
+              { label: "Attestations", href: "/prove/attestations" },
+              { label: "Exchanges", href: "/prove/exchanges" },
+              { label: "Verification", href: "/prove/verification" },
+            ]}
+            actions={
+              !showForm ? (
+                <button
+                  data-tour="new-attestation"
+                  onClick={() => setShowForm(true)}
+                  className="px-4 py-2 text-sm font-medium rounded-lg bg-brand text-white hover:bg-brand/90 transition-colors"
+                >
+                  New Attestation
+                </button>
+              ) : undefined
+            }
+          />
         </div>
 
         {/* Inline Form */}
@@ -169,16 +199,26 @@ export default function AttestationsPage() {
           </div>
         )}
 
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 text-sm">
+            {error}
+          </div>
+        )}
+
         {/* Content */}
         {loading ? (
           <div className="text-sm text-muted-foreground py-8 text-center">Loading attestations...</div>
         ) : attestations.length === 0 ? (
-          <div className="border border-dashed border-border rounded-xl p-12 text-center">
-            <p className="text-sm text-muted-foreground">No attestations issued yet</p>
-          </div>
+          <EmptyState
+            icon={headerIcon}
+            title="No attestations issued yet"
+            description="Issue a signed governance attestation to create a verifiable proof of your compliance posture. Attestations can be shared via Trust Exchange."
+            ctaLabel="Issue your first attestation"
+            ctaAction={() => setShowForm(true)}
+          />
         ) : (
           <>
-            <div className="border border-border rounded-lg overflow-hidden">
+            <div className="border border-border rounded-lg overflow-hidden" data-tour="attestations-table">
               <table className="w-full text-sm">
                 <thead className="bg-muted/50">
                   <tr>
@@ -191,7 +231,7 @@ export default function AttestationsPage() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {attestations.map((att) => (
-                    <tr key={att.id} className="hover:bg-muted/30 transition-colors">
+                    <tr key={att.id} className="hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => setSelectedItem(att)}>
                       <td className="px-4 py-3">{new Date(att.attested_at).toLocaleDateString()}</td>
                       <td className="px-4 py-3 font-medium">{att.title}</td>
                       <td className="px-4 py-3">
@@ -200,7 +240,7 @@ export default function AttestationsPage() {
                             {att.verification_id}
                           </span>
                           <button
-                            onClick={() => copyVerificationId(att.verification_id)}
+                            onClick={(e) => { e.stopPropagation(); copyVerificationId(att.verification_id); }}
                             title="Copy verification ID"
                             className="p-0.5 rounded hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
                           >
@@ -261,6 +301,80 @@ export default function AttestationsPage() {
             )}
           </>
         )}
+
+        {/* Detail Panel */}
+        <DetailPanel
+          open={!!selectedItem}
+          onClose={() => setSelectedItem(null)}
+          title={selectedItem?.title ?? ""}
+          subtitle="Attestation"
+          actions={
+            selectedItem ? (
+              <button
+                onClick={() => copyVerificationId(selectedItem.verification_id)}
+                className="px-3 py-1.5 text-sm font-medium rounded-lg border border-border hover:bg-muted/50 transition-colors"
+              >
+                {copiedId === selectedItem.verification_id ? "Copied!" : "Copy Verification ID"}
+              </button>
+            ) : undefined
+          }
+        >
+          {selectedItem && (
+            <div className="space-y-4">
+              <div>
+                <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Statement</dt>
+                <dd className="text-sm whitespace-pre-wrap">{selectedItem.statement}</dd>
+              </div>
+
+              {selectedItem.posture_snapshot != null && typeof selectedItem.posture_snapshot === "object" ? (
+                <div>
+                  <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Posture Snapshot</dt>
+                  <dd className="text-sm space-y-1">
+                    {Object.entries(selectedItem.posture_snapshot as Record<string, unknown>).map(([key, value]) => (
+                      <div key={key} className="flex gap-2">
+                        <span className="font-medium text-muted-foreground">{key}:</span>
+                        <span>{String(value)}</span>
+                      </div>
+                    ))}
+                  </dd>
+                </div>
+              ) : null}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Verification ID</dt>
+                  <dd className="flex items-center text-sm">
+                    <code className="font-mono text-xs bg-muted/50 px-2 py-0.5 rounded">{selectedItem.verification_id}</code>
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Event Hash</dt>
+                  <dd className="text-sm font-mono text-xs" title={selectedItem.event_hash}>
+                    {selectedItem.event_hash.slice(0, 16)}...
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Chain Status</dt>
+                  <dd>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${chainStatusBadge[selectedItem.chain_status] ?? "bg-gray-100 text-gray-600"}`}>
+                      {selectedItem.chain_status.charAt(0).toUpperCase() + selectedItem.chain_status.slice(1)}
+                    </span>
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Attested By</dt>
+                  <dd className="text-sm font-mono text-xs">{selectedItem.attested_by}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Created At</dt>
+                  <dd className="text-sm">{new Date(selectedItem.created_at).toLocaleString()}</dd>
+                </div>
+              </div>
+            </div>
+          )}
+        </DetailPanel>
+
+        <OnboardingTour tourId="attestations" steps={tourSteps} />
       </div>
     </TierGate>
   );

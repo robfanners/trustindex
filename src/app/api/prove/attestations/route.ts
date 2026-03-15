@@ -3,6 +3,7 @@ import { requireTier } from "@/lib/requireTier";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { hashPayload, generateVerificationId, anchorOnChain } from "@/lib/prove/chain";
 import { createAttestationSchema, firstZodError } from "@/lib/validations";
+import { writeAuditLog } from "@/lib/audit";
 
 export async function GET(req: NextRequest) {
   const check = await requireTier("Verify");
@@ -82,5 +83,15 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  await writeAuditLog({
+    organisationId: check.orgId,
+    entityType: "attestation",
+    entityId: data.id,
+    actionType: "created",
+    performedBy: check.userId,
+    metadata: { title, verification_id: verificationId },
+  });
+
   return NextResponse.json(data, { status: 201 });
 }

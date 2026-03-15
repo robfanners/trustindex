@@ -174,7 +174,7 @@ async function copyText(label: string, text: string) {
             <h2 className="text-lg font-semibold">Survey created — next steps</h2>
             <div className="text-sm text-muted-foreground mb-4">
               Your survey is live.
-              Use the Survey Dashboard to share links, track responses in real time, and view results as they emerge.
+              Use the Manage Survey page to share links, track responses in real time, and view results as they emerge.
             </div>
             <div className="space-y-2">
               <div className="text-sm font-semibold text-muted-foreground">Admin code</div>
@@ -197,7 +197,7 @@ async function copyText(label: string, text: string) {
                 className="px-5 py-3 rounded bg-brand text-white font-semibold hover:bg-brand-hover inline-block"
                 href={`/api/auth-owner?runId=${encodeURIComponent(result.runId)}&ownerToken=${encodeURIComponent(result.ownerToken)}&next=${encodeURIComponent(`/admin/run/${result.runId}`)}`}
               >
-                Open Survey Dashboard
+                Manage Survey
               </a>
             </div>
             {copied && <div className="text-sm text-success">{copied}</div>}
@@ -226,7 +226,7 @@ async function copyText(label: string, text: string) {
                     onClick={() =>
                       copyText(
                         "Links copied",
-                        `Survey Dashboard: ${window.location.origin}/admin/run/${result.runId}\nResults: ${window.location.origin}${result.dashboardLink}\n\nSurvey link:\n${window.location.origin}${result.surveyLinks[0]}`
+                        `Manage Survey: ${window.location.origin}/admin/run/${result.runId}\nResults: ${window.location.origin}${result.dashboardLink}\n\nSurvey link:\n${window.location.origin}${result.surveyLinks[0]}`
                       )
                     }
                   >
@@ -240,7 +240,7 @@ async function copyText(label: string, text: string) {
                       encodeURIComponent(`Verisum links – ${runTitle}`) +
                       "&body=" +
                       encodeURIComponent(
-                        `Survey Dashboard: ${window.location.origin}/admin/run/${result.runId}\nResults: ` +
+                        `Manage Survey: ${window.location.origin}/admin/run/${result.runId}\nResults: ` +
                           `${window.location.origin}${result.dashboardLink}\n\nSurvey link:\n` +
                           `${window.location.origin}${result.surveyLinks[0]}`
                       )

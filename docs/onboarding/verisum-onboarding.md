@@ -20,7 +20,7 @@ Enterprise GRC platforms cost six figures and take months to implement. Consulta
 - **TrustOrg:** Organisation-level AI governance assessments
 - **TrustSys:** Individual AI system risk assessments
 - **AI Governance Copilot:** Policy generator, staff declaration portal, vendor register, incident logging, regulatory feed, monthly compliance reports
-- **Live at:** https://trustindex.verisum.org
+- **Live at:** https://app.verisum.org
 
 ### Three Revenue Streams
 1. **SaaS subscriptions** (primary) — Explorer (free), Starter (£79/mo), Pro (£199/mo), Enterprise (custom)

@@ -36,9 +36,10 @@ function capitalize(s: string) {
 
 export default function VendorsPage() {
   const [vendors, setVendors] = useState<Vendor[]>([]);
-  const [limit, setLimit] = useState(0);
+  const [limit, setLimit] = useState<number>(-1); // default unlimited until API confirms
   const [count, setCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Filters (client-side)
   const [riskFilter, setRiskFilter] = useState("");
@@ -59,14 +60,21 @@ export default function VendorsPage() {
 
   const fetchVendors = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch("/api/vendors");
+      const data = await res.json();
       if (res.ok) {
-        const data = await res.json();
         setVendors(data.vendors ?? []);
-        setLimit(data.limit ?? 0);
+        setLimit(data.limit ?? -1);
         setCount(data.count ?? 0);
+      } else {
+        console.error("Vendors API error:", data.error);
+        setError(data.error ?? "Failed to load vendors");
       }
+    } catch (err) {
+      console.error("Vendors fetch error:", err);
+      setError("Failed to connect to vendors API");
     } finally {
       setLoading(false);
     }
@@ -100,7 +108,8 @@ export default function VendorsPage() {
     (v) => !v.risk_category || v.risk_category === "unassessed"
   ).length;
 
-  const atLimit = count >= limit;
+  const unlimited = limit === -1;
+  const atLimit = !unlimited && count >= limit;
 
   async function handleAddVendor(e: React.FormEvent) {
     e.preventDefault();
@@ -185,7 +194,13 @@ export default function VendorsPage() {
             Plan Limit
           </p>
           <p className="text-2xl font-semibold mt-1">
-            {count} <span className="text-base font-normal text-muted-foreground">of {limit}</span>
+            {limit === 0 ? (
+              <span className="text-base font-normal text-amber-600">Upgrade required</span>
+            ) : unlimited ? (
+              <><span>{count}</span> <span className="text-base font-normal text-muted-foreground">Unlimited</span></>
+            ) : (
+              <>{count} <span className="text-base font-normal text-muted-foreground">of {limit}</span></>
+            )}
           </p>
         </div>
       </div>
@@ -224,13 +239,25 @@ export default function VendorsPage() {
 
       {/* Add vendor button + collapsible form */}
       <div>
-        <button
-          onClick={() => setShowForm((s) => !s)}
-          disabled={atLimit}
-          className="px-4 py-2 rounded-lg bg-brand text-white text-sm font-medium hover:bg-brand/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {atLimit ? "Limit reached" : "Add Vendor"}
-        </button>
+        {limit === 0 && !unlimited ? (
+          <a
+            href="/upgrade"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-amber-500 text-white text-sm font-medium hover:bg-amber-600 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+            </svg>
+            Upgrade to add vendors
+          </a>
+        ) : (
+          <button
+            onClick={() => setShowForm((s) => !s)}
+            disabled={atLimit}
+            className="px-4 py-2 rounded-lg bg-brand text-white text-sm font-medium hover:bg-brand/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {atLimit ? "Limit reached" : "Add Vendor"}
+          </button>
+        )}
 
         {showForm && !atLimit && (
           <form
@@ -320,6 +347,13 @@ export default function VendorsPage() {
       {loading ? (
         <div className="text-sm text-muted-foreground py-8 text-center">
           Loading vendors...
+        </div>
+      ) : error ? (
+        <div className="border border-red-200 bg-red-50 rounded-xl p-8 text-center">
+          <p className="text-sm text-red-600">{error}</p>
+          <button onClick={fetchVendors} className="mt-3 text-sm text-brand hover:underline">
+            Try again
+          </button>
         </div>
       ) : filtered.length === 0 && !riskFilter && !sourceFilter ? (
         <div className="border border-dashed border-border rounded-xl p-12 text-center">

@@ -56,7 +56,7 @@ function LockedOverlay({ children, label }: { children: React.ReactNode; label: 
             href="/upgrade"
             className="inline-block text-xs px-3 py-1.5 rounded bg-brand text-white hover:bg-brand-hover transition-colors pointer-events-auto"
           >
-            Upgrade to Starter
+            Upgrade to Verisum Core
           </a>
         </div>
       </div>

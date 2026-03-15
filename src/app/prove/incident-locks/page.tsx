@@ -2,6 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import TierGate from "@/components/TierGate";
+import PageHeader from "@/components/ui/PageHeader";
+import EmptyState from "@/components/ui/EmptyState";
+import DetailPanel from "@/components/ui/DetailPanel";
+import OnboardingTour from "@/components/ui/OnboardingTour";
+import { showActionToast } from "@/components/ui/Toast";
 
 type IncidentLock = {
   id: string;
@@ -49,6 +54,19 @@ function capitalize(s: string) {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+const headerIcon = (
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <rect strokeWidth={1.5} x="3" y="11" width="18" height="11" rx="2" ry="2" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 11V7a5 5 0 0110 0v4" />
+  </svg>
+);
+
+const tourSteps = [
+  { target: "[data-tour='page-header']", title: "Incident Locks", content: "Create tamper-proof snapshots of incident state for forensic evidence and regulatory compliance." },
+  { target: "[data-tour='lock-incident']", title: "Lock an Incident", content: "Select an incident and provide a reason to create an immutable evidence snapshot." },
+  { target: "[data-tour='locks-table']", title: "Lock History", content: "Click any row to see the full snapshot details, lock reason, and chain status." },
+];
+
 export default function IncidentLocksPage() {
   const [locks, setLocks] = useState<IncidentLock[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,6 +82,9 @@ export default function IncidentLocksPage() {
 
   // Copy state
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Detail panel state
+  const [selectedItem, setSelectedItem] = useState<IncidentLock | null>(null);
 
   const fetchLocks = useCallback(async () => {
     setLoading(true);
@@ -114,6 +135,7 @@ export default function IncidentLocksPage() {
         setLockReason("");
         setShowForm(false);
         await fetchLocks();
+        showActionToast("Incident locked — tamper-proof snapshot created");
       }
     } finally {
       setCreating(false);
@@ -134,27 +156,26 @@ export default function IncidentLocksPage() {
     <TierGate requiredTier="Verify" featureLabel="Incident Lock">
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-brand/10 text-brand">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <rect strokeWidth={1.5} x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 11V7a5 5 0 0110 0v4" />
-              </svg>
-            </div>
-            <div>
-              <h1 className="text-2xl font-semibold">Incident Lock</h1>
-              <p className="text-sm text-muted-foreground">
-                Freeze incident evidence with cryptographic proof
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={() => setShowForm((v) => !v)}
-            className="px-3 py-1.5 text-sm font-medium rounded-lg bg-brand text-white hover:bg-brand/90 transition-colors"
-          >
-            {showForm ? "Cancel" : "Lock Incident"}
-          </button>
+        <div data-tour="page-header">
+          <PageHeader
+            icon={headerIcon}
+            title="Incident Locks"
+            description="Tamper-proof snapshots of incident state — forensic evidence for auditors and regulators"
+            workflowHint={[
+              { label: "Incidents", href: "/monitor/incidents" },
+              { label: "Incident Locks", href: "/prove/incident-locks" },
+              { label: "Exchanges", href: "/prove/exchanges" },
+            ]}
+            actions={
+              <button
+                data-tour="lock-incident"
+                onClick={() => setShowForm((v) => !v)}
+                className="px-3 py-1.5 text-sm font-medium rounded-lg bg-brand text-white hover:bg-brand/90 transition-colors"
+              >
+                {showForm ? "Cancel" : "Lock Incident"}
+              </button>
+            }
+          />
         </div>
 
         {/* Lock Form */}
@@ -217,20 +238,16 @@ export default function IncidentLocksPage() {
         {loading ? (
           <div className="text-sm text-muted-foreground py-8 text-center">Loading incident locks...</div>
         ) : locks.length === 0 ? (
-          <div className="border border-dashed border-border rounded-xl p-12 text-center space-y-3">
-            <div className="text-muted-foreground/60">
-              <svg className="w-10 h-10 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <rect strokeWidth={1.5} x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 11V7a5 5 0 0110 0v4" />
-              </svg>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              No incidents have been locked yet. Lock an incident to create a tamper-evident snapshot of its current state.
-            </p>
-          </div>
+          <EmptyState
+            icon={headerIcon}
+            title="No incident locks yet"
+            description="Lock an incident to create a tamper-proof snapshot of its current state. Locked incidents provide immutable evidence for regulatory compliance."
+            ctaLabel="Lock an incident"
+            ctaAction={() => setShowForm(true)}
+          />
         ) : (
           <>
-            <div className="border border-border rounded-lg overflow-hidden">
+            <div className="border border-border rounded-lg overflow-hidden" data-tour="locks-table">
               <table className="w-full text-sm">
                 <thead className="bg-muted/50">
                   <tr>
@@ -244,7 +261,7 @@ export default function IncidentLocksPage() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {paginatedLocks.map((lock) => (
-                    <tr key={lock.id} className="hover:bg-muted/30 transition-colors">
+                    <tr key={lock.id} className="hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => setSelectedItem(lock)}>
                       <td className="px-4 py-3 align-top">
                         {new Date(lock.locked_at).toLocaleDateString()}
                       </td>
@@ -273,7 +290,7 @@ export default function IncidentLocksPage() {
                             {lock.verification_id.slice(0, 12)}...
                           </span>
                           <button
-                            onClick={() => copyVerificationId(lock.id, lock.verification_id)}
+                            onClick={(e) => { e.stopPropagation(); copyVerificationId(lock.id, lock.verification_id); }}
                             className="p-0.5 rounded hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
                             title="Copy verification ID"
                           >
@@ -329,6 +346,98 @@ export default function IncidentLocksPage() {
             )}
           </>
         )}
+
+        {/* Detail Panel */}
+        <DetailPanel
+          open={!!selectedItem}
+          onClose={() => setSelectedItem(null)}
+          title="Incident Lock"
+          subtitle={selectedItem?.snapshot.title ?? ""}
+          actions={
+            selectedItem ? (
+              <button
+                onClick={() => copyVerificationId("panel", selectedItem.verification_id)}
+                className="px-3 py-1.5 text-sm font-medium rounded-lg border border-border hover:bg-muted/50 transition-colors"
+              >
+                {copiedId === "panel" ? "Copied!" : "Copy Verification ID"}
+              </button>
+            ) : undefined
+          }
+        >
+          {selectedItem && (
+            <div className="space-y-4">
+              {selectedItem.lock_reason && (
+                <div>
+                  <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Lock Reason</dt>
+                  <dd className="text-sm whitespace-pre-wrap">{selectedItem.lock_reason}</dd>
+                </div>
+              )}
+
+              <div className="border-t border-border pt-4">
+                <h4 className="text-sm font-medium mb-3">Incident Snapshot</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Title</dt>
+                    <dd className="text-sm">{selectedItem.snapshot.title}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Impact</dt>
+                    <dd>
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${impactBadge[selectedItem.snapshot.impact_level] ?? "bg-gray-100 text-gray-800"}`}>
+                        {capitalize(selectedItem.snapshot.impact_level)}
+                      </span>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Status</dt>
+                    <dd className="text-sm">{capitalize(selectedItem.snapshot.status)}</dd>
+                  </div>
+                  {selectedItem.snapshot.description && (
+                    <div className="col-span-2">
+                      <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Description</dt>
+                      <dd className="text-sm">{selectedItem.snapshot.description}</dd>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="border-t border-border pt-4 grid grid-cols-2 gap-4">
+                {selectedItem.locked_by && (
+                  <div>
+                    <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Locked By</dt>
+                    <dd className="text-sm font-mono text-xs">{selectedItem.locked_by}</dd>
+                  </div>
+                )}
+                <div>
+                  <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Verification ID</dt>
+                  <dd className="text-sm">
+                    <code className="font-mono text-xs bg-muted/50 px-2 py-0.5 rounded">{selectedItem.verification_id}</code>
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Event Hash</dt>
+                  <dd className="text-sm font-mono text-xs" title={selectedItem.event_hash}>
+                    {selectedItem.event_hash.slice(0, 16)}...
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Chain Status</dt>
+                  <dd>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${chainBadge[selectedItem.chain_status] ?? "bg-gray-100 text-gray-600"}`}>
+                      {capitalize(selectedItem.chain_status)}
+                    </span>
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Created At</dt>
+                  <dd className="text-sm">{new Date(selectedItem.created_at).toLocaleString()}</dd>
+                </div>
+              </div>
+            </div>
+          )}
+        </DetailPanel>
+
+        <OnboardingTour tourId="incident-locks" steps={tourSteps} />
       </div>
     </TierGate>
   );

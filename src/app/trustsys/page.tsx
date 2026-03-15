@@ -26,6 +26,7 @@ type Assessment = {
   stability_status: string;
   run_count: number;
   has_in_progress: boolean;
+  ibg_status?: string;
 };
 
 type Run = {
@@ -367,8 +368,17 @@ function TrustSysContent() {
                       </div>
                     </div>
 
-                    {/* Score badge */}
+                    {/* IBG + Score badges */}
                     <div className="flex items-center gap-3 flex-shrink-0">
+                      {a.ibg_status === "active" ? (
+                        <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-green-100 text-green-800">
+                          IBG
+                        </span>
+                      ) : a.ibg_status === "draft" ? (
+                        <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-amber-100 text-amber-800">
+                          IBG Draft
+                        </span>
+                      ) : null}
                       {tier ? (
                         <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${tier.bgClass} ${tier.colorClass}`}>
                           {a.latest_score}
@@ -387,6 +397,12 @@ function TrustSysContent() {
 
                     {/* Action buttons — stop propagation so clicks don't toggle expand */}
                     <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <Link
+                        href={`/trustsys/${a.id}/ibg`}
+                        className="text-xs px-3 py-1.5 rounded-lg border border-border text-foreground hover:bg-gray-100 transition-colors font-medium"
+                      >
+                        {a.ibg_status === "active" || a.ibg_status === "draft" ? "View IBG" : "Define IBG"}
+                      </Link>
                       {a.run_count > 0 && (
                         <button
                           type="button"

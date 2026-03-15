@@ -135,11 +135,47 @@ export async function POST(req: Request) {
         .select("vendor_name, risk_category, data_types, notes, source")
         .eq("organisation_id", profile.organisation_id);
 
+      // Fetch active IBG specs for the org's systems
+      const { data: ibgSpecs } = await sb
+        .from("ibg_specifications")
+        .select("authorised_goals, decision_authorities, action_spaces, blast_radius, assessment_id, version, status, effective_from")
+        .eq("organisation_id", profile.organisation_id)
+        .eq("status", "active");
+
+      let ibgInventory: Record<string, unknown>[] = [];
+      if (ibgSpecs && ibgSpecs.length > 0) {
+        const assessmentIds = ibgSpecs.map((s) => s.assessment_id);
+        const { data: assessments } = await sb
+          .from("trustsys_assessments")
+          .select("id, name, type")
+          .in("id", assessmentIds);
+
+        const assessmentMap = new Map(
+          (assessments ?? []).map((a) => [a.id, a])
+        );
+
+        ibgInventory = ibgSpecs.map((s) => {
+          const assessment = assessmentMap.get(s.assessment_id);
+          return {
+            systemName: assessment?.name ?? "Unknown System",
+            systemType: assessment?.type ?? "AI System",
+            version: s.version,
+            status: s.status,
+            effectiveFrom: s.effective_from,
+            authorisedGoals: s.authorised_goals,
+            decisionAuthorities: s.decision_authorities,
+            actionSpaces: s.action_spaces,
+            blastRadius: s.blast_radius,
+          };
+        });
+      }
+
       const inventoryJson = {
         generatedAt: new Date().toISOString(),
         company: responses.company,
         tools: responses.tools,
         additionalVendors: vendors ?? [],
+        ibgSpecifications: ibgInventory,
       };
 
       // ── 3. Generate gap analysis ─────────────────────────────────────

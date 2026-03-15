@@ -4,7 +4,7 @@
 
 AI governance platform. Helps organisations measure, monitor, and prove responsible AI usage. Built by Verisum Ltd (solo founder: Rob Fanshawe).
 
-**Live URL:** https://app.verisum.org (currently deployed at trustindex.verisum.org)
+**Live URL:** https://app.verisum.org
 **Repo:** github.com/robfanners/trustindex
 
 ## Tech Stack

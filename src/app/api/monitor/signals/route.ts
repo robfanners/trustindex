@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { requireTier } from "@/lib/requireTier";
 import { createSignalSchema, firstZodError } from "@/lib/validations";
+import { writeAuditLog } from "@/lib/audit";
 
 // GET — list runtime signals for org
 export async function GET(req: Request) {
@@ -104,6 +105,15 @@ export async function POST(req: Request) {
     if (error) {
       return NextResponse.json({ error: "Failed to create signal" }, { status: 500 });
     }
+
+    await writeAuditLog({
+      organisationId: check.orgId,
+      entityType: "signal",
+      entityId: signal.id,
+      actionType: "created",
+      performedBy: check.userId,
+      metadata: { severity: signal.severity, system_name: signal.system_name, signal_type: signal.signal_type },
+    });
 
     return NextResponse.json({ signal }, { status: 201 });
   } catch (err: unknown) {

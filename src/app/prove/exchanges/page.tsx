@@ -2,6 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import TierGate from "@/components/TierGate";
+import PageHeader from "@/components/ui/PageHeader";
+import EmptyState from "@/components/ui/EmptyState";
+import DetailPanel from "@/components/ui/DetailPanel";
+import OnboardingTour from "@/components/ui/OnboardingTour";
+import { showActionToast } from "@/components/ui/Toast";
 
 type Exchange = {
   id: string;
@@ -38,6 +43,18 @@ function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+const headerIcon = (
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 4v12m0-12l-4 4m4-4l4 4" />
+  </svg>
+);
+
+const tourSteps = [
+  { target: "[data-tour='page-header']", title: "Trust Exchange", content: "Share governance proofs with external parties for independent verification." },
+  { target: "[data-tour='share-proof']", title: "Share a Proof", content: "Select an attestation, provenance certificate, or incident lock to share with auditors or partners." },
+  { target: "[data-tour='exchanges-table']", title: "Exchange History", content: "Click any row to see the full sharing details and verification link." },
+];
+
 export default function TrustExchangePage() {
   const [exchanges, setExchanges] = useState<Exchange[]>([]);
   const [total, setTotal] = useState(0);
@@ -58,6 +75,9 @@ export default function TrustExchangePage() {
 
   // Clipboard feedback
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Detail panel state
+  const [selectedItem, setSelectedItem] = useState<Exchange | null>(null);
 
   const fetchExchanges = useCallback(async () => {
     setLoading(true);
@@ -179,9 +199,11 @@ export default function TrustExchangePage() {
         }),
       });
       if (res.ok) {
+        const recipientName = sharedWithName.trim();
         resetForm();
         setPage(1);
         await fetchExchanges();
+        showActionToast("Proof shared with " + recipientName);
       }
     } finally {
       setSubmitting(false);
@@ -190,7 +212,8 @@ export default function TrustExchangePage() {
 
   const copyVerifyUrl = async (verificationId: string) => {
     try {
-      await navigator.clipboard.writeText(`/verify/${verificationId}`);
+      const url = `${window.location.origin}/prove/verification?id=${verificationId}`;
+      await navigator.clipboard.writeText(url);
       setCopiedId(verificationId);
       setTimeout(() => setCopiedId(null), 2000);
     } catch {
@@ -204,38 +227,29 @@ export default function TrustExchangePage() {
     <TierGate requiredTier="Verify" featureLabel="Trust Exchange">
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-brand/10 text-brand">
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 4v12m0-12l-4 4m4-4l4 4"
-                />
-              </svg>
-            </div>
-            <div>
-              <h1 className="text-2xl font-semibold">Trust Exchange</h1>
-              <p className="text-sm text-muted-foreground">
-                Share governance proofs with external parties for verification
-              </p>
-            </div>
-          </div>
-          {!showForm && (
-            <button
-              onClick={() => setShowForm(true)}
-              className="px-4 py-2 text-sm font-medium rounded-lg bg-brand text-white hover:bg-brand/90 transition-colors"
-            >
-              Share Proof
-            </button>
-          )}
+        <div data-tour="page-header">
+          <PageHeader
+            icon={headerIcon}
+            title="Trust Exchange"
+            description="Share governance proofs with third parties — external verification of your compliance posture"
+            workflowHint={[
+              { label: "Attestations", href: "/prove/attestations" },
+              { label: "Provenance", href: "/prove/provenance" },
+              { label: "Exchanges", href: "/prove/exchanges" },
+              { label: "Verification", href: "/prove/verification" },
+            ]}
+            actions={
+              !showForm ? (
+                <button
+                  data-tour="share-proof"
+                  onClick={() => setShowForm(true)}
+                  className="px-4 py-2 text-sm font-medium rounded-lg bg-brand text-white hover:bg-brand/90 transition-colors"
+                >
+                  Share Proof
+                </button>
+              ) : undefined
+            }
+          />
         </div>
 
         {/* Share Form */}
@@ -362,31 +376,16 @@ export default function TrustExchangePage() {
             Loading exchanges...
           </div>
         ) : exchanges.length === 0 ? (
-          <div className="border border-dashed border-border rounded-xl p-12 text-center space-y-3">
-            <div className="text-muted-foreground/60">
-              <svg
-                className="w-10 h-10 mx-auto mb-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 4v12m0-12l-4 4m4-4l4 4"
-                />
-              </svg>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              No proofs have been shared yet. Share an attestation, provenance
-              certificate, or incident lock with external parties for
-              independent verification.
-            </p>
-          </div>
+          <EmptyState
+            icon={headerIcon}
+            title="No proofs shared yet"
+            description="Share attestations, provenance certificates, or incident locks with auditors, regulators, or partners. Recipients can verify proofs independently."
+            ctaLabel="Share a proof"
+            ctaAction={() => setShowForm(true)}
+          />
         ) : (
           <>
-            <div className="border border-border rounded-lg overflow-hidden">
+            <div className="border border-border rounded-lg overflow-hidden" data-tour="exchanges-table">
               <table className="w-full text-sm">
                 <thead className="bg-muted/50">
                   <tr>
@@ -411,7 +410,8 @@ export default function TrustExchangePage() {
                   {exchanges.map((ex) => (
                     <tr
                       key={ex.id}
-                      className="hover:bg-muted/30 transition-colors"
+                      className="hover:bg-muted/50 transition-colors cursor-pointer"
+                      onClick={() => setSelectedItem(ex)}
                     >
                       <td className="px-4 py-3">
                         {new Date(ex.shared_at).toLocaleDateString()}
@@ -440,13 +440,14 @@ export default function TrustExchangePage() {
                       <td className="px-4 py-3">
                         <span className="inline-flex items-center gap-1.5">
                           <a
-                            href={`/verify/${ex.verification_id}`}
+                            href={`/prove/verification?id=${ex.verification_id}`}
+                            onClick={(e) => e.stopPropagation()}
                             className="font-mono text-xs bg-muted/50 px-1.5 py-0.5 rounded hover:underline"
                           >
                             {ex.verification_id}
                           </a>
                           <button
-                            onClick={() => copyVerifyUrl(ex.verification_id)}
+                            onClick={(e) => { e.stopPropagation(); copyVerifyUrl(ex.verification_id); }}
                             title="Copy verify URL"
                             className="p-0.5 rounded hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
                           >
@@ -532,6 +533,96 @@ export default function TrustExchangePage() {
             )}
           </>
         )}
+
+        {/* Detail Panel */}
+        <DetailPanel
+          open={!!selectedItem}
+          onClose={() => setSelectedItem(null)}
+          title={selectedItem ? "Shared with " + selectedItem.shared_with_name : ""}
+          subtitle={selectedItem ? (proofTypeLabel[selectedItem.proof_type] ?? capitalize(selectedItem.proof_type)) : ""}
+          badge={
+            selectedItem ? (
+              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${proofTypeBadge[selectedItem.proof_type] ?? "bg-gray-100 text-gray-600"}`}>
+                {proofTypeLabel[selectedItem.proof_type] ?? capitalize(selectedItem.proof_type)}
+              </span>
+            ) : undefined
+          }
+          actions={
+            selectedItem ? (
+              <button
+                onClick={() => copyVerifyUrl(selectedItem.verification_id)}
+                className="px-3 py-1.5 text-sm font-medium rounded-lg border border-border hover:bg-muted/50 transition-colors"
+              >
+                {copiedId === selectedItem.verification_id ? "Copied!" : "Copy Verify URL"}
+              </button>
+            ) : undefined
+          }
+        >
+          {selectedItem && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Proof Type</dt>
+                  <dd>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${proofTypeBadge[selectedItem.proof_type] ?? "bg-gray-100 text-gray-600"}`}>
+                      {proofTypeLabel[selectedItem.proof_type] ?? capitalize(selectedItem.proof_type)}
+                    </span>
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Shared With</dt>
+                  <dd className="text-sm">
+                    <div className="font-medium">{selectedItem.shared_with_name}</div>
+                    {selectedItem.shared_with_email && (
+                      <div className="text-xs text-muted-foreground">{selectedItem.shared_with_email}</div>
+                    )}
+                  </dd>
+                </div>
+              </div>
+
+              {selectedItem.note && (
+                <div>
+                  <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Note</dt>
+                  <dd className="text-sm">{selectedItem.note}</dd>
+                </div>
+              )}
+
+              <div>
+                <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Verification ID</dt>
+                <dd className="text-sm">
+                  <code className="font-mono text-xs bg-muted/50 px-2 py-0.5 rounded">{selectedItem.verification_id}</code>
+                </dd>
+              </div>
+
+              <div>
+                <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Verify URL</dt>
+                <dd className="text-sm">
+                  <a
+                    href={`/prove/verification?id=${selectedItem.verification_id}`}
+                    className="text-brand hover:underline text-xs"
+                  >
+                    /prove/verification?id={selectedItem.verification_id}
+                  </a>
+                </dd>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                {selectedItem.shared_by && (
+                  <div>
+                    <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Shared By</dt>
+                    <dd className="text-sm font-mono text-xs">{selectedItem.shared_by}</dd>
+                  </div>
+                )}
+                <div>
+                  <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Created At</dt>
+                  <dd className="text-sm">{new Date(selectedItem.created_at).toLocaleString()}</dd>
+                </div>
+              </div>
+            </div>
+          )}
+        </DetailPanel>
+
+        <OnboardingTour tourId="exchanges" steps={tourSteps} />
       </div>
     </TierGate>
   );
