@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
 import { supabaseServer } from "@/lib/supabaseServer";
+import { writeAuditLog } from "@/lib/audit";
 
 type RouteContext = { params: Promise<{ actionId: string }> };
 
@@ -171,6 +172,15 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
         updated_by: user.id,
       });
     }
+
+    await writeAuditLog({
+      organisationId: updated.organisation_id,
+      entityType: "action",
+      entityId: actionId,
+      actionType: "updated",
+      performedBy: user.id,
+      metadata: { changes: changes.map(c => ({ field: c.field, from: c.from, to: c.to })) },
+    });
 
     return NextResponse.json({ action: updated });
   } catch (e: unknown) {

@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import TierGate from "@/components/TierGate";
+import OnboardingTour from "@/components/ui/OnboardingTour";
 
 type VerificationRecord = {
   id: string;
@@ -108,13 +110,22 @@ function ChainStatusIndicator({ status, txHash }: { status: string; txHash: stri
 }
 
 export default function VerificationPage() {
+  return (
+    <Suspense fallback={<div className="p-12 text-center text-muted-foreground">Loading...</div>}>
+      <VerificationPageInner />
+    </Suspense>
+  );
+}
+
+function VerificationPageInner() {
+  const searchParams = useSearchParams();
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<VerificationResult | null>(null);
   const [searched, setSearched] = useState(false);
 
-  const handleVerify = async () => {
-    const trimmed = query.trim();
+  const handleVerify = useCallback(async (verificationId?: string) => {
+    const trimmed = (verificationId ?? query).trim();
     if (!trimmed) return;
 
     setLoading(true);
@@ -129,7 +140,18 @@ export default function VerificationPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [query]);
+
+  // Auto-populate and verify from ?id= query param on mount
+  useEffect(() => {
+    const id = searchParams.get("id");
+    if (id) {
+      setQuery(id);
+      handleVerify(id);
+    }
+    // Only run on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") handleVerify();
@@ -139,7 +161,7 @@ export default function VerificationPage() {
     <TierGate requiredTier="Verify" featureLabel="Verification Portal">
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3" data-tour="page-header">
           <div className="p-2 rounded-lg bg-brand/10 text-brand">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <circle strokeWidth={1.5} cx="11" cy="11" r="8" />
@@ -155,18 +177,18 @@ export default function VerificationPage() {
         </div>
 
         {/* Search */}
-        <div className="flex gap-3">
+        <div className="flex gap-3" data-tour="search-input">
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Enter verification ID (e.g., VER-A1B2C3D4)"
-            className="flex-1 px-4 py-3 rounded-lg border border-border bg-background text-base font-mono placeholder:font-sans placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand/50"
+            className="flex-1 px-5 py-4 rounded-lg border border-border bg-background text-lg font-mono placeholder:font-sans placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand/50"
           />
           <button
             type="button"
-            onClick={handleVerify}
+            onClick={() => handleVerify()}
             disabled={loading || !query.trim()}
             className="px-6 py-3 rounded-lg bg-brand text-white font-medium hover:bg-brand/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
@@ -294,21 +316,31 @@ export default function VerificationPage() {
           )
         ) : !searched ? (
           /* Initial state */
-          <div className="border border-dashed border-border rounded-xl p-8 text-center space-y-3">
-            <div className="text-muted-foreground/60">
-              <svg className="w-10 h-10 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="border border-dashed border-border rounded-xl p-12 text-center space-y-4">
+            <div className="text-muted-foreground/40">
+              <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
             </div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Enter a verification ID to look up a governance proof
+            <h2 className="text-lg font-semibold text-foreground">
+              Verify Governance Proof
+            </h2>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+              Enter a verification ID to look up a governance attestation, provenance certificate, or incident lock.
             </p>
-            <p className="text-xs text-muted-foreground">
-              Every attestation and provenance record in Verisum receives a unique verification ID
-              that can be used to independently confirm its authenticity and on-chain anchoring status.
+            <p className="text-xs font-mono text-muted-foreground/60">
+              Format: VER-xxxxxxxx
             </p>
           </div>
         ) : null}
+
+        <OnboardingTour
+          tourId="verification"
+          steps={[
+            { target: "[data-tour='page-header']", title: "Verification Portal", content: "Look up any governance proof using its verification ID. Proofs are cryptographically signed and independently verifiable." },
+            { target: "[data-tour='search-input']", title: "Enter a Verification ID", content: "Paste a VER-xxxxxxxx code to verify an attestation, provenance certificate, or incident lock." },
+          ]}
+        />
       </div>
     </TierGate>
   );

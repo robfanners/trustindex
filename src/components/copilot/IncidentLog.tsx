@@ -42,7 +42,7 @@ const IMPACT_OPTIONS = ["low", "medium", "high", "critical"];
 export default function IncidentLog() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [monthlyCount, setMonthlyCount] = useState(0);
-  const [monthlyLimit, setMonthlyLimit] = useState<number>(Infinity);
+  const [monthlyLimit, setMonthlyLimit] = useState<number>(-1);
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
@@ -186,7 +186,7 @@ export default function IncidentLog() {
     return <div className="text-sm text-muted-foreground">Loading incidents...</div>;
   }
 
-  const atLimit = monthlyCount >= monthlyLimit;
+  const atLimit = monthlyLimit >= 0 && monthlyCount >= monthlyLimit;
 
   return (
     <div className="space-y-4">
@@ -194,8 +194,14 @@ export default function IncidentLog() {
         <div>
           <h3 className="font-semibold">Incident Log</h3>
           <p className="text-xs text-muted-foreground">
-            {monthlyCount} this month{" "}
-            {monthlyLimit < Infinity ? `of ${monthlyLimit} limit` : ""}
+            {monthlyLimit === 0 ? (
+              <a href="/upgrade" className="text-amber-600 hover:underline">Upgrade to log incidents</a>
+            ) : (
+              <>
+                {monthlyCount} this month{" "}
+                {monthlyLimit >= 0 ? `of ${monthlyLimit} limit` : ""}
+              </>
+            )}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -212,13 +218,22 @@ export default function IncidentLog() {
             ))}
           </select>
           {!showAdd && (
-            <button
-              onClick={() => setShowAdd(true)}
-              disabled={atLimit}
-              className="text-sm px-3 py-1.5 rounded bg-brand text-white hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {atLimit ? "Limit reached" : "Log incident"}
-            </button>
+            monthlyLimit === 0 ? (
+              <a
+                href="/upgrade"
+                className="text-sm px-3 py-1.5 rounded bg-amber-500 text-white hover:bg-amber-600"
+              >
+                Upgrade to log incidents
+              </a>
+            ) : (
+              <button
+                onClick={() => setShowAdd(true)}
+                disabled={atLimit}
+                className="text-sm px-3 py-1.5 rounded bg-brand text-white hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {atLimit ? "Limit reached" : "Log incident"}
+              </button>
+            )
           )}
         </div>
       </div>

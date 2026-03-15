@@ -162,6 +162,23 @@ type Escalation = {
   entity_id: string;
   resolved: boolean;
   created_at: string;
+  source_signal?: {
+    id: string;
+    system_name: string;
+    metric_name: string;
+    signal_type: string;
+    severity: string;
+    created_at: string;
+  } | null;
+};
+
+type ActivityFeedItem = {
+  type: "signal" | "escalation" | "audit";
+  id: string;
+  summary: string;
+  severity?: string;
+  created_at: string;
+  metadata?: Record<string, unknown>;
 };
 
 type ReassessmentPolicy = {
@@ -189,14 +206,16 @@ function OverviewTab() {
   const [escalationCount, setEscalationCount] = useState(0);
   const [policies, setPolicies] = useState<ReassessmentPolicy[]>([]);
   const [resolvingId, setResolvingId] = useState<string | null>(null);
+  const [activityFeed, setActivityFeed] = useState<ActivityFeedItem[]>([]);
 
   useEffect(() => {
     (async () => {
       try {
-        const [healthRes, escRes, polRes] = await Promise.allSettled([
+        const [healthRes, escRes, polRes, activityRes] = await Promise.allSettled([
           fetch("/api/trustgraph/health"),
           fetch("/api/trustgraph/escalations?resolved=false&per_page=10"),
           fetch("/api/trustgraph/reassessment-policies"),
+          fetch("/api/dashboard/recent-activity"),
         ]);
 
         if (healthRes.status === "fulfilled" && healthRes.value.ok) {
@@ -213,6 +232,11 @@ function OverviewTab() {
         if (polRes.status === "fulfilled" && polRes.value.ok) {
           const data = await polRes.value.json();
           setPolicies(data.policies || []);
+        }
+
+        if (activityRes.status === "fulfilled" && activityRes.value.ok) {
+          const data = await activityRes.value.json();
+          setActivityFeed(data.feed || []);
         }
       } catch {
         // silent — will show placeholder state
@@ -375,6 +399,11 @@ function OverviewTab() {
                     <span className="text-sm text-foreground truncate">
                       {esc.reason}
                     </span>
+                    {esc.source_signal && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 whitespace-nowrap">
+                        Signal: {esc.source_signal.metric_name}
+                      </span>
+                    )}
                     <span className="text-[10px] text-muted-foreground whitespace-nowrap">
                       {new Date(esc.created_at).toLocaleDateString("en-GB", {
                         day: "numeric",
@@ -401,6 +430,113 @@ function OverviewTab() {
           )}
         </div>
       )}
+
+      {/* Recent Activity Feed */}
+      {activityFeed.length > 0 && (
+        <div className="border border-border rounded-xl p-6">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium text-foreground">Recent Activity</h3>
+            <Link href="/monitor/signals" className="text-xs text-brand hover:text-brand/80">
+              View signals &rarr;
+            </Link>
+          </div>
+          <div className="space-y-2">
+            {activityFeed.slice(0, 8).map((item) => {
+              const icon = item.type === "signal" ? "\u26a0" : item.type === "escalation" ? "\ud83d\udea8" : "\ud83d\udcdd";
+              const typeStyle =
+                item.type === "signal"
+                  ? "bg-amber-50 text-amber-700"
+                  : item.type === "escalation"
+                  ? "bg-destructive/10 text-destructive"
+                  : "bg-muted text-muted-foreground";
+              return (
+                <div
+                  key={`${item.type}-${item.id}`}
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg bg-muted/50"
+                >
+                  <span className={`text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded ${typeStyle}`}>
+                    {icon} {item.type}
+                  </span>
+                  <span className="text-sm text-foreground truncate flex-1">
+                    {item.summary}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                    {new Date(item.created_at).toLocaleDateString("en-GB", {
+                      day: "numeric",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Automation Health */}
+      <div className="border border-border rounded-xl p-6">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-medium text-foreground">Automation Health</h3>
+          <span className="text-[10px] text-muted-foreground">Monitoring & proof pipeline status</span>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            {
+              module: "Signals",
+              href: "/monitor/signals",
+              status: "active" as const,
+              desc: "Integration monitoring",
+            },
+            {
+              module: "Escalations",
+              href: "/monitor/escalations",
+              status: "active" as const,
+              desc: "Auto-escalation on critical",
+            },
+            {
+              module: "Drift",
+              href: "/monitor/drift",
+              status: "partial" as const,
+              desc: "Assessment scheduling",
+            },
+            {
+              module: "Incidents",
+              href: "/monitor/incidents",
+              status: "manual" as const,
+              desc: "Manual logging",
+            },
+          ].map((m) => {
+            const dotColor =
+              m.status === "active"
+                ? "bg-emerald-500"
+                : m.status === "partial"
+                ? "bg-amber-500"
+                : "bg-gray-400";
+            const statusLabel =
+              m.status === "active"
+                ? "Active"
+                : m.status === "partial"
+                ? "Partial"
+                : "Manual";
+            return (
+              <Link
+                key={m.module}
+                href={m.href}
+                className="flex flex-col gap-1.5 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${dotColor}`} />
+                  <span className="text-sm font-medium text-foreground">{m.module}</span>
+                </div>
+                <span className="text-[10px] text-muted-foreground">{m.desc}</span>
+                <span className="text-[10px] font-medium text-muted-foreground">{statusLabel}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
 
       {/* Reassessment Due Alerts */}
       {(overduePolicies.length > 0 || upcomingPolicies.length > 0) && (

@@ -19,6 +19,7 @@ type Assessment = {
   stability_status: string;
   run_count: number;
   has_in_progress: boolean;
+  ibg_status?: "none" | "draft" | "active";
 };
 
 // ---------------------------------------------------------------------------
@@ -182,12 +183,21 @@ export default function AIRegistryPage() {
             <circle cx="11" cy="17" r="1" fill="currentColor" stroke="none" />
           </svg>
         </div>
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-semibold">AI Registry</h1>
           <p className="text-sm text-muted-foreground">
             Governance inventory of all registered AI systems
           </p>
         </div>
+        <a
+          href="/trustsys"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-brand text-white text-sm font-medium hover:bg-brand/90 transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Register New System
+        </a>
       </div>
 
       {/* Loading */}
@@ -289,18 +299,18 @@ export default function AIRegistryPage() {
                 </svg>
               </div>
               <p className="text-sm text-muted-foreground mb-3">
-                No AI systems registered yet. Register systems through TrustSys to begin
-                tracking their governance posture.
+                No AI systems registered yet. Register your first AI system to begin
+                tracking its governance posture.
               </p>
-              <Link
+              <a
                 href="/trustsys"
-                className="inline-flex items-center gap-1 text-sm text-brand hover:text-brand/80 font-medium transition-colors"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-brand text-white text-sm font-medium hover:bg-brand/90 transition-colors"
               >
-                Go to TrustSys
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
-              </Link>
+                Register New System
+              </a>
             </div>
           ) : filtered.length === 0 ? (
             <div className="border border-dashed border-border rounded-xl p-12 text-center">
@@ -326,6 +336,9 @@ export default function AIRegistryPage() {
                       </th>
                       <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">
                         Score
+                      </th>
+                      <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">
+                        IBG
                       </th>
                       <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">
                         Status
@@ -377,6 +390,21 @@ export default function AIRegistryPage() {
                           >
                             {a.latest_score !== null ? a.latest_score : "\u2014"}
                           </span>
+                        </td>
+
+                        {/* IBG status */}
+                        <td className="px-4 py-3">
+                          {a.ibg_status === "active" ? (
+                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-800">
+                              Active
+                            </span>
+                          ) : a.ibg_status === "draft" ? (
+                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                              Draft
+                            </span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">&mdash;</span>
+                          )}
                         </td>
 
                         {/* Stability status */}

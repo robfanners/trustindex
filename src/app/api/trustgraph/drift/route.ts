@@ -69,33 +69,99 @@ export async function GET(req: NextRequest) {
 
     const allRunIds = [...sysRunIds, ...orgRunIds];
 
-    if (allRunIds.length === 0) {
-      return NextResponse.json({ drift_events: [], total: 0, page, per_page: perPage });
-    }
+    // --- Fetch reassessment policies (always available if assessments exist) ---
+    const { data: policies } = await db
+      .from("reassessment_policies")
+      .select("*")
+      .eq("organisation_id", orgId)
+      .order("next_due", { ascending: true, nullsFirst: false });
 
-    let query = db
-      .from("drift_events")
-      .select("*", { count: "exact" })
-      .in("run_id", allRunIds)
-      .gte("created_at", cutoff)
-      .order("created_at", { ascending: false })
-      .range((page - 1) * perPage, page * perPage - 1);
+    const now = new Date();
+    const reassessmentStatus = (policies || []).map((p: {
+      id: string;
+      target_id: string;
+      target_name?: string;
+      run_type: string;
+      frequency_days: number;
+      last_completed: string | null;
+      next_due: string | null;
+      [key: string]: unknown;
+    }) => {
+      const nextDue = p.next_due ? new Date(p.next_due) : null;
+      const daysUntilDue = nextDue
+        ? Math.ceil((nextDue.getTime() - now.getTime()) / 86400000)
+        : null;
+      let status: "on_track" | "due_soon" | "overdue" | "no_schedule" = "no_schedule";
+      if (daysUntilDue !== null) {
+        if (daysUntilDue < 0) status = "overdue";
+        else if (daysUntilDue <= 14) status = "due_soon";
+        else status = "on_track";
+      }
+      return {
+        target_id: p.target_id,
+        target_name: p.target_name ?? p.target_id,
+        run_type: p.run_type,
+        frequency_days: p.frequency_days,
+        last_completed: p.last_completed,
+        next_due: p.next_due,
+        days_until_due: daysUntilDue,
+        status,
+      };
+    });
 
-    if (runType) {
-      query = query.eq("run_type", runType);
-    }
+    // --- Fetch health data for drift summary ---
+    const { data: healthRows } = await db
+      .from("trustgraph_health_mv")
+      .select("p_drift")
+      .eq("organisation_id", orgId)
+      .limit(1);
+    const pDrift = healthRows?.[0] ? Number((healthRows[0] as { p_drift: number }).p_drift) || 0 : 0;
 
-    const { data: events, error: fetchErr, count } = await query;
+    const staleCount = reassessmentStatus.filter(
+      (r: { status: string }) => r.status === "overdue"
+    ).length;
 
-    if (fetchErr) {
-      return NextResponse.json({ error: fetchErr.message }, { status: 500 });
+    const driftSummary = {
+      p_drift: pDrift,
+      total_policies: reassessmentStatus.length,
+      stale_count: staleCount,
+      total_assessments: allRunIds.length,
+    };
+
+    // --- Fetch drift events (may be empty if < 2 runs) ---
+    let driftEvents: unknown[] = [];
+    let driftTotal = 0;
+
+    if (allRunIds.length > 0) {
+      let query = db
+        .from("drift_events")
+        .select("*", { count: "exact" })
+        .in("run_id", allRunIds)
+        .gte("created_at", cutoff)
+        .order("created_at", { ascending: false })
+        .range((page - 1) * perPage, page * perPage - 1);
+
+      if (runType) {
+        query = query.eq("run_type", runType);
+      }
+
+      const { data: events, error: fetchErr, count: evCount } = await query;
+
+      if (fetchErr) {
+        return NextResponse.json({ error: fetchErr.message }, { status: 500 });
+      }
+
+      driftEvents = events || [];
+      driftTotal = evCount ?? 0;
     }
 
     return NextResponse.json({
-      drift_events: events || [],
-      total: count ?? 0,
+      drift_events: driftEvents,
+      total: driftTotal,
       page,
       per_page: perPage,
+      reassessment_status: reassessmentStatus,
+      drift_summary: driftSummary,
     });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Unknown error";

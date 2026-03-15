@@ -808,7 +808,7 @@ function SystemAssessContent() {
                 className="inline-block px-4 py-2 rounded bg-brand text-white text-sm font-semibold hover:bg-brand-hover"
                 href="/upgrade"
               >
-                Upgrade to Pro
+                Upgrade to Verisum Assure
               </a>
             </>
           )}

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { getUserPlan, maxIncidentsPerMonth } from "@/lib/entitlements";
+import { writeAuditLog } from "@/lib/audit";
 
 // GET — list incidents for org
 export async function GET(req: Request) {
@@ -61,7 +62,7 @@ export async function GET(req: Request) {
     return NextResponse.json({
       incidents: incidents ?? [],
       monthlyCount: monthlyCount ?? 0,
-      monthlyLimit: limit,
+      monthlyLimit: limit === Infinity ? -1 : limit,
     });
   } catch (err: unknown) {
     return NextResponse.json({ error: err instanceof Error ? err.message : "Internal server error" }, { status: 500 });
@@ -112,7 +113,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { title, description, aiVendorId, impactLevel } = body;
+    const { title, description, aiVendorId, impactLevel, sourceEscalationId, sourceSignalId } = body;
 
     if (!title) {
       return NextResponse.json({ error: "title is required" }, { status: 400 });
@@ -127,6 +128,8 @@ export async function POST(req: Request) {
         ai_vendor_id: aiVendorId || null,
         impact_level: impactLevel || "low",
         reported_by: user.id,
+        source_escalation_id: sourceEscalationId || null,
+        source_signal_id: sourceSignalId || null,
       })
       .select("*, ai_vendors(vendor_name)")
       .single();
@@ -135,6 +138,15 @@ export async function POST(req: Request) {
       console.error("[incidents] Error creating:", error);
       return NextResponse.json({ error: "Failed to create incident" }, { status: 500 });
     }
+
+    await writeAuditLog({
+      organisationId: profile.organisation_id,
+      entityType: "incident",
+      entityId: incident.id,
+      actionType: "created",
+      performedBy: user.id,
+      metadata: { title, impact_level: impactLevel || "low", source_escalation_id: sourceEscalationId || null },
+    });
 
     return NextResponse.json({ incident });
   } catch (err: unknown) {
@@ -197,6 +209,15 @@ export async function PATCH(req: Request) {
     if (error) {
       return NextResponse.json({ error: "Failed to update incident" }, { status: 500 });
     }
+
+    await writeAuditLog({
+      organisationId: profile.organisation_id,
+      entityType: "incident",
+      entityId: id,
+      actionType: "status_change",
+      performedBy: user.id,
+      metadata: { status: newStatus, impact_level: impactLevel },
+    });
 
     return NextResponse.json({ incident });
   } catch (err: unknown) {

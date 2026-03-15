@@ -36,7 +36,7 @@
   --switch-background: #cbced4;
   --ring: oklch(0.708 0 0);
 
-  /* Brand — Verisum primary blue (aligned with happ.verisum.org) */
+  /* Brand — Verisum primary blue */
   --brand: #0066FF;
   --brand-hover: #0052CC;
   --brand-foreground: #ffffff;
@@ -262,7 +262,7 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* Fonts — DM Sans aligned with happ.verisum.org */
+  /* Fonts — DM Sans */
   --font-sans: var(--font-dm-sans), 'DM Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 

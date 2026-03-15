@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireTier } from "@/lib/requireTier";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { createExchangeSchema, firstZodError } from "@/lib/validations";
+import { writeAuditLog } from "@/lib/audit";
 
 export async function GET(req: NextRequest) {
   try {
@@ -109,6 +110,15 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    await writeAuditLog({
+      organisationId: check.orgId,
+      entityType: "exchange",
+      entityId: exchange.id,
+      actionType: "created",
+      performedBy: check.userId,
+      metadata: { proof_type, proof_id, shared_with_name, shared_with_email: shared_with_email || null },
+    });
 
     return NextResponse.json(
       { ...exchange, verify_url: `/verify/${verificationId}` },

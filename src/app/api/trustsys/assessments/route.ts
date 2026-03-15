@@ -99,6 +99,23 @@ export async function GET() {
       }
     }
 
+    // Fetch IBG status for all systems
+    const { data: ibgSpecs } = await db
+      .from("ibg_specifications")
+      .select("assessment_id, status")
+      .in("assessment_id", systemIds)
+      .in("status", ["active", "draft"])
+      .order("status", { ascending: true }); // "active" before "draft"
+
+    const ibgStatusMap = new Map<string, string>();
+    for (const spec of ibgSpecs || []) {
+      const sid = spec.assessment_id as string;
+      // Active takes precedence over draft
+      if (!ibgStatusMap.has(sid) || spec.status === "active") {
+        ibgStatusMap.set(sid, spec.status as string);
+      }
+    }
+
     const result = systems.map((s) => {
       const latest = latestRunMap.get(s.id as string);
       return {
@@ -114,6 +131,7 @@ export async function GET() {
         latest_version: 0,
         run_count: runCountMap.get(s.id as string) ?? 0,
         has_in_progress: hasInProgressMap.get(s.id as string) ?? false,
+        ibg_status: ibgStatusMap.get(s.id as string) ?? "none",
       };
     });
 

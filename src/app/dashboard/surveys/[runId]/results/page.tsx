@@ -7,6 +7,7 @@ import AuthenticatedShell from "@/components/AuthenticatedShell";
 import RequireAuth from "@/components/RequireAuth";
 import { useAuth } from "@/context/AuthContext";
 import { canExportResults } from "@/lib/entitlements";
+import ExportMenu from "@/components/ui/ExportMenu";
 import {
   Radar,
   RadarChart,
@@ -532,7 +533,7 @@ function SurveyResultsContent() {
         <h1 className="text-2xl font-bold">Verisum Results</h1>
         <div className="text-destructive">{error}</div>
         <a className="text-brand underline" href={manageHref}>
-          Back to Survey Dashboard
+          Back to Manage Survey
         </a>
       </div>
     );
@@ -607,11 +608,11 @@ function SurveyResultsContent() {
             Need to share or chase responses?
           </span>{" "}
           <a className="text-brand underline" href={manageHref}>
-            Open Survey Dashboard
+            Manage Survey
           </a>
         </div>
         <a className="text-brand underline" href={manageHref}>
-          Back to Survey Dashboard
+          Back to Manage Survey
         </a>
       </div>
     );
@@ -681,7 +682,7 @@ function SurveyResultsContent() {
         </div>
 
         <a className="text-brand underline" href={manageHref}>
-          Back to Survey Dashboard
+          Back to Manage Survey
         </a>
       </div>
     );
@@ -692,7 +693,7 @@ function SurveyResultsContent() {
   // -------------------------------------------------------------------------
 
   return (
-    <div className="space-y-6 md:space-y-8">
+    <div id="survey-results-content" className="space-y-6 md:space-y-8">
       <header className="space-y-2">
         <h1 className="text-3xl font-bold">Verisum Results</h1>
         <p className="text-sm text-muted-foreground">
@@ -705,10 +706,10 @@ function SurveyResultsContent() {
             {counts?.respondents ?? 0}
           </div>
           <a
-            className="text-brand underline whitespace-nowrap"
+            className="inline-flex items-center px-4 py-2 rounded-lg bg-brand text-white text-sm font-medium hover:bg-brand/90 transition-colors whitespace-nowrap"
             href={manageHref}
           >
-            Back to Survey Dashboard
+            Manage Survey
           </a>
         </div>
       </header>
@@ -838,9 +839,9 @@ function SurveyResultsContent() {
 
       {/* Export */}
       <div className="rounded-xl border border-border p-6 shadow-sm space-y-3">
-        <h2 className="text-lg font-semibold">Export</h2>
+        <h2 className="text-lg font-semibold">Export &amp; Share</h2>
         {exportAllowed ? (
-          <>
+          <div className="flex flex-wrap items-center gap-3">
             <button
               className="px-3 py-2 border border-border rounded hover:bg-[#f5f5f5] text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={downloadResponsesCsv}
@@ -848,20 +849,26 @@ function SurveyResultsContent() {
             >
               {exporting ? "Preparing CSV..." : "Download responses CSV"}
             </button>
+            <ExportMenu
+              elementId="survey-results-content"
+              filename={`verisum_survey_${runId}_results`}
+              planAllowsExport={exportAllowed}
+              emailSubject="Verisum TrustOrg Survey Results"
+            />
             {exportStatus && (
               <div className="text-sm text-muted-foreground">{exportStatus}</div>
             )}
-          </>
+          </div>
         ) : (
           <>
             <p className="text-sm text-muted-foreground">
-              CSV export is available on Pro and Enterprise plans.
+              Export is available on Verisum Assure and Verify plans.
             </p>
             <a
               className="inline-block px-4 py-2 rounded bg-brand text-white text-sm font-semibold hover:bg-brand-hover"
               href="/upgrade"
             >
-              Upgrade to Pro
+              Upgrade to Verisum Assure
             </a>
           </>
         )}
@@ -975,15 +982,6 @@ function SurveyResultsContent() {
         </div>
       </div>
 
-      {/* Back link */}
-      <div className="text-sm text-muted-foreground">
-        <span className="font-medium">
-          Need to share or chase responses?
-        </span>{" "}
-        <a className="text-brand underline" href={manageHref}>
-          Open Survey Dashboard
-        </a>
-      </div>
     </div>
   );
 }

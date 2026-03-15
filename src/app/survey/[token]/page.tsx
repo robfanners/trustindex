@@ -192,7 +192,7 @@ export default function SurveyPage() {
               </a>
               {runMode === "org" && (
                 <a className="text-brand underline" href={`/admin/run/${runId}`}>
-                  Open Survey Dashboard
+                  Manage Survey
                 </a>
               )}
               {runMode === "explorer" && (
@@ -206,7 +206,7 @@ export default function SurveyPage() {
                     encodeURIComponent(
                       `Here are my Verisum links:\n\n` +
                         `Results: ${window.location.origin}/dashboard/${runId}\n` +
-                        `Survey Dashboard: ${window.location.origin}/admin/run/${runId}\n`
+                        `Manage Survey: ${window.location.origin}/admin/run/${runId}\n`
                     )
                   }
                 >

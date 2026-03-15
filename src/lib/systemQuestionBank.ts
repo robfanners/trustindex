@@ -13,7 +13,8 @@ export type SystemDimension =
   | "Explainability"
   | "Human Oversight"
   | "Risk Controls"
-  | "Accountability";
+  | "Accountability"
+  | "Intent-Based Governance";
 
 export type AnswerType = "enum_maturity" | "boolean";
 
@@ -61,6 +62,7 @@ export const SYSTEM_DIMENSIONS: SystemDimension[] = [
   "Human Oversight",
   "Risk Controls",
   "Accountability",
+  "Intent-Based Governance",
 ];
 
 export const MATURITY_LEVELS: { value: MaturityLevel; label: string }[] = [
@@ -317,6 +319,55 @@ export const SYSTEM_QUESTIONS: SystemQuestion[] = [
       "Compliance mapping done (AI Act / ISO / SOC2 / sector rules) where relevant?",
     answerType: "enum_maturity",
     weight: 0.20,
+  },
+
+  // -------------------------------------------------------------------------
+  // Intent-Based Governance (5) — IBG™
+  // -------------------------------------------------------------------------
+  {
+    id: "TXS_IBG_01",
+    dimension: "Intent-Based Governance",
+    control: "Authorised goals defined",
+    prompt:
+      "Has this system\u2019s authorised goals and purposes been formally specified before deployment?",
+    answerType: "enum_maturity",
+    weight: 0.25,
+  },
+  {
+    id: "TXS_IBG_02",
+    dimension: "Intent-Based Governance",
+    control: "Decision authorities specified",
+    prompt:
+      "Are the system\u2019s permitted decision authorities and action spaces explicitly defined and enforced?",
+    answerType: "enum_maturity",
+    weight: 0.25,
+  },
+  {
+    id: "TXS_IBG_03",
+    dimension: "Intent-Based Governance",
+    control: "Blast radius constraints set",
+    prompt:
+      "Are blast radius constraints defined (entity scope, financial limits, data boundaries, temporal limits, cascade scope)?",
+    answerType: "enum_maturity",
+    weight: 0.20,
+  },
+  {
+    id: "TXS_IBG_04",
+    dimension: "Intent-Based Governance",
+    control: "IBG specification reviewed",
+    prompt:
+      "Is the Intent-Based Governance\u2122 specification reviewed and updated at defined intervals or on system changes?",
+    answerType: "enum_maturity",
+    weight: 0.15,
+  },
+  {
+    id: "TXS_IBG_05",
+    dimension: "Intent-Based Governance",
+    control: "Boundary violation monitoring",
+    prompt:
+      "Is there active monitoring for boundary violations (goal drift, scope creep, blast radius breach)?",
+    answerType: "enum_maturity",
+    weight: 0.15,
   },
 ];
 
