@@ -332,16 +332,6 @@ function UpgradeContent() {
                 </ul>
               </div>
 
-              {/* Learn more link */}
-              <a
-                href={`/product/${tier.slug === "starter" ? "core" : tier.slug === "pro" ? "assure" : "verify"}`}
-                className={`text-sm font-medium hover:underline transition-colors ${
-                  isTeal ? "text-teal-600" : isBrand ? "text-brand" : "text-foreground"
-                }`}
-              >
-                Learn more &rarr;
-              </a>
-
               {/* CTA */}
               {cta.href === "#checkout" && cta.checkoutPlan ? (
                 <button
