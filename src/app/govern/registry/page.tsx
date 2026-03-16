@@ -53,6 +53,16 @@ type LinkedModel = {
   linked_systems_count: number;
 };
 
+type DecisionItem = {
+  id: string;
+  human_decision: string | null;
+  decision_status: string;
+  reviewed_at: string | null;
+  ai_outputs: { output_summary: string; output_type: string | null } | null;
+  profiles: { full_name: string } | null;
+  policy_versions: { title: string; version: number } | null;
+};
+
 type EvidenceSummary = {
   system_id: string;
   system_name: string;
@@ -146,8 +156,9 @@ export default function AIRegistryPage() {
   const [compliance, setCompliance] = useState<ComplianceRequirement[]>([]);
   const [evidence, setEvidence] = useState<EvidenceSummary | null>(null);
   const [models, setModels] = useState<LinkedModel[]>([]);
+  const [decisions, setDecisions] = useState<DecisionItem[]>([]);
   const [detailLoading, setDetailLoading] = useState(false);
-  const [detailTab, setDetailTab] = useState<"compliance" | "evidence" | "models">("compliance");
+  const [detailTab, setDetailTab] = useState<"compliance" | "evidence" | "models" | "decisions">("compliance");
   const [savingCompliance, setSavingCompliance] = useState<string | null>(null);
 
   // Fetch systems from risk-registry API
@@ -187,7 +198,10 @@ export default function AIRegistryPage() {
       fetch(`/api/model-registry?system_id=${selectedSystem.id}`).then((r) =>
         r.ok ? r.json() : null
       ),
-    ]).then(([compRes, evRes, modRes]) => {
+      fetch(`/api/happ/systems/${selectedSystem.id}/decisions?per_page=10`).then((r) =>
+        r.ok ? r.json() : null
+      ),
+    ]).then(([compRes, evRes, modRes, decRes]) => {
       if (compRes.status === "fulfilled" && compRes.value) {
         setCompliance(compRes.value.data ?? []);
       }
@@ -196,6 +210,9 @@ export default function AIRegistryPage() {
       }
       if (modRes.status === "fulfilled" && modRes.value) {
         setModels(modRes.value.models ?? []);
+      }
+      if (decRes.status === "fulfilled" && decRes.value) {
+        setDecisions(decRes.value.records ?? []);
       }
       setDetailLoading(false);
     });
@@ -424,6 +441,7 @@ export default function AIRegistryPage() {
                           setCompliance([]);
                           setEvidence(null);
                           setModels([]);
+                          setDecisions([]);
                           setDetailTab("compliance");
                         }}
                       >
@@ -602,12 +620,59 @@ export default function AIRegistryPage() {
               >
                 Models
               </button>
+              <button
+                onClick={() => setDetailTab("decisions")}
+                className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors ${
+                  detailTab === "decisions"
+                    ? "border-brand text-brand"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Decisions
+              </button>
             </div>
 
             {detailLoading ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
                 <div className="w-4 h-4 border-2 border-brand border-t-transparent rounded-full animate-spin" />
                 Loading...
+              </div>
+            ) : detailTab === "decisions" ? (
+              /* Decision records */
+              <div className="space-y-3">
+                {decisions.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No decisions recorded. <Link href="/prove/decisions" className="text-brand hover:underline">Go to Decision Ledger</Link> to record decisions.
+                  </p>
+                ) : (
+                  decisions.map((d) => (
+                    <div key={d.id} className="border border-border rounded-lg p-3 space-y-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium truncate">{d.ai_outputs?.output_summary ?? "\u2014"}</div>
+                          <div className="text-xs text-muted-foreground mt-0.5">
+                            {d.profiles?.full_name ?? "Unknown"}{d.policy_versions ? ` \u00B7 ${d.policy_versions.title} v${d.policy_versions.version}` : ""}
+                          </div>
+                        </div>
+                        <div className="flex gap-1.5 shrink-0">
+                          {d.human_decision && (
+                            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                              d.human_decision === "approved" ? "bg-green-100 text-green-800" :
+                              d.human_decision === "rejected" ? "bg-red-100 text-red-800" :
+                              d.human_decision === "escalated" ? "bg-amber-100 text-amber-800" :
+                              "bg-blue-100 text-blue-800"
+                            }`}>
+                              {d.human_decision.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {d.reviewed_at && (
+                        <div className="text-xs text-muted-foreground">{formatDate(d.reviewed_at)}</div>
+                      )}
+                    </div>
+                  ))
+                )}
               </div>
             ) : detailTab === "models" ? (
               /* Linked models */
