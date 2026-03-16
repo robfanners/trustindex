@@ -68,6 +68,50 @@ export const linkModelToSystemSchema = z.object({
   role: z.enum(["primary", "fallback", "evaluation", "component"]).optional(),
 });
 
+// --- HAPP Decision Attribution schemas ---
+
+export const createPolicyVersionSchema = z.object({
+  policy_id: z.string().uuid("Invalid policy ID"),
+  title: z.string().min(1, "title is required").max(500),
+  content_snapshot: z.record(z.string(), z.unknown()),
+  effective_from: z.string().max(50).optional(),
+  effective_until: z.string().max(50).optional(),
+});
+
+export const createAiOutputSchema = z.object({
+  system_id: z.string().uuid("Invalid system ID"),
+  model_id: z.string().uuid().optional(),
+  output_summary: z.string().min(1, "output_summary is required").max(5000),
+  output_hash: z.string().max(200).optional(),
+  output_type: z.enum(["recommendation", "classification", "generated_text", "action_request", "score", "other"]).optional(),
+  confidence_score: z.number().min(0).max(1).optional(),
+  risk_signal: z.enum(["low", "medium", "high", "critical"]).optional(),
+  occurred_at: z.string().min(1, "occurred_at is required"),
+});
+
+export const createDecisionRecordSchema = z.object({
+  ai_output_id: z.string().uuid("Invalid output ID"),
+  policy_version_id: z.string().uuid("Invalid policy version ID"),
+  review_mode: z.enum(["required", "optional", "auto_approved"]),
+  human_decision: z.enum(["approved", "rejected", "escalated", "modified"]),
+  human_rationale: z.string().max(5000).optional(),
+});
+
+export const createDecisionWithOutputSchema = z.object({
+  system_id: z.string().uuid("Invalid system ID"),
+  model_id: z.string().uuid().optional(),
+  output_summary: z.string().min(1, "output_summary is required").max(5000),
+  output_hash: z.string().max(200).optional(),
+  output_type: z.enum(["recommendation", "classification", "generated_text", "action_request", "score", "other"]).optional(),
+  confidence_score: z.number().min(0).max(1).optional(),
+  risk_signal: z.enum(["low", "medium", "high", "critical"]).optional(),
+  occurred_at: z.string().min(1, "occurred_at is required"),
+  policy_version_id: z.string().uuid("Invalid policy version ID"),
+  review_mode: z.enum(["required", "optional", "auto_approved"]),
+  human_decision: z.enum(["approved", "rejected", "escalated", "modified"]),
+  human_rationale: z.string().max(5000).optional(),
+});
+
 // --- Monitor schemas ---
 
 export const createSignalSchema = z.object({
