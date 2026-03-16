@@ -301,13 +301,13 @@ export default function DecisionLedgerPage() {
   const selectClass = "px-3 py-1.5 rounded-lg border border-border bg-background text-sm";
 
   return (
-    <TierGate requiredTier="Verify">
+    <TierGate requiredTier="Verify" featureLabel="Decision Ledger">
       <div className="space-y-6">
         <PageHeader
           icon={headerIcon}
           title="Decision Ledger"
-          subtitle="Human-reviewed AI decisions under policy"
-          action={
+          description="Human-reviewed AI decisions under policy"
+          actions={
             <button
               onClick={() => setShowForm(!showForm)}
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-brand text-white text-sm font-medium hover:bg-brand/90 transition-colors"
@@ -467,10 +467,11 @@ export default function DecisionLedgerPage() {
 
         {!loading && !error && decisions.length === 0 && (
           <EmptyState
+            icon={headerIcon}
             title="No decisions recorded"
             description="Record your first human-reviewed AI decision to begin building your decision ledger."
-            actionLabel="Record Decision"
-            onAction={() => setShowForm(true)}
+            ctaLabel="Record Decision"
+            ctaAction={() => setShowForm(true)}
           />
         )}
 
