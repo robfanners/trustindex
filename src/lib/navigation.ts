@@ -63,6 +63,7 @@ export const navSections: NavSection[] = [
       { label: "Policies", href: "/copilot/generate-policy", icon: "scroll", exists: true },
       { label: "AI Registry", href: "/govern/registry", icon: "server", exists: true },
       { label: "Vendors", href: "/govern/vendors", icon: "building", exists: true },
+      { label: "Models", href: "/govern/models", icon: "cpu", exists: true },
       { label: "Actions", href: "/actions", icon: "check-circle", exists: true },
     ],
   },

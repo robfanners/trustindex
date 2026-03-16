@@ -8,6 +8,7 @@ import {
   fetchCodeowners,
   fetchDependabotAlerts,
   fetchCIStatus,
+  fetchModelArtifacts,
   GitHubEvidence,
   GitHubRepo,
 } from "@/lib/github";
@@ -49,17 +50,19 @@ export async function POST() {
 
   for (const repo of repos) {
     try {
-      const [prReviews, codeowners, dependabot, ciStatus] = await Promise.all([
+      const [prReviews, codeowners, dependabot, ciStatus, modelArtifacts] = await Promise.all([
         fetchPRReviews(client, repo, since),
         fetchCodeowners(client, repo),
         fetchDependabotAlerts(client, repo),
         fetchCIStatus(client, repo),
+        fetchModelArtifacts(client, repo),
       ]);
 
       allEvidence.push(...prReviews);
       allEvidence.push(codeowners);
       allEvidence.push(...dependabot);
       allEvidence.push(...ciStatus);
+      allEvidence.push(...modelArtifacts);
     } catch (err) {
       errors.push(`${repo.owner}/${repo.repo}: ${err instanceof Error ? err.message : "Unknown error"}`);
     }
@@ -117,6 +120,7 @@ export async function POST() {
         ci_checks: allEvidence.filter((e) => e.type === "ci_status").length,
         security_alerts: allEvidence.filter((e) => e.type === "dependabot").length,
         codeowners: allEvidence.filter((e) => e.type === "codeowners").length,
+        model_artifacts: allEvidence.filter((e) => e.type === "model_card" || e.type === "training_config").length,
       },
     },
   });
