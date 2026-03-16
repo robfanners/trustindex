@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
   // Search attestations first
   const { data: attestation } = await db
     .from("prove_attestations")
-    .select("id, title, statement, attested_by, attested_at, verification_id, event_hash, chain_tx_hash, chain_status, organisation_id, created_at")
+    .select("id, title, statement, attested_by, attested_at, verification_id, event_hash, chain_tx_hash, chain_status, organisation_id, created_at, valid_until, revoked_at")
     .eq("verification_id", verificationId)
     .single();
 
@@ -38,6 +38,8 @@ export async function GET(req: NextRequest) {
       record: {
         ...attestation,
         organisation_name: org?.name ?? "Unknown",
+        is_valid: !attestation.revoked_at && (!attestation.valid_until || new Date(attestation.valid_until) > new Date()),
+        validity_status: attestation.revoked_at ? "revoked" : attestation.valid_until && new Date(attestation.valid_until) <= new Date() ? "expired" : "active",
       },
     });
   }
@@ -69,7 +71,7 @@ export async function GET(req: NextRequest) {
   // Search incident locks
   const { data: incidentLock } = await db
     .from("prove_incident_locks")
-    .select("id, incident_id, lock_reason, snapshot, locked_by, locked_at, verification_id, event_hash, chain_tx_hash, chain_status, organisation_id, created_at")
+    .select("id, incident_id, lock_reason, snapshot, locked_by, locked_at, verification_id, event_hash, chain_tx_hash, chain_status, organisation_id, created_at, valid_until, revoked_at")
     .eq("verification_id", verificationId)
     .single();
 
@@ -86,6 +88,8 @@ export async function GET(req: NextRequest) {
       record: {
         ...incidentLock,
         organisation_name: org?.name ?? "Unknown",
+        is_valid: !incidentLock.revoked_at && (!incidentLock.valid_until || new Date(incidentLock.valid_until) > new Date()),
+        validity_status: incidentLock.revoked_at ? "revoked" : incidentLock.valid_until && new Date(incidentLock.valid_until) <= new Date() ? "expired" : "active",
       },
     });
   }
