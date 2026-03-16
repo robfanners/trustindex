@@ -192,6 +192,8 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
     if (pathname.startsWith("/actions")) return "/actions";
     if (pathname.startsWith("/reports")) return "/reports";
     if (pathname.startsWith("/copilot")) return "/copilot/generate-policy";
+    if (pathname.startsWith("/govern/models")) return "/govern/models";
+    if (pathname.startsWith("/govern")) return pathname;
     if (pathname.startsWith("/monitor")) return pathname;
     if (pathname.startsWith("/prove")) return pathname;
     // Legacy routes

@@ -44,6 +44,30 @@ export const createExchangeSchema = z.object({
   note: z.string().max(2000).optional(),
 });
 
+// --- Model Registry schemas ---
+
+export const createModelSchema = z.object({
+  model_name: z.string().min(1, "model_name is required").max(200),
+  model_version: z.string().min(1, "model_version is required").max(200),
+  provider: z.string().max(200).optional(),
+  model_type: z.enum(["foundation", "fine_tuned", "custom", "rag", "agent", "other"]).optional(),
+  capabilities: z.array(z.string().max(100)).max(20).optional(),
+  training_data_sources: z.array(z.string().max(200)).max(20).optional(),
+  deployment_date: z.string().max(20).optional(),
+  status: z.enum(["active", "retired", "evaluating"]).optional(),
+  parent_model_id: z.string().uuid().optional(),
+  model_card_url: z.string().max(500).optional().or(z.literal("")),
+  notes: z.string().max(2000).optional(),
+});
+
+export const updateModelSchema = createModelSchema.partial();
+
+export const linkModelToSystemSchema = z.object({
+  system_id: z.string().uuid("Invalid system ID"),
+  model_id: z.string().uuid("Invalid model ID"),
+  role: z.enum(["primary", "fallback", "evaluation", "component"]).optional(),
+});
+
 // --- Monitor schemas ---
 
 export const createSignalSchema = z.object({

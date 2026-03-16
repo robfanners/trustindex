@@ -6,7 +6,7 @@ export type GitHubRepo = {
 };
 
 export type GitHubEvidence = {
-  type: "security_scan" | "pr_review" | "ci_status" | "codeowners" | "dependabot";
+  type: "security_scan" | "pr_review" | "ci_status" | "codeowners" | "dependabot" | "model_card" | "training_config";
   title: string;
   url: string;
   status: "pass" | "fail" | "warning" | "info";
@@ -181,6 +181,43 @@ export async function fetchCIStatus(
       },
       collected_at: new Date().toISOString(),
     });
+  }
+
+  return evidence;
+}
+
+/** Fetch model artifact files (model cards, training configs) */
+export async function fetchModelArtifacts(
+  client: Octokit,
+  repo: GitHubRepo
+): Promise<GitHubEvidence[]> {
+  const artifactPaths: { path: string; type: "model_card" | "training_config"; label: string }[] = [
+    { path: "model_card.md", type: "model_card", label: "Model Card" },
+    { path: "MODEL_CARD.md", type: "model_card", label: "Model Card" },
+    { path: "docs/model_card.md", type: "model_card", label: "Model Card" },
+    { path: "model_config.json", type: "training_config", label: "Model Config" },
+    { path: "training_config.yaml", type: "training_config", label: "Training Config" },
+    { path: "training_config.yml", type: "training_config", label: "Training Config" },
+  ];
+
+  const evidence: GitHubEvidence[] = [];
+
+  for (const artifact of artifactPaths) {
+    try {
+      const { data } = await client.rest.repos.getContent({ ...repo, path: artifact.path });
+      if ("content" in data) {
+        evidence.push({
+          type: artifact.type,
+          title: `${artifact.label} found: ${artifact.path}`,
+          url: `https://github.com/${repo.owner}/${repo.repo}/blob/main/${artifact.path}`,
+          status: "pass",
+          metadata: { path: artifact.path, size: data.size },
+          collected_at: new Date().toISOString(),
+        });
+      }
+    } catch {
+      // File not found — skip
+    }
   }
 
   return evidence;

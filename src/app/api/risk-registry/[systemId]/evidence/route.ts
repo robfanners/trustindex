@@ -52,6 +52,7 @@ export async function GET(
     governance: { pass: 0, fail: 0, warning: 0, total: 0, items: [] },
     security: { pass: 0, fail: 0, warning: 0, total: 0, items: [] },
     operations: { pass: 0, fail: 0, warning: 0, total: 0, items: [] },
+    model_provenance: { pass: 0, fail: 0, warning: 0, total: 0, items: [] },
   };
 
   for (const signal of signals ?? []) {
@@ -62,6 +63,7 @@ export async function GET(
     let category = "operations";
     if (["dependabot", "security_scan"].includes(evidenceType)) category = "security";
     if (["codeowners", "pr_review"].includes(evidenceType)) category = "governance";
+    if (["model_card", "training_config"].includes(evidenceType)) category = "model_provenance";
 
     categories[category][status as "pass" | "fail" | "warning"]++;
     categories[category].total++;

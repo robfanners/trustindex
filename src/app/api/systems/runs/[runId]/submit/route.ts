@@ -129,6 +129,26 @@ export async function POST(_req: NextRequest, context: RouteContext) {
       }
     }
 
+    // Snapshot linked models at assessment time
+    let modelSnapshot = null;
+    const { data: linkedModels } = await db
+      .from("system_model_links")
+      .select("model_id, role, model_registry(model_name, model_version, provider)")
+      .eq("system_id", run.system_id);
+
+    if (linkedModels && linkedModels.length > 0) {
+      modelSnapshot = linkedModels.map((lm) => {
+        const mr = lm.model_registry as unknown as { model_name: string; model_version: string; provider: string | null } | null;
+        return {
+          model_id: lm.model_id,
+          model_name: mr?.model_name ?? null,
+          model_version: mr?.model_version ?? null,
+          provider: mr?.provider ?? null,
+          role: lm.role,
+        };
+      });
+    }
+
     // Update the run to submitted
     const { data: updatedRun, error: updateErr } = await db
       .from("system_runs")
@@ -138,6 +158,7 @@ export async function POST(_req: NextRequest, context: RouteContext) {
         overall_score: overall,
         dimension_scores: dimensionScores,
         risk_flags: riskFlags,
+        model_snapshot: modelSnapshot,
       })
       .eq("id", runId)
       .select("*")
