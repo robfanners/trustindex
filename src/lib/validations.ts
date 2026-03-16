@@ -6,6 +6,7 @@ export const createAttestationSchema = z.object({
   title: z.string().min(1, "title is required").max(500),
   statement: z.string().min(1, "statement is required").max(5000),
   posture_snapshot: z.record(z.string(), z.unknown()).optional(),
+  valid_days: z.number().int().min(1).max(365).optional(),
 });
 
 export const createProvenanceSchema = z.object({

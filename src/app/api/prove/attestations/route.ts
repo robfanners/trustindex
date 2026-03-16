@@ -24,7 +24,12 @@ export async function GET(req: NextRequest) {
     .range(offset, offset + perPage - 1);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ attestations: data ?? [], total: count ?? 0 });
+
+  const enriched = (data ?? []).map((a: Record<string, unknown>) => ({
+    ...a,
+    is_valid: !a.revoked_at && (!a.valid_until || new Date(a.valid_until as string) > new Date()),
+  }));
+  return NextResponse.json({ attestations: enriched, total: count ?? 0 });
 }
 
 export async function POST(req: NextRequest) {
@@ -37,7 +42,11 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: firstZodError(parsed.error) }, { status: 400 });
   }
-  const { title, statement, posture_snapshot } = parsed.data;
+  const { title, statement, posture_snapshot, valid_days } = parsed.data;
+
+  const valid_until = valid_days
+    ? new Date(Date.now() + valid_days * 86400000).toISOString()
+    : null;
 
   const now = new Date().toISOString();
 
@@ -72,6 +81,7 @@ export async function POST(req: NextRequest) {
       title,
       statement,
       posture_snapshot: posture_snapshot || null,
+      valid_until,
       attested_by: check.userId,
       attested_at: now,
       verification_id: verificationId,
