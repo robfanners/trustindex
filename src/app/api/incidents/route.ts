@@ -113,7 +113,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { title, description, aiVendorId, impactLevel, sourceEscalationId, sourceSignalId } = body;
+    const { title, description, aiVendorId, impactLevel, sourceEscalationId, sourceSignalId, systemId } = body;
 
     if (!title) {
       return NextResponse.json({ error: "title is required" }, { status: 400 });
@@ -130,6 +130,7 @@ export async function POST(req: Request) {
         reported_by: user.id,
         source_escalation_id: sourceEscalationId || null,
         source_signal_id: sourceSignalId || null,
+        system_id: systemId || null,
       })
       .select("*, ai_vendors(vendor_name)")
       .single();
