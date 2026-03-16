@@ -20,7 +20,8 @@ export async function GET(req: NextRequest) {
   }
 
   const { searchParams } = new URL(req.url);
-  const days = Math.min(parseInt(searchParams.get("days") ?? "90"), 365);
+  const rawDays = parseInt(searchParams.get("days") ?? "90", 10);
+  const days = Math.min(isNaN(rawDays) ? 90 : rawDays, 365);
   const since = new Date(Date.now() - days * 86400000).toISOString();
 
   // Get org users
@@ -31,40 +32,47 @@ export async function GET(req: NextRequest) {
 
   const userIds = (orgUsers ?? []).map((u: { id: string }) => u.id);
 
-  // TrustOrg score history
+  // TrustOrg score history (survey_runs table)
   const { data: orgRuns } = await db
-    .from("trustorg_runs")
-    .select("id, score, dimension_scores, completed_at, stability_status")
+    .from("survey_runs")
+    .select("id, overall_score, dimension_scores, submitted_at")
     .in("created_by", userIds)
-    .eq("status", "completed")
-    .gte("completed_at", since)
-    .order("completed_at", { ascending: true });
+    .eq("status", "submitted")
+    .gte("submitted_at", since)
+    .order("submitted_at", { ascending: true });
 
-  // TrustSys score history
-  const { data: sysRuns } = await db
-    .from("trustsys_runs")
-    .select("id, assessment_id, score, dimension_scores, completed_at, stability_status")
-    .eq("status", "completed")
-    .gte("completed_at", since)
-    .order("completed_at", { ascending: true });
-
-  // Get org systems to filter
+  // Get org systems
   const { data: orgSystems } = await db
     .from("systems")
     .select("id, name")
     .in("owner_id", userIds);
 
   const orgSystemMap = new Map((orgSystems ?? []).map((s: { id: string; name: string }) => [s.id, s.name]));
-  const filteredSysRuns = (sysRuns ?? []).filter(
-    (r: { assessment_id: string }) => orgSystemMap.has(r.assessment_id)
-  );
+  const systemIds = [...orgSystemMap.keys()];
 
-  // Drift events
-  const { data: driftEvents } = await db
-    .from("drift_events")
-    .select("id, run_type, delta_score, dimension_id, drift_flag, created_at")
-    .gte("created_at", since)
-    .order("created_at", { ascending: true });
+  // TrustSys score history (system_runs table)
+  const { data: sysRuns } = await db
+    .from("system_runs")
+    .select("id, system_id, overall_score, submitted_at")
+    .in("system_id", systemIds.length > 0 ? systemIds : ["__none__"])
+    .eq("status", "submitted")
+    .gte("submitted_at", since)
+    .order("submitted_at", { ascending: true });
+
+  // Collect all run IDs for org-scoped drift event filtering
+  const orgRunIds = (orgRuns ?? []).map((r: { id: string }) => r.id);
+  const sysRunIds = (sysRuns ?? []).map((r: { id: string }) => r.id);
+  const allRunIds = [...orgRunIds, ...sysRunIds];
+
+  // Drift events (scoped to org's runs only)
+  const { data: driftEvents } = allRunIds.length > 0
+    ? await db
+        .from("drift_events")
+        .select("id, run_type, delta_score, dimension_id, drift_flag, created_at")
+        .in("run_id", allRunIds)
+        .gte("created_at", since)
+        .order("created_at", { ascending: true })
+    : { data: [] };
 
   // Build weekly timeline
   const toWeekKey = (dateStr: string) => {
@@ -81,17 +89,17 @@ export async function GET(req: NextRequest) {
   }>();
 
   for (const run of orgRuns ?? []) {
-    const week = toWeekKey(run.completed_at);
+    const week = toWeekKey(run.submitted_at);
     const entry = weekMap.get(week) ?? { org_score: null, sys_scores: new Map(), drift_count: 0 };
-    entry.org_score = run.score;
+    entry.org_score = run.overall_score;
     weekMap.set(week, entry);
   }
 
-  for (const run of filteredSysRuns) {
-    const week = toWeekKey(run.completed_at);
+  for (const run of sysRuns ?? []) {
+    const week = toWeekKey(run.submitted_at);
     const entry = weekMap.get(week) ?? { org_score: null, sys_scores: new Map(), drift_count: 0 };
-    const sysName = orgSystemMap.get(run.assessment_id) ?? run.assessment_id;
-    entry.sys_scores.set(sysName, run.score);
+    const sysName = orgSystemMap.get(run.system_id) ?? run.system_id;
+    entry.sys_scores.set(sysName, run.overall_score);
     weekMap.set(week, entry);
   }
 
