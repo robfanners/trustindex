@@ -89,6 +89,7 @@ export const navSections: NavSection[] = [
       { label: "Approvals", href: "/prove/approvals", icon: "shield-check", exists: true },
       { label: "Attestations", href: "/prove/attestations", icon: "stamp", exists: true },
       { label: "Provenance", href: "/prove/provenance", icon: "link", exists: true },
+      { label: "Decisions", href: "/prove/decisions", icon: "file-text", exists: true },
       { label: "Incident Lock", href: "/prove/incident-locks", icon: "lock", exists: true },
       { label: "Trust Exchange", href: "/prove/exchanges", icon: "share", exists: true },
       { label: "Verification", href: "/prove/verification", icon: "search", exists: true },
