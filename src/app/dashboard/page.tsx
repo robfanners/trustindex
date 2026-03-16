@@ -18,6 +18,7 @@ import {
   Legend,
 } from "recharts";
 import CopilotDashboard from "@/components/copilot/CopilotDashboard";
+import TrustTrends from "@/components/trustgraph/TrustTrends";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -342,6 +343,11 @@ function OverviewTab() {
           </div>
         </div>
       )}
+
+      {/* Trust Score Trends */}
+      <div className="border border-border rounded-xl p-6">
+        <TrustTrends />
+      </div>
 
       {/* Alerts & flags */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
