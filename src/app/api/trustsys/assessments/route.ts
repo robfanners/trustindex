@@ -179,6 +179,11 @@ export async function POST(req: NextRequest) {
     const type = typeof body.type === "string" ? body.type.trim() : null;
     const environment =
       typeof body.environment === "string" ? body.environment.trim() : null;
+    const aiVendorId = typeof body.ai_vendor_id === "string" ? body.ai_vendor_id.trim() : null;
+    const riskCategory = typeof body.risk_category === "string" ? body.risk_category.trim() : "unassessed";
+    const ownerName = typeof body.owner_name === "string" ? body.owner_name.trim() : null;
+    const ownerRole = typeof body.owner_role === "string" ? body.owner_role.trim() : null;
+    const complianceTags = Array.isArray(body.compliance_tags) ? body.compliance_tags : [];
 
     if (!name) {
       return NextResponse.json({ error: "name is required" }, { status: 400 });
@@ -192,6 +197,11 @@ export async function POST(req: NextRequest) {
         version_label: versionLabel || null,
         type: type || null,
         environment: environment || null,
+        ai_vendor_id: aiVendorId || null,
+        risk_category: riskCategory,
+        owner_name: ownerName || null,
+        owner_role: ownerRole || null,
+        compliance_tags: complianceTags,
       })
       .select("id, name, version_label, type, environment, created_at")
       .single();
