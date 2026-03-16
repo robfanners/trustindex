@@ -23,8 +23,28 @@ export default function AppShell({ children }: AppShellProps) {
 
   const isAdminOrDashboard = pathname.startsWith("/admin") || pathname.startsWith("/dashboard");
 
+  // Marketing nav — shown on public pages
+  const marketingNav = useMemo(() => [
+    { label: "Product", href: "/#product" },
+    { label: "How It Works", href: "/how-it-works" },
+    { label: "Pricing", href: "/upgrade" },
+    { label: "Services", href: "/services" },
+  ], []);
+
+  const isPublicPage = !isAdminOrDashboard && pathname !== "/verisum" && !pathname.startsWith("/dashboard");
+
   const navItems = useMemo(() => {
     const items: Array<{ label: string; href: string; isActive?: boolean; isExternal?: boolean }> = [];
+
+    if (isPublicPage) {
+      marketingNav.forEach((item) => {
+        items.push({
+          ...item,
+          isActive: pathname === item.href || (item.href !== "/#product" && pathname.startsWith(item.href)),
+        });
+      });
+      return items;
+    }
 
     if (isAdminOrDashboard) {
       items.push(
@@ -46,7 +66,7 @@ export default function AppShell({ children }: AppShellProps) {
     }
 
     return items;
-  }, [pathname, runId, isAdminOrDashboard]);
+  }, [pathname, runId, isAdminOrDashboard, isPublicPage, marketingNav]);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -108,10 +128,10 @@ export default function AppShell({ children }: AppShellProps) {
                   </div>
                 ) : (
                   <a
-                    href="/auth/login"
+                    href={isPublicPage ? "/try" : "/auth/login"}
                     className="ml-3 text-sm font-semibold px-5 py-2 rounded-full bg-brand text-brand-foreground shadow-lg shadow-brand/20 hover:bg-brand-hover hover:-translate-y-0.5 hover:shadow-brand/30 transition-all duration-300"
                   >
-                    Log in
+                    {isPublicPage ? "Get Started" : "Log in"}
                   </a>
                 )
               )}
@@ -240,6 +260,16 @@ export default function AppShell({ children }: AppShellProps) {
                 <li>
                   <a href="/how-it-works" className="text-sm text-white/50 hover:text-white transition-colors">
                     How It Works
+                  </a>
+                </li>
+                <li>
+                  <a href="/services" className="text-sm text-white/50 hover:text-white transition-colors">
+                    Services
+                  </a>
+                </li>
+                <li>
+                  <a href="/protocol" className="text-sm text-white/50 hover:text-white transition-colors">
+                    HAPP Protocol
                   </a>
                 </li>
                 <li>
