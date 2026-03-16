@@ -10,7 +10,7 @@ type CertificateData = {
   validUntil: string | null;
   trustScore: number | null;
   chainTxHash: string | null;
-  chainStatus: string;
+  chainStatus: string | null;
 };
 
 export function generateTrustCertificate(data: CertificateData): jsPDF {

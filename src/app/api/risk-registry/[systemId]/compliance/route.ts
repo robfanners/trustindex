@@ -14,11 +14,31 @@ export async function GET(
 
   const db = supabaseServer();
 
-  // Get system's risk category
+  // Get user's org to scope system lookup
+  const { data: profile } = await db
+    .from("profiles")
+    .select("organisation_id")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile?.organisation_id) {
+    return NextResponse.json({ error: "No organisation linked" }, { status: 400 });
+  }
+
+  // Get org user IDs for ownership check
+  const { data: orgUsers } = await db
+    .from("profiles")
+    .select("id")
+    .eq("organisation_id", profile.organisation_id);
+
+  const userIds = (orgUsers ?? []).map((u: { id: string }) => u.id);
+
+  // Get system's risk category (org-scoped)
   const { data: system } = await db
     .from("systems")
     .select("id, risk_category")
     .eq("id", systemId)
+    .in("owner_id", userIds)
     .single();
 
   if (!system) return NextResponse.json({ error: "System not found" }, { status: 404 });
@@ -63,8 +83,40 @@ export async function POST(
   const { data: { user } } = await authClient.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-  const body = updateComplianceSchema.parse(await req.json());
+  const parsed = updateComplianceSchema.safeParse(await req.json());
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid input" }, { status: 400 });
+  }
+  const body = parsed.data;
+
   const db = supabaseServer();
+
+  // Verify system belongs to user's org
+  const { data: postProfile } = await db
+    .from("profiles")
+    .select("organisation_id")
+    .eq("id", user.id)
+    .single();
+
+  if (!postProfile?.organisation_id) {
+    return NextResponse.json({ error: "No organisation linked" }, { status: 400 });
+  }
+
+  const { data: orgUsersPost } = await db
+    .from("profiles")
+    .select("id")
+    .eq("organisation_id", postProfile.organisation_id);
+
+  const postUserIds = (orgUsersPost ?? []).map((u: { id: string }) => u.id);
+
+  const { data: systemCheck } = await db
+    .from("systems")
+    .select("id")
+    .eq("id", systemId)
+    .in("owner_id", postUserIds)
+    .single();
+
+  if (!systemCheck) return NextResponse.json({ error: "System not found" }, { status: 404 });
 
   const { data, error } = await db
     .from("system_compliance_map")

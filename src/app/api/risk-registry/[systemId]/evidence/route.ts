@@ -24,7 +24,8 @@ export async function GET(
   }
 
   const { searchParams } = new URL(req.url);
-  const days = Math.min(parseInt(searchParams.get("days") ?? "30"), 90);
+  const rawDays = parseInt(searchParams.get("days") ?? "30", 10);
+  const days = Math.min(isNaN(rawDays) ? 30 : rawDays, 90);
   const since = new Date(Date.now() - days * 86400000).toISOString();
 
   // Get system name for signal matching
