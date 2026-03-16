@@ -132,8 +132,8 @@ export async function fetchDependabotAlerts(
         : "warning") as "fail" | "warning",
       metadata: {
         severity: alert.security_advisory.severity,
-        package: alert.dependency.package.name,
-        ecosystem: alert.dependency.package.ecosystem,
+        package: alert.dependency.package?.name,
+        ecosystem: alert.dependency.package?.ecosystem,
         cve: alert.security_advisory.cve_id,
       },
       collected_at: new Date().toISOString(),
