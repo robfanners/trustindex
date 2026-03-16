@@ -238,6 +238,11 @@ export default function AppShell({ children }: AppShellProps) {
                   </a>
                 </li>
                 <li>
+                  <a href="/how-it-works" className="text-sm text-white/50 hover:text-white transition-colors">
+                    How It Works
+                  </a>
+                </li>
+                <li>
                   <a href="/upgrade" className="text-sm text-white/50 hover:text-white transition-colors">
                     Pricing
                   </a>
