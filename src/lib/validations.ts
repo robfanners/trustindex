@@ -124,6 +124,25 @@ export const createSignalSchema = z.object({
   context: z.record(z.string(), z.unknown()).optional(),
 });
 
+// --- Compliance Framework schemas ---
+
+export const createComplianceFrameworkSchema = z.object({
+  name: z.string().min(1).max(200),
+  short_name: z.string().max(20).optional(),
+  coverage_pct: z.number().int().min(0).max(100).default(0),
+  status: z.enum(["on_track", "at_risk", "overdue", "completed"]).default("on_track"),
+  due_date: z.string().optional(),
+  notes: z.string().max(2000).optional(),
+});
+
+export const updateComplianceFrameworkSchema = z.object({
+  id: z.string().uuid(),
+  coverage_pct: z.number().int().min(0).max(100).optional(),
+  status: z.enum(["on_track", "at_risk", "overdue", "completed"]).optional(),
+  due_date: z.string().nullable().optional(),
+  notes: z.string().max(2000).nullable().optional(),
+});
+
 // --- Helper to extract first error message ---
 
 export function firstZodError(error: z.ZodError): string {

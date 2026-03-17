@@ -50,7 +50,7 @@ export const navSections: NavSection[] = [
     label: "",
     minTier: null,
     items: [
-      { label: "Dashboard", href: "/dashboard", icon: "home", exists: true },
+      { label: "Control Centre", href: "/dashboard", icon: "layout-dashboard", exists: true },
     ],
   },
   {
