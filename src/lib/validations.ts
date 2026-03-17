@@ -112,6 +112,70 @@ export const createDecisionWithOutputSchema = z.object({
   human_rationale: z.string().max(5000).optional(),
 });
 
+// --- HAPP API Ingest schemas ---
+
+export const identityAssuranceSchema = z.object({
+  level: z.enum(["ial_1", "ial_2", "ial_3"]),
+  method: z.string().max(100),
+  reviewer_email: z.string().email().max(320).optional(),
+  reviewer_name: z.string().max(200).optional(),
+  reviewer_external_id: z.string().max(200).optional(),
+});
+
+export const actionBindingSchema = z.object({
+  level: z.enum(["ab_1", "ab_2", "ab_3"]),
+  method: z.string().max(100),
+  reviewed_at: z.string().min(1, "reviewed_at is required"),
+  session_id: z.string().max(500).optional(),
+  signature: z.string().max(2000).optional(),
+});
+
+export const outputContextSchema = z.object({
+  input_summary: z.string().max(5000).optional(),
+  full_output_ref: z.string().url().max(2000).optional(),
+  supporting_evidence: z.array(z.object({
+    label: z.string().max(200),
+    url: z.string().url().max(2000),
+  })).max(20).optional(),
+  notes: z.string().max(5000).optional(),
+});
+
+export const apiIngestDecisionSchema = z.object({
+  system_id: z.string().uuid("Invalid system ID"),
+  policy_version_id: z.string().uuid("Invalid policy version ID"),
+  oversight_mode: z.enum(["in_the_loop", "on_the_loop"]),
+
+  // Output fields (inline creation)
+  output_summary: z.string().min(1, "output_summary is required").max(5000),
+  output_hash: z.string().max(200).optional(),
+  output_type: z.enum(["recommendation", "classification", "generated_text", "action_request", "score", "other"]).optional(),
+  confidence_score: z.number().min(0).max(1).optional(),
+  risk_signal: z.enum(["low", "medium", "high", "critical"]).optional(),
+  occurred_at: z.string().min(1, "occurred_at is required"),
+  model_id: z.string().uuid().optional(),
+  external_event_id: z.string().max(500).optional(),
+
+  // Context (links, notes, evidence)
+  context: outputContextSchema.optional(),
+
+  // Review (optional — if omitted, decision enters pending_review queue)
+  review_mode: z.enum(["required", "optional", "auto_approved"]),
+  human_decision: z.enum(["approved", "rejected", "escalated", "modified"]).optional(),
+  human_rationale: z.string().max(5000).optional(),
+
+  // Identity assurance (optional — affects grade)
+  identity_assurance: identityAssuranceSchema.optional(),
+
+  // Action binding (optional — affects grade)
+  action_binding: actionBindingSchema.optional(),
+});
+
+export const createApiKeySchema = z.object({
+  name: z.string().min(1, "Name is required").max(200),
+  scopes: z.array(z.enum(["outputs:write", "decisions:write", "decisions:read", "keys:read"])).min(1, "At least one scope is required"),
+  expires_at: z.string().max(50).optional(),
+});
+
 // --- Monitor schemas ---
 
 export const createSignalSchema = z.object({
