@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireTier } from "@/lib/requireTier";
+import { resolveAuth } from "@/lib/resolveAuth";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { hashPayload, anchorOnChain } from "@/lib/prove/chain";
 import { writeAuditLog } from "@/lib/audit";
 
 type Ctx = { params: Promise<{ decisionId: string }> };
 
-export async function POST(_req: NextRequest, ctx: Ctx) {
-  const check = await requireTier("Verify");
-  if (!check.authorized) return check.response;
-  if (!check.orgId) return NextResponse.json({ error: "No organisation linked" }, { status: 400 });
+export async function POST(req: NextRequest, ctx: Ctx) {
+  const auth = await resolveAuth(req, "Verify", "decisions:write");
+  if (!auth.authorized) return auth.response;
 
   const { decisionId } = await ctx.params;
   const db = supabaseServer();
@@ -19,7 +18,7 @@ export async function POST(_req: NextRequest, ctx: Ctx) {
     .from("decision_records")
     .select("*")
     .eq("id", decisionId)
-    .eq("organisation_id", check.orgId)
+    .eq("organisation_id", auth.organisationId)
     .single();
 
   if (decErr || !decision) return NextResponse.json({ error: "Decision not found" }, { status: 404 });
@@ -66,6 +65,8 @@ export async function POST(_req: NextRequest, ctx: Ctx) {
     human_rationale_hash: decision.human_rationale ? hashPayload({ text: decision.human_rationale }) : null,
     reviewed_at: decision.reviewed_at,
     created_at: decision.created_at,
+    assurance_grade: decision.assurance_grade,
+    oversight_mode: decision.oversight_mode,
   };
 
   const eventHash = hashPayload(payload);
@@ -93,11 +94,11 @@ export async function POST(_req: NextRequest, ctx: Ctx) {
   if (updateErr) return NextResponse.json({ error: updateErr.message }, { status: 500 });
 
   await writeAuditLog({
-    organisationId: check.orgId,
+    organisationId: auth.organisationId,
     entityType: "decision",
     entityId: decisionId,
     actionType: "anchored",
-    performedBy: check.userId,
+    performedBy: auth.userId || auth.apiKeyId!,
     metadata: { event_hash: eventHash, chain_status: chainResult.status },
   });
 

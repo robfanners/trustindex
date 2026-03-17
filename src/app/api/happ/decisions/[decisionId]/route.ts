@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireTier } from "@/lib/requireTier";
+import { resolveAuth } from "@/lib/resolveAuth";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { writeAuditLog } from "@/lib/audit";
 
 type Ctx = { params: Promise<{ decisionId: string }> };
 
-export async function GET(_req: NextRequest, ctx: Ctx) {
-  const check = await requireTier("Verify");
-  if (!check.authorized) return check.response;
-  if (!check.orgId) return NextResponse.json({ error: "No organisation linked" }, { status: 400 });
+export async function GET(req: NextRequest, ctx: Ctx) {
+  const auth = await resolveAuth(req, "Verify", "decisions:read");
+  if (!auth.authorized) return auth.response;
 
   const { decisionId } = await ctx.params;
   const db = supabaseServer();
@@ -17,7 +16,7 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
     .from("decision_records")
     .select(
       `*,
-      ai_outputs(*),
+      ai_outputs(*, context),
       policy_versions(title, version, policy_hash, status),
       systems(name),
       profiles!decision_records_human_reviewer_id_fkey(full_name, email),
@@ -25,7 +24,7 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
       prove_provenance(title, verification_id)`
     )
     .eq("id", decisionId)
-    .eq("organisation_id", check.orgId)
+    .eq("organisation_id", auth.organisationId)
     .single();
 
   if (error || !data) return NextResponse.json({ error: "Decision not found" }, { status: 404 });
@@ -45,9 +44,8 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
 }
 
 export async function PATCH(req: NextRequest, ctx: Ctx) {
-  const check = await requireTier("Verify");
-  if (!check.authorized) return check.response;
-  if (!check.orgId) return NextResponse.json({ error: "No organisation linked" }, { status: 400 });
+  const auth = await resolveAuth(req, "Verify", "decisions:write");
+  if (!auth.authorized) return auth.response;
 
   const { decisionId } = await ctx.params;
   const body = await req.json();
@@ -58,7 +56,7 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
     .from("decision_records")
     .select("*")
     .eq("id", decisionId)
-    .eq("organisation_id", check.orgId)
+    .eq("organisation_id", auth.organisationId)
     .single();
 
   if (fetchErr || !current) return NextResponse.json({ error: "Decision not found" }, { status: 404 });
@@ -78,6 +76,13 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
   if (body.human_decision !== undefined) {
     update.human_decision = body.human_decision;
     update.reviewed_at = now;
+
+    // If reviewing a pending_review decision, promote to review_completed with silver grade
+    if (current.decision_status === "pending_review") {
+      update.decision_status = "review_completed";
+      update.assurance_grade = "silver";
+      update.human_reviewer_id = auth.userId;
+    }
   }
 
   if (Object.keys(update).length === 0) {
@@ -94,11 +99,11 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   await writeAuditLog({
-    organisationId: check.orgId,
+    organisationId: auth.organisationId,
     entityType: "decision",
     entityId: decisionId,
     actionType: "status_change",
-    performedBy: check.userId,
+    performedBy: auth.userId || auth.apiKeyId!,
     metadata: { updated_fields: Object.keys(update) },
   });
 
