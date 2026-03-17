@@ -96,6 +96,15 @@ export const navSections: NavSection[] = [
     ],
   },
   {
+    id: "developer",
+    label: "DEVELOPER",
+    minTier: "pro",
+    tierBadge: "Assure",
+    items: [
+      { label: "API Keys", href: "/developer/api-keys", icon: "key", exists: true },
+    ],
+  },
+  {
     id: "report",
     label: "REPORT",
     minTier: null,
