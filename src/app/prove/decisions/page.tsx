@@ -30,10 +30,19 @@ type DecisionRecord = {
   chain_status: string;
   anchored_at: string | null;
   created_at: string;
+  assurance_grade: string | null;
+  oversight_mode: string | null;
   systems: { name: string } | null;
   profiles: { full_name: string } | null;
   policy_versions: { title: string; version: number } | null;
   ai_outputs: { output_summary: string; output_type: string | null } | null;
+};
+
+type AiOutputContext = {
+  input_summary?: string;
+  notes?: string;
+  supporting_evidence?: string[];
+  full_output_ref?: string;
 };
 
 type DecisionDetail = DecisionRecord & {
@@ -45,6 +54,7 @@ type DecisionDetail = DecisionRecord & {
     risk_signal: string | null;
     occurred_at: string;
     model_id: string | null;
+    context: AiOutputContext | null;
   } | null;
   policy_versions: { title: string; version: number; policy_hash: string; status: string } | null;
   profiles: { full_name: string; email: string } | null;
@@ -74,6 +84,22 @@ const STATUS_COLOURS: Record<string, string> = {
   anchoring_pending: "bg-amber-100 text-amber-800",
   anchored: "bg-green-100 text-green-800",
   failed: "bg-red-100 text-red-800",
+};
+
+const SOURCE_COLOURS: Record<string, string> = {
+  manual: "bg-gray-100 text-gray-700",
+  api: "bg-blue-100 text-blue-800",
+};
+
+const GRADE_COLOURS: Record<string, string> = {
+  gold: "bg-amber-100 text-amber-800",
+  silver: "bg-slate-100 text-slate-700",
+  bronze: "bg-orange-100 text-orange-800",
+};
+
+const OVERSIGHT_COLOURS: Record<string, string> = {
+  in_the_loop: "bg-blue-100 text-blue-800",
+  on_the_loop: "bg-purple-100 text-purple-800",
 };
 
 const CHAIN_COLOURS: Record<string, string> = {
@@ -119,6 +145,13 @@ export default function DecisionLedgerPage() {
   const [systemFilter, setSystemFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [decisionFilter, setDecisionFilter] = useState("");
+  const [sourceFilter, setSourceFilter] = useState("");
+  const [gradeFilter, setGradeFilter] = useState("");
+
+  // Review form state
+  const [reviewDecision, setReviewDecision] = useState("approved");
+  const [reviewRationale, setReviewRationale] = useState("");
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
 
   // Systems list for filter + form
   const [systems, setSystems] = useState<SystemOption[]>([]);
@@ -183,6 +216,8 @@ export default function DecisionLedgerPage() {
       if (systemFilter) params.set("system_id", systemFilter);
       if (statusFilter) params.set("decision_status", statusFilter);
       if (decisionFilter) params.set("human_decision", decisionFilter);
+      if (sourceFilter) params.set("source_type", sourceFilter);
+      if (gradeFilter) params.set("assurance_grade", gradeFilter);
 
       const res = await fetch(`/api/happ/decisions?${params}`);
       if (!res.ok) {
@@ -197,10 +232,10 @@ export default function DecisionLedgerPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, systemFilter, statusFilter, decisionFilter]);
+  }, [page, systemFilter, statusFilter, decisionFilter, sourceFilter, gradeFilter]);
 
   useEffect(() => { fetchDecisions(); }, [fetchDecisions]);
-  useEffect(() => { setPage(1); }, [systemFilter, statusFilter, decisionFilter]);
+  useEffect(() => { setPage(1); }, [systemFilter, statusFilter, decisionFilter, sourceFilter, gradeFilter]);
 
   // Fetch detail
   const openDetail = async (id: string) => {
@@ -284,6 +319,36 @@ export default function DecisionLedgerPage() {
     setFormReviewMode("required");
     setFormDecision("approved");
     setFormRationale("");
+  };
+
+  // Submit review for pending decision
+  const handleReviewSubmit = async () => {
+    if (!selected) return;
+    setReviewSubmitting(true);
+    try {
+      const res = await fetch(`/api/happ/decisions/${selected.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          human_decision: reviewDecision,
+          human_rationale: reviewRationale || null,
+        }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error || "Failed to submit review");
+      }
+      showActionToast("Review submitted");
+      setReviewDecision("approved");
+      setReviewRationale("");
+      // Re-fetch detail and list
+      await openDetail(selected.id);
+      fetchDecisions();
+    } catch (e: unknown) {
+      showActionToast(e instanceof Error ? e.message : "Failed to submit review");
+    } finally {
+      setReviewSubmitting(false);
+    }
   };
 
   // Summary stats
@@ -433,6 +498,24 @@ export default function DecisionLedgerPage() {
           ))}
         </div>
 
+        {/* Review Queue Banner */}
+        {stats.pending > 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm text-amber-800">
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="font-medium">{stats.pending} decision{stats.pending !== 1 ? "s" : ""} awaiting review</span>
+            </div>
+            <button
+              onClick={() => setStatusFilter("pending_review")}
+              className="text-xs font-medium px-3 py-1 rounded-lg bg-amber-200 text-amber-900 hover:bg-amber-300 transition-colors"
+            >
+              Review now
+            </button>
+          </div>
+        )}
+
         {/* Filters */}
         <div className="flex flex-wrap gap-3">
           <select value={systemFilter} onChange={(e) => setSystemFilter(e.target.value)} className={selectClass}>
@@ -453,6 +536,25 @@ export default function DecisionLedgerPage() {
             <option value="escalated">Escalated</option>
             <option value="modified">Modified</option>
           </select>
+          <select value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)} className={selectClass}>
+            <option value="">All sources</option>
+            <option value="manual">Manual</option>
+            <option value="api">API</option>
+          </select>
+          <select value={gradeFilter} onChange={(e) => setGradeFilter(e.target.value)} className={selectClass}>
+            <option value="">All grades</option>
+            <option value="gold">Gold</option>
+            <option value="silver">Silver</option>
+            <option value="bronze">Bronze</option>
+          </select>
+          {statusFilter !== "pending_review" && (
+            <button
+              onClick={() => setStatusFilter("pending_review")}
+              className="px-3 py-1.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-800 text-sm font-medium hover:bg-amber-100 transition-colors"
+            >
+              Pending Review
+            </button>
+          )}
         </div>
 
         {/* Loading */}
@@ -483,9 +585,11 @@ export default function DecisionLedgerPage() {
                 <thead className="bg-muted/50">
                   <tr>
                     <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">System</th>
+                    <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Source</th>
                     <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Output Summary</th>
                     <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Reviewer</th>
                     <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Decision</th>
+                    <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Grade</th>
                     <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Policy</th>
                     <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Status</th>
                     <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Reviewed</th>
@@ -495,12 +599,24 @@ export default function DecisionLedgerPage() {
                   {decisions.map((d) => (
                     <tr key={d.id} className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => openDetail(d.id)}>
                       <td className="px-4 py-3 font-medium">{d.systems?.name ?? "\u2014"}</td>
+                      <td className="px-4 py-3">
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${SOURCE_COLOURS[d.source_type] ?? "bg-gray-100 text-gray-600"}`}>
+                          {d.source_type === "api" ? "API" : "Manual"}
+                        </span>
+                      </td>
                       <td className="px-4 py-3 text-muted-foreground max-w-[200px] truncate">{d.ai_outputs?.output_summary ?? "\u2014"}</td>
                       <td className="px-4 py-3 text-muted-foreground">{d.profiles?.full_name ?? "\u2014"}</td>
                       <td className="px-4 py-3">
                         {d.human_decision ? (
                           <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${DECISION_COLOURS[d.human_decision] ?? "bg-gray-100 text-gray-600"}`}>
                             {formatType(d.human_decision)}
+                          </span>
+                        ) : <span className="text-xs text-muted-foreground">&mdash;</span>}
+                      </td>
+                      <td className="px-4 py-3">
+                        {d.assurance_grade ? (
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${GRADE_COLOURS[d.assurance_grade] ?? "bg-gray-100 text-gray-600"}`}>
+                            {d.assurance_grade.charAt(0).toUpperCase() + d.assurance_grade.slice(1)}
                           </span>
                         ) : <span className="text-xs text-muted-foreground">&mdash;</span>}
                       </td>
@@ -542,10 +658,27 @@ export default function DecisionLedgerPage() {
           title={selected?.systems?.name ?? "Decision Detail"}
           subtitle="Decision Ledger"
           badge={
-            selected?.human_decision ? (
-              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${DECISION_COLOURS[selected.human_decision] ?? "bg-gray-100 text-gray-600"}`}>
-                {formatType(selected.human_decision)}
-              </span>
+            selected ? (
+              <div className="flex flex-wrap gap-1.5">
+                {selected.human_decision && (
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${DECISION_COLOURS[selected.human_decision] ?? "bg-gray-100 text-gray-600"}`}>
+                    {formatType(selected.human_decision)}
+                  </span>
+                )}
+                {selected.assurance_grade && (
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${GRADE_COLOURS[selected.assurance_grade] ?? "bg-gray-100 text-gray-600"}`}>
+                    {selected.assurance_grade.charAt(0).toUpperCase() + selected.assurance_grade.slice(1)}
+                  </span>
+                )}
+                {selected.oversight_mode && (
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${OVERSIGHT_COLOURS[selected.oversight_mode] ?? "bg-gray-100 text-gray-600"}`}>
+                    {selected.oversight_mode === "in_the_loop" ? "In-the-Loop" : "On-the-Loop"}
+                  </span>
+                )}
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${SOURCE_COLOURS[selected.source_type] ?? "bg-gray-100 text-gray-600"}`}>
+                  {selected.source_type === "api" ? "API" : "Manual"}
+                </span>
+              </div>
             ) : undefined
           }
         >
@@ -645,6 +778,89 @@ export default function DecisionLedgerPage() {
                       <dd className="text-sm">{selected.profiles?.full_name ?? "\u2014"}</dd>
                     </div>
                   </div>
+
+                  {/* Context Section */}
+                  {selected.ai_outputs?.context && (
+                    <div className="border-t border-border pt-4 space-y-3">
+                      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Context</h4>
+                      {selected.ai_outputs.context.input_summary && (
+                        <div>
+                          <dt className="text-xs font-medium text-muted-foreground mb-1">Input Summary</dt>
+                          <dd className="text-sm">{selected.ai_outputs.context.input_summary}</dd>
+                        </div>
+                      )}
+                      {selected.ai_outputs.context.notes && (
+                        <div>
+                          <dt className="text-xs font-medium text-muted-foreground mb-1">Notes</dt>
+                          <dd className="text-sm">{selected.ai_outputs.context.notes}</dd>
+                        </div>
+                      )}
+                      {selected.ai_outputs.context.supporting_evidence && selected.ai_outputs.context.supporting_evidence.length > 0 && (
+                        <div>
+                          <dt className="text-xs font-medium text-muted-foreground mb-1">Supporting Evidence</dt>
+                          <dd className="text-sm space-y-1">
+                            {selected.ai_outputs.context.supporting_evidence.map((url, i) => (
+                              <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="block text-brand hover:underline truncate">
+                                {url}
+                              </a>
+                            ))}
+                          </dd>
+                        </div>
+                      )}
+                      {selected.ai_outputs.context.full_output_ref && (
+                        <div>
+                          <dt className="text-xs font-medium text-muted-foreground mb-1">Full Output</dt>
+                          <dd className="text-sm">
+                            <a href={selected.ai_outputs.context.full_output_ref} target="_blank" rel="noopener noreferrer" className="text-brand hover:underline">
+                              {selected.ai_outputs.context.full_output_ref}
+                            </a>
+                          </dd>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Review Form for Pending Decisions */}
+                  {selected.decision_status === "pending_review" && (
+                    <div className="border-t border-border pt-4 space-y-3">
+                      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Review This Decision</h4>
+                      <div>
+                        <label className="block text-xs font-medium text-muted-foreground mb-2">Decision</label>
+                        <div className="flex flex-wrap gap-3">
+                          {(["approved", "rejected", "escalated", "modified"] as const).map((opt) => (
+                            <label key={opt} className="flex items-center gap-1.5 text-sm cursor-pointer">
+                              <input
+                                type="radio"
+                                name="reviewDecision"
+                                value={opt}
+                                checked={reviewDecision === opt}
+                                onChange={(e) => setReviewDecision(e.target.value)}
+                                className="accent-brand"
+                              />
+                              {formatType(opt)}
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-muted-foreground mb-1">Rationale (optional)</label>
+                        <textarea
+                          value={reviewRationale}
+                          onChange={(e) => setReviewRationale(e.target.value)}
+                          className={inputClass}
+                          rows={2}
+                          placeholder="Why was this decision made?"
+                        />
+                      </div>
+                      <button
+                        onClick={handleReviewSubmit}
+                        disabled={reviewSubmitting}
+                        className="px-4 py-2 rounded-lg bg-brand text-white text-sm font-medium hover:bg-brand/90 transition-colors disabled:opacity-50"
+                      >
+                        {reviewSubmitting ? "Submitting..." : "Submit Review"}
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 /* Chain tab */
