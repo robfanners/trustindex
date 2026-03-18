@@ -97,7 +97,7 @@ export default function ScoreRing({ score, dimensions }: ScoreRingProps) {
       {/* header */}
       <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground,#6B7280)]">
         Verisum Score{" "}
-        <span className="font-normal">&middot; TrustOrg composite</span>
+        <span className="font-normal">&middot; TrustGraph composite</span>
       </h3>
 
       {hasDimensions ? (

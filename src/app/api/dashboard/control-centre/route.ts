@@ -59,13 +59,13 @@ export async function GET() {
       provenanceResult,
     ] = await Promise.allSettled([
       // 1. Health score
-      db.rpc("tg_compute_health", { p_org: orgId }).single(),
+      db.rpc("tg_compute_health", { p_org_id: orgId }).single(),
 
       // 2. Escalations (unresolved, top 6)
       db
         .from("escalations")
         .select(
-          "id, reason, severity, status, trigger_type, assigned_to, created_at",
+          "id, reason, severity, status, assigned_to, created_at",
         )
         .eq("organisation_id", orgId)
         .eq("resolved", false)
@@ -122,12 +122,12 @@ export async function GET() {
         .eq("organisation_id", orgId)
         .eq("status", "open"),
 
-      // 9. Attestations (valid)
+      // 9. Attestations (valid — not revoked and not expired)
       db
         .from("prove_attestations")
-        .select("id, is_valid, chain_status")
+        .select("id, chain_status")
         .eq("organisation_id", orgId)
-        .eq("is_valid", true),
+        .is("revoked_at", null),
 
       // 10. Provenance
       db
@@ -158,7 +158,6 @@ export async function GET() {
         reason: string;
         severity: string;
         status: string;
-        trigger_type: string;
         assigned_to: string | null;
         created_at: string;
       }[]
@@ -220,7 +219,7 @@ export async function GET() {
     >(actionsResult) ?? [];
 
     const attestations = safeData<
-      { id: string; is_valid: boolean; chain_status: string }[]
+      { id: string; chain_status: string }[]
     >(attestationsResult) ?? [];
 
     const provenance = safeData<{ id: string; chain_status: string }[]>(
