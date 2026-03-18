@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import DetailPanel from "@/components/ui/DetailPanel";
+import { showActionToast } from "@/components/ui/Toast";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -161,6 +162,13 @@ export default function AIRegistryPage() {
   const [detailTab, setDetailTab] = useState<"compliance" | "evidence" | "models" | "decisions">("compliance");
   const [savingCompliance, setSavingCompliance] = useState<string | null>(null);
 
+  // Link model state
+  const [showLinkModel, setShowLinkModel] = useState(false);
+  const [availableModels, setAvailableModels] = useState<{ id: string; model_name: string; model_version: string }[]>([]);
+  const [linkModelId, setLinkModelId] = useState("");
+  const [linkRole, setLinkRole] = useState("primary");
+  const [linkingModel, setLinkingModel] = useState(false);
+
   // Fetch systems from risk-registry API
   const fetchSystems = useCallback(async () => {
     setLoading(true);
@@ -217,6 +225,67 @@ export default function AIRegistryPage() {
       setDetailLoading(false);
     });
   }, [selectedSystem]);
+
+  // Fetch available models for linking
+  const fetchAvailableModels = useCallback(async () => {
+    try {
+      const res = await fetch("/api/model-registry?per_page=100");
+      if (res.ok) {
+        const d = await res.json();
+        setAvailableModels(d.models ?? []);
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  // Refresh linked models for selected system
+  const refreshLinkedModels = useCallback(async () => {
+    if (!selectedSystem) return;
+    const res = await fetch(`/api/model-registry?system_id=${selectedSystem.id}`);
+    if (res.ok) {
+      const d = await res.json();
+      setModels(d.models ?? []);
+    }
+  }, [selectedSystem]);
+
+  // Link a model to the selected system
+  const handleLinkModel = async () => {
+    if (!selectedSystem || !linkModelId) return;
+    setLinkingModel(true);
+    try {
+      const res = await fetch("/api/model-registry/links", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ system_id: selectedSystem.id, model_id: linkModelId, role: linkRole }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        showActionToast(d.error || "Failed to link");
+      } else {
+        showActionToast("Model linked");
+        setShowLinkModel(false);
+        setLinkModelId("");
+        setLinkRole("primary");
+        await refreshLinkedModels();
+      }
+    } catch { showActionToast("Failed to link model"); }
+    finally { setLinkingModel(false); }
+  };
+
+  // Unlink a model from the selected system
+  const handleUnlinkModel = async (modelId: string) => {
+    if (!selectedSystem) return;
+    try {
+      const res = await fetch("/api/model-registry/links", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ system_id: selectedSystem.id, model_id: modelId }),
+      });
+      if (res.ok) {
+        showActionToast("Model unlinked");
+        await refreshLinkedModels();
+      }
+    } catch { showActionToast("Failed to unlink"); }
+  };
 
   // Update compliance status
   const updateComplianceStatus = async (requirementId: string, status: string) => {
@@ -677,7 +746,50 @@ export default function AIRegistryPage() {
             ) : detailTab === "models" ? (
               /* Linked models */
               <div className="space-y-3">
-                {models.length === 0 ? (
+                {/* Link Model button */}
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => { setShowLinkModel(!showLinkModel); if (!showLinkModel) fetchAvailableModels(); }}
+                    className="text-xs font-medium text-brand hover:text-brand-hover transition-colors"
+                  >
+                    {showLinkModel ? "Cancel" : "+ Link Model"}
+                  </button>
+                </div>
+
+                {/* Link form */}
+                {showLinkModel && (
+                  <div className="border border-brand/30 rounded-lg p-3 space-y-2 bg-brand/5">
+                    <select
+                      value={linkModelId}
+                      onChange={(e) => setLinkModelId(e.target.value)}
+                      className="w-full text-sm border border-border rounded px-2 py-1.5 bg-white"
+                    >
+                      <option value="">Select a model...</option>
+                      {availableModels
+                        .filter((am) => !models.some((m) => m.id === am.id))
+                        .map((am) => <option key={am.id} value={am.id}>{am.model_name} ({am.model_version})</option>)}
+                    </select>
+                    <select
+                      value={linkRole}
+                      onChange={(e) => setLinkRole(e.target.value)}
+                      className="w-full text-sm border border-border rounded px-2 py-1.5 bg-white"
+                    >
+                      <option value="primary">Primary</option>
+                      <option value="fallback">Fallback</option>
+                      <option value="evaluation">Evaluation</option>
+                      <option value="component">Component</option>
+                    </select>
+                    <button
+                      onClick={handleLinkModel}
+                      disabled={!linkModelId || linkingModel}
+                      className="w-full text-xs font-medium px-3 py-1.5 rounded bg-brand text-white hover:bg-brand-hover disabled:opacity-50 transition-colors"
+                    >
+                      {linkingModel ? "Linking..." : "Link Model"}
+                    </button>
+                  </div>
+                )}
+
+                {models.length === 0 && !showLinkModel ? (
                   <p className="text-sm text-muted-foreground">
                     No models linked to this system. <Link href="/govern/models" className="text-brand hover:underline">Go to Model Registry</Link> to link models.
                   </p>
@@ -691,7 +803,7 @@ export default function AIRegistryPage() {
                             {m.model_version}{m.provider ? ` \u00B7 ${m.provider}` : ""}
                           </div>
                         </div>
-                        <div className="flex gap-1.5 shrink-0">
+                        <div className="flex items-center gap-1.5 shrink-0">
                           {m.status && (
                             <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                               m.status === "active" ? "bg-green-100 text-green-800" :
@@ -701,6 +813,13 @@ export default function AIRegistryPage() {
                               {formatType(m.status)}
                             </span>
                           )}
+                          <button
+                            onClick={() => handleUnlinkModel(m.id)}
+                            className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+                            title="Unlink model"
+                          >
+                            &times;
+                          </button>
                         </div>
                       </div>
                       {m.model_type && (

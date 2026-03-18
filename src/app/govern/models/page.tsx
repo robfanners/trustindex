@@ -131,6 +131,13 @@ export default function ModelRegistryPage() {
   const [linkedSystems, setLinkedSystems] = useState<LinkedSystem[]>([]);
   const [detailLoading, setDetailLoading] = useState(false);
 
+  // Link system state
+  const [showLinkSystem, setShowLinkSystem] = useState(false);
+  const [availableSystems, setAvailableSystems] = useState<{ id: string; name: string }[]>([]);
+  const [linkSystemId, setLinkSystemId] = useState("");
+  const [linkRole, setLinkRole] = useState("primary");
+  const [linking, setLinking] = useState(false);
+
   // Fetch models
   const fetchModels = useCallback(async () => {
     setLoading(true);
@@ -174,6 +181,69 @@ export default function ModelRegistryPage() {
       setDetailLoading(false);
     });
   }, [selectedModel]);
+
+  // Fetch available systems for linking
+  const fetchAvailableSystems = useCallback(async () => {
+    try {
+      const res = await fetch("/api/systems");
+      if (res.ok) {
+        const d = await res.json();
+        setAvailableSystems((d.data ?? d) as { id: string; name: string }[]);
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  // Refresh linked systems for selected model
+  const refreshLinkedSystems = useCallback(async () => {
+    if (!selectedModel) return;
+    const res = await fetch(`/api/model-registry/${selectedModel.id}`);
+    if (res.ok) {
+      const d = await res.json();
+      setLinkedSystems(d.data?.linked_systems ?? []);
+    }
+  }, [selectedModel]);
+
+  // Link a system to the selected model
+  const handleLinkSystem = async () => {
+    if (!selectedModel || !linkSystemId) return;
+    setLinking(true);
+    try {
+      const res = await fetch("/api/model-registry/links", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ system_id: linkSystemId, model_id: selectedModel.id, role: linkRole }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        showActionToast(d.error || "Failed to link");
+      } else {
+        showActionToast("System linked");
+        setShowLinkSystem(false);
+        setLinkSystemId("");
+        setLinkRole("primary");
+        await refreshLinkedSystems();
+        fetchModels();
+      }
+    } catch { showActionToast("Failed to link system"); }
+    finally { setLinking(false); }
+  };
+
+  // Unlink a system from the selected model
+  const handleUnlinkSystem = async (systemId: string) => {
+    if (!selectedModel) return;
+    try {
+      const res = await fetch("/api/model-registry/links", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ system_id: systemId, model_id: selectedModel.id }),
+      });
+      if (res.ok) {
+        showActionToast("System unlinked");
+        await refreshLinkedSystems();
+        fetchModels();
+      }
+    } catch { showActionToast("Failed to unlink"); }
+  };
 
   // Create model
   const handleSubmit = async () => {
@@ -608,7 +678,50 @@ export default function ModelRegistryPage() {
               ) : (
                 /* Systems tab */
                 <div className="space-y-3">
-                  {linkedSystems.length === 0 ? (
+                  {/* Link System button */}
+                  <div className="flex justify-end">
+                    <button
+                      onClick={() => { setShowLinkSystem(!showLinkSystem); if (!showLinkSystem) fetchAvailableSystems(); }}
+                      className="text-xs font-medium text-brand hover:text-brand-hover transition-colors"
+                    >
+                      {showLinkSystem ? "Cancel" : "+ Link System"}
+                    </button>
+                  </div>
+
+                  {/* Link form */}
+                  {showLinkSystem && (
+                    <div className="border border-brand/30 rounded-lg p-3 space-y-2 bg-brand/5">
+                      <select
+                        value={linkSystemId}
+                        onChange={(e) => setLinkSystemId(e.target.value)}
+                        className="w-full text-sm border border-border rounded px-2 py-1.5 bg-white"
+                      >
+                        <option value="">Select a system...</option>
+                        {availableSystems
+                          .filter((s) => !linkedSystems.some((ls) => ls.system_id === s.id))
+                          .map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                      </select>
+                      <select
+                        value={linkRole}
+                        onChange={(e) => setLinkRole(e.target.value)}
+                        className="w-full text-sm border border-border rounded px-2 py-1.5 bg-white"
+                      >
+                        <option value="primary">Primary</option>
+                        <option value="fallback">Fallback</option>
+                        <option value="evaluation">Evaluation</option>
+                        <option value="component">Component</option>
+                      </select>
+                      <button
+                        onClick={handleLinkSystem}
+                        disabled={!linkSystemId || linking}
+                        className="w-full text-xs font-medium px-3 py-1.5 rounded bg-brand text-white hover:bg-brand-hover disabled:opacity-50 transition-colors"
+                      >
+                        {linking ? "Linking..." : "Link System"}
+                      </button>
+                    </div>
+                  )}
+
+                  {linkedSystems.length === 0 && !showLinkSystem ? (
                     <p className="text-sm text-muted-foreground">This model is not linked to any systems yet.</p>
                   ) : (
                     linkedSystems.map((link) => (
@@ -616,9 +729,18 @@ export default function ModelRegistryPage() {
                         <div>
                           <div className="text-sm font-medium">{link.systems?.name ?? link.system_id}</div>
                         </div>
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${ROLE_COLOURS[link.role] ?? "bg-gray-100 text-gray-600"}`}>
-                          {link.role}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${ROLE_COLOURS[link.role] ?? "bg-gray-100 text-gray-600"}`}>
+                            {link.role}
+                          </span>
+                          <button
+                            onClick={() => handleUnlinkSystem(link.system_id)}
+                            className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+                            title="Unlink system"
+                          >
+                            &times;
+                          </button>
+                        </div>
                       </div>
                     ))
                   )}
