@@ -124,14 +124,14 @@ export default function QuickActions() {
           <Link
             key={action.href}
             href={action.href}
-            className="flex items-center gap-3 rounded-lg px-3 py-3 transition-all duration-150 border border-transparent hover:border-[var(--brand,#0066FF)] hover:bg-[var(--brand,#0066FF)]/5"
+            className="flex items-center gap-2.5 rounded-lg px-2.5 py-2.5 transition-all duration-150 border border-transparent hover:border-[var(--brand,#0066FF)] hover:bg-[var(--brand,#0066FF)]/5 min-w-0"
           >
             <span
               className={`shrink-0 flex items-center justify-center w-9 h-9 rounded-lg ${action.iconBg}`}
             >
               {action.icon}
             </span>
-            <span className="text-sm font-medium text-gray-800">
+            <span className="text-xs font-medium text-gray-800 leading-tight">
               {action.label}
             </span>
           </Link>
