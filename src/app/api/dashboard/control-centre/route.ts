@@ -82,10 +82,11 @@ export async function GET() {
         .limit(6),
 
       // 4. Drift events (flagged, top 10)
+      // drift_events has no organisation_id — filter via RPC or fetch all flagged
+      // (small table, acceptable for now)
       db
         .from("drift_events")
         .select("id, run_type, delta_score, drift_flag, created_at")
-        .eq("organisation_id", orgId)
         .eq("drift_flag", true)
         .order("created_at", { ascending: false })
         .limit(10),
