@@ -28,6 +28,38 @@ const LIMITS: Record<PlanName, PlanLimits> = {
   enterprise: { maxSurveys: Infinity, maxSystems: Infinity, canExport: true },
 };
 
+/** Plan-specific feature limits — single source of truth for UI + enforcement */
+export const PLAN_LIMITS = {
+  explorer: {
+    maxStaffDeclarations: 0,
+    maxVendors: 0,
+    maxIncidentsPerMonth: 0,
+    maxTeamMembers: 1,
+    maxPolicyGenerations: 0,
+  },
+  starter: {
+    maxStaffDeclarations: 50,
+    maxVendors: 10,
+    maxIncidentsPerMonth: 5,
+    maxTeamMembers: 1,
+    maxPolicyGenerations: 3,
+  },
+  pro: {
+    maxStaffDeclarations: 250,
+    maxVendors: Infinity,
+    maxIncidentsPerMonth: Infinity,
+    maxTeamMembers: 5,
+    maxPolicyGenerations: 10,
+  },
+  enterprise: {
+    maxStaffDeclarations: Infinity,
+    maxVendors: Infinity,
+    maxIncidentsPerMonth: Infinity,
+    maxTeamMembers: Infinity,
+    maxPolicyGenerations: 50,
+  },
+} as const;
+
 /** Return the limits object for a given plan. Defaults to explorer. */
 export function getPlanLimits(plan: string | null | undefined): PlanLimits {
   const key = (plan ?? "explorer") as PlanName;
@@ -63,10 +95,8 @@ export function canManageTeam(plan: string | null | undefined): boolean {
 
 /** Max team members allowed */
 export function maxTeamMembers(plan: string | null | undefined): number {
-  const p = plan ?? "explorer";
-  if (p === "pro") return 5;
-  if (p === "enterprise") return Infinity;
-  return 1; // owner only
+  const p = (plan ?? "explorer") as PlanName;
+  return PLAN_LIMITS[p]?.maxTeamMembers ?? 1;
 }
 
 /** Can the user access data & export settings? (Pro+) */
@@ -87,36 +117,26 @@ export function isPaidPlan(plan: string | null | undefined): boolean {
 
 /** Max staff declarations allowed */
 export function maxStaffDeclarations(plan: string | null | undefined): number {
-  const p = plan ?? "explorer";
-  if (p === "starter") return 50;
-  if (p === "pro") return 250;
-  if (p === "enterprise") return Infinity;
-  return 0;
+  const p = (plan ?? "explorer") as PlanName;
+  return PLAN_LIMITS[p]?.maxStaffDeclarations ?? 0;
 }
 
 /** Max AI vendors allowed */
 export function maxVendors(plan: string | null | undefined): number {
-  const p = plan ?? "explorer";
-  if (p === "starter") return 10;
-  if (p === "pro" || p === "enterprise") return Infinity;
-  return 0;
+  const p = (plan ?? "explorer") as PlanName;
+  return PLAN_LIMITS[p]?.maxVendors ?? 0;
 }
 
 /** Max incidents per month */
 export function maxIncidentsPerMonth(plan: string | null | undefined): number {
-  const p = plan ?? "explorer";
-  if (p === "starter") return 5;
-  if (p === "pro" || p === "enterprise") return Infinity;
-  return 0;
+  const p = (plan ?? "explorer") as PlanName;
+  return PLAN_LIMITS[p]?.maxIncidentsPerMonth ?? 0;
 }
 
 /** Max AI policy generations per month */
 export function maxPolicyGenerations(plan: string | null | undefined): number {
-  const p = plan ?? "explorer";
-  if (p === "starter") return 3;
-  if (p === "pro") return 10;
-  if (p === "enterprise") return 50;
-  return 0;
+  const p = (plan ?? "explorer") as PlanName;
+  return PLAN_LIMITS[p]?.maxPolicyGenerations ?? 0;
 }
 
 /** Can generate AI policies? (Starter+) */

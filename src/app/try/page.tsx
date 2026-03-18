@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { createSupabaseBrowserClient } from "@/lib/supabase-auth-browser";
 import AppShell from "@/components/AppShell";
 import SurveyForm, { type Question } from "@/components/SurveyForm";
 import OnboardingForm from "@/components/OnboardingForm";
@@ -75,6 +75,7 @@ function bandFor(score: number) {
 // ---------------------------------------------------------------------------
 
 export default function TryExplorerPage() {
+  const supabase = createSupabaseBrowserClient();
   // Phase: "loading" → "survey" → "submitting-results" → "results"
   const [phase, setPhase] = useState<
     "loading" | "survey" | "submitting-results" | "results"

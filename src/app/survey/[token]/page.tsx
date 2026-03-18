@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { createSupabaseBrowserClient } from "@/lib/supabase-auth-browser";
 import AppShell from "@/components/AppShell";
 import SurveyForm, { type Question } from "@/components/SurveyForm";
 
 export default function SurveyPage() {
+  const supabase = createSupabaseBrowserClient();
   const params = useParams<{ token: string }>();
   const token = params?.token;
 

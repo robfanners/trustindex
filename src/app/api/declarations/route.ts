@@ -1,47 +1,30 @@
-import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { requireAuth, apiOk, withErrorHandling } from "@/lib/apiHelpers";
 
 // GET — list tokens + declaration stats for org (dashboard view)
 export async function GET() {
-  try {
-    const authClient = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await authClient.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    const sb = supabaseServer();
-    const { data: profile } = await sb
-      .from("profiles")
-      .select("organisation_id")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile?.organisation_id) {
-      return NextResponse.json({ error: "No organisation" }, { status: 400 });
-    }
+  return withErrorHandling(async () => {
+    const auth = await requireAuth();
+    if (auth.error) return auth.error;
+    const { orgId, db } = auth;
 
     // Fetch tokens
-    const { data: tokens } = await sb
+    const { data: tokens } = await db
       .from("declaration_tokens")
       .select("id, token, label, is_active, created_at")
-      .eq("organisation_id", profile.organisation_id)
+      .eq("organisation_id", orgId)
       .order("created_at", { ascending: false });
 
     // Fetch declaration count
-    const { count: totalDeclarations } = await sb
+    const { count: totalDeclarations } = await db
       .from("staff_declarations")
       .select("id", { count: "exact", head: true })
-      .eq("organisation_id", profile.organisation_id);
+      .eq("organisation_id", orgId);
 
     // Fetch invite stats per token
     const tokenIds = (tokens ?? []).map((t: { id: string }) => t.id);
     const inviteStats: Record<string, { sent: number; submitted: number }> = {};
     if (tokenIds.length > 0) {
-      const { data: invites } = await sb
+      const { data: invites } = await db
         .from("declaration_invites")
         .select("token_id, submitted_at")
         .in("token_id", tokenIds);
@@ -53,14 +36,11 @@ export async function GET() {
       }
     }
 
-    return NextResponse.json({
+    return apiOk({
       tokens: tokens ?? [],
       tokenCount: (tokens ?? []).filter((t: { is_active: boolean }) => t.is_active).length,
       totalDeclarations: totalDeclarations ?? 0,
       inviteStats,
     });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Internal server error";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+  });
 }

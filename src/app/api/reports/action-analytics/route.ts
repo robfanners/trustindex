@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { getAuthenticatedOrgWithRole } from "@/lib/reportAuth.server";
 import { canAccessReport } from "@/lib/reportAuth";
 import type { VersiumRole } from "@/lib/roles";
+import { apiError, apiOk, withErrorHandling } from "@/lib/apiHelpers";
 import { supabaseServer } from "@/lib/supabaseServer";
 
 // ---------------------------------------------------------------------------
@@ -10,17 +11,14 @@ import { supabaseServer } from "@/lib/supabaseServer";
 // Query params: from, to (ISO date), severity, status, run_type
 
 export async function GET(req: NextRequest) {
-  try {
+  return withErrorHandling(async () => {
     const result = await getAuthenticatedOrgWithRole();
     if ("error" in result) return result.error;
 
     const { orgId, role } = result;
 
     if (!canAccessReport(role as VersiumRole, "action_completion")) {
-      return NextResponse.json(
-        { error: "Insufficient permissions" },
-        { status: 403 }
-      );
+      return apiError("Insufficient permissions", 403);
     }
 
     const db = supabaseServer();
@@ -33,10 +31,7 @@ export async function GET(req: NextRequest) {
     const runType = url.searchParams.get("run_type");
 
     if (!from || !to) {
-      return NextResponse.json(
-        { error: "from and to date params are required" },
-        { status: 400 }
-      );
+      return apiError("from and to date params are required", 400);
     }
 
     // Fetch all actions in range
@@ -63,7 +58,7 @@ export async function GET(req: NextRequest) {
     const { data: actions, error: fetchErr } = await query;
 
     if (fetchErr) {
-      return NextResponse.json({ error: fetchErr.message }, { status: 500 });
+      return apiError(fetchErr.message, 500);
     }
 
     type ActionRow = {
@@ -140,17 +135,14 @@ export async function GET(req: NextRequest) {
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([week, data]) => ({ week, ...data }));
 
-    return NextResponse.json({
+    return apiOk({
       analytics: {
         totals,
         by_severity: bySeverity,
         time_series: timeSeries,
       },
     });
-  } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+  });
 }
 
 // ---------------------------------------------------------------------------

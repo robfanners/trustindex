@@ -1,39 +1,23 @@
-import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
-import { getUserPlan, maxIncidentsPerMonth } from "@/lib/entitlements";
+import { requireAuth, apiOk, withErrorHandling, parseBody } from "@/lib/apiHelpers";
+import { maxIncidentsPerMonth } from "@/lib/entitlements";
 import { writeAuditLog } from "@/lib/audit";
+import { createIncidentSchema, updateIncidentSchema } from "@/lib/validations";
 
 // GET — list incidents for org
 export async function GET(req: Request) {
-  try {
-    const authClient = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await authClient.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    const sb = supabaseServer();
-    const { data: profile } = await sb
-      .from("profiles")
-      .select("organisation_id, plan")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile?.organisation_id) {
-      return NextResponse.json({ error: "No organisation" }, { status: 400 });
-    }
+  return withErrorHandling(async () => {
+    const auth = await requireAuth();
+    if (auth.error) return auth.error;
+    const { orgId, plan, db } = auth;
 
     // Optional status filter
     const { searchParams } = new URL(req.url);
     const statusFilter = searchParams.get("status");
 
-    let query = sb
+    let query = db
       .from("incidents")
       .select("*, ai_vendors(vendor_name)")
-      .eq("organisation_id", profile.organisation_id)
+      .eq("organisation_id", orgId)
       .order("created_at", { ascending: false });
 
     if (statusFilter) {
@@ -43,7 +27,7 @@ export async function GET(req: Request) {
     const { data: incidents, error } = await query;
 
     if (error) {
-      return NextResponse.json({ error: "Failed to fetch incidents" }, { status: 500 });
+      throw new Error("Failed to fetch incidents");
     }
 
     // Monthly count for limit check
@@ -51,47 +35,28 @@ export async function GET(req: Request) {
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
 
-    const { count: monthlyCount } = await sb
+    const { count: monthlyCount } = await db
       .from("incidents")
       .select("id", { count: "exact", head: true })
-      .eq("organisation_id", profile.organisation_id)
+      .eq("organisation_id", orgId)
       .gte("created_at", startOfMonth.toISOString());
 
-    const limit = maxIncidentsPerMonth(profile.plan);
+    const limit = maxIncidentsPerMonth(plan);
 
-    return NextResponse.json({
+    return apiOk({
       incidents: incidents ?? [],
       monthlyCount: monthlyCount ?? 0,
       monthlyLimit: limit === Infinity ? -1 : limit,
     });
-  } catch (err: unknown) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : "Internal server error" }, { status: 500 });
-  }
+  });
 }
 
 // POST — create incident
 export async function POST(req: Request) {
-  try {
-    const authClient = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await authClient.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    const plan = await getUserPlan(user.id);
-
-    const sb = supabaseServer();
-    const { data: profile } = await sb
-      .from("profiles")
-      .select("organisation_id")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile?.organisation_id) {
-      return NextResponse.json({ error: "No organisation" }, { status: 400 });
-    }
+  return withErrorHandling(async () => {
+    const auth = await requireAuth();
+    if (auth.error) return auth.error;
+    const { user, orgId, plan, db } = auth;
 
     // Check monthly limit
     const limit = maxIncidentsPerMonth(plan);
@@ -99,30 +64,24 @@ export async function POST(req: Request) {
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
 
-    const { count } = await sb
+    const { count } = await db
       .from("incidents")
       .select("id", { count: "exact", head: true })
-      .eq("organisation_id", profile.organisation_id)
+      .eq("organisation_id", orgId)
       .gte("created_at", startOfMonth.toISOString());
 
     if ((count ?? 0) >= limit) {
-      return NextResponse.json(
-        { error: "Monthly incident limit reached. Upgrade for unlimited." },
-        { status: 403 }
-      );
+      throw new Error("Monthly incident limit reached. Upgrade for unlimited.");
     }
 
-    const body = await req.json();
-    const { title, description, aiVendorId, impactLevel, sourceEscalationId, sourceSignalId, systemId } = body;
+    const parsed = await parseBody(req, createIncidentSchema);
+    if (parsed.error) return parsed.error;
+    const { title, description, aiVendorId, impactLevel, sourceEscalationId, sourceSignalId, systemId } = parsed.data;
 
-    if (!title) {
-      return NextResponse.json({ error: "title is required" }, { status: 400 });
-    }
-
-    const { data: incident, error } = await sb
+    const { data: incident, error } = await db
       .from("incidents")
       .insert({
-        organisation_id: profile.organisation_id,
+        organisation_id: orgId,
         title,
         description: description || null,
         ai_vendor_id: aiVendorId || null,
@@ -137,11 +96,11 @@ export async function POST(req: Request) {
 
     if (error) {
       console.error("[incidents] Error creating:", error);
-      return NextResponse.json({ error: "Failed to create incident" }, { status: 500 });
+      throw new Error("Failed to create incident");
     }
 
     await writeAuditLog({
-      organisationId: profile.organisation_id,
+      organisationId: orgId,
       entityType: "incident",
       entityId: incident.id,
       actionType: "created",
@@ -149,40 +108,20 @@ export async function POST(req: Request) {
       metadata: { title, impact_level: impactLevel || "low", source_escalation_id: sourceEscalationId || null },
     });
 
-    return NextResponse.json({ incident });
-  } catch (err: unknown) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : "Internal server error" }, { status: 500 });
-  }
+    return apiOk({ incident }, 201);
+  });
 }
 
 // PATCH — update incident (status, resolution)
 export async function PATCH(req: Request) {
-  try {
-    const authClient = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await authClient.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
+  return withErrorHandling(async () => {
+    const auth = await requireAuth();
+    if (auth.error) return auth.error;
+    const { user, orgId, db } = auth;
 
-    const sb = supabaseServer();
-    const { data: profile } = await sb
-      .from("profiles")
-      .select("organisation_id")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile?.organisation_id) {
-      return NextResponse.json({ error: "No organisation" }, { status: 400 });
-    }
-
-    const body = await req.json();
-    const { id, status: newStatus, resolution, impactLevel } = body;
-
-    if (!id) {
-      return NextResponse.json({ error: "id is required" }, { status: 400 });
-    }
+    const parsed = await parseBody(req, updateIncidentSchema);
+    if (parsed.error) return parsed.error;
+    const { id, status: newStatus, resolution, impactLevel, title: newTitle, description: newDesc, aiVendorId } = parsed.data;
 
     const updates: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
@@ -192,27 +131,27 @@ export async function PATCH(req: Request) {
     if (newStatus) updates.status = newStatus;
     if (resolution !== undefined) updates.resolution = resolution;
     if (impactLevel) updates.impact_level = impactLevel;
-    if (body.title !== undefined) updates.title = body.title;
-    if (body.description !== undefined) updates.description = body.description;
-    if (body.aiVendorId !== undefined) updates.ai_vendor_id = body.aiVendorId || null;
+    if (newTitle !== undefined) updates.title = newTitle;
+    if (newDesc !== undefined) updates.description = newDesc;
+    if (aiVendorId !== undefined) updates.ai_vendor_id = aiVendorId || null;
     if (newStatus === "resolved" || newStatus === "closed") {
       updates.resolved_at = new Date().toISOString();
     }
 
-    const { data: incident, error } = await sb
+    const { data: incident, error } = await db
       .from("incidents")
       .update(updates)
       .eq("id", id)
-      .eq("organisation_id", profile.organisation_id)
+      .eq("organisation_id", orgId)
       .select("*, edited_at, edited_by, ai_vendors(vendor_name)")
       .single();
 
     if (error) {
-      return NextResponse.json({ error: "Failed to update incident" }, { status: 500 });
+      throw new Error("Failed to update incident");
     }
 
     await writeAuditLog({
-      organisationId: profile.organisation_id,
+      organisationId: orgId,
       entityType: "incident",
       entityId: id,
       actionType: "status_change",
@@ -220,8 +159,6 @@ export async function PATCH(req: Request) {
       metadata: { status: newStatus, impact_level: impactLevel },
     });
 
-    return NextResponse.json({ incident });
-  } catch (err: unknown) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : "Internal server error" }, { status: 500 });
-  }
+    return apiOk({ incident });
+  });
 }

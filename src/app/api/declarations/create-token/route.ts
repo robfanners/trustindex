@@ -3,6 +3,8 @@ import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { getUserPlan, isPaidPlan } from "@/lib/entitlements";
 import { getServerOrigin } from "@/lib/url";
+import { parseBody } from "@/lib/apiHelpers";
+import { createDeclarationTokenSchema } from "@/lib/validations";
 
 export async function POST(req: Request) {
   try {
@@ -40,15 +42,9 @@ export async function POST(req: Request) {
     }
 
     // Parse optional label and expiry
-    let label: string | null = null;
-    let expiresAt: string | null = null;
-    try {
-      const body = await req.json();
-      if (body.label) label = body.label;
-      if (body.expiresAt) expiresAt = body.expiresAt;
-    } catch {
-      // defaults
-    }
+    const parsed = await parseBody(req, createDeclarationTokenSchema);
+    if (parsed.error) return parsed.error;
+    const { label, assignee_email, expires_at } = parsed.data;
 
     // Create token
     const { data: token, error } = await sb
@@ -56,7 +52,8 @@ export async function POST(req: Request) {
       .insert({
         organisation_id: profile.organisation_id,
         label,
-        expires_at: expiresAt,
+        assignee_email,
+        expires_at,
         created_by: user.id,
       })
       .select()

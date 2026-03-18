@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { createSupabaseBrowserClient } from "@/lib/supabase-auth-browser";
 import AppShell from "@/components/AppShell";
 import {
   Radar,
@@ -179,6 +179,7 @@ function interpretationForDimension(name: string): DimInterpretation {
 }
 
 export default function DashboardPage() {
+  const supabase = createSupabaseBrowserClient();
   const params = useParams<{ runId: string }>();
   const runId = params?.runId;
   const adminHref = runId ? `/admin/run/${runId}` : "/admin/new-run";

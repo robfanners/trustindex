@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import MetricCard from "@/components/vcc/MetricCard";
+import { TIER_THRESHOLDS } from "@/lib/trustGraphTiers";
 import type { DashboardMetrics } from "@/lib/vcc/types";
 
 export default function VCCDashboardPage() {
@@ -55,7 +56,7 @@ export default function VCCDashboardPage() {
   // Score-based accent for avg system score
   const scoreAccent = (() => {
     if (metrics.avgSystemScore == null) return "gray" as const;
-    if (metrics.avgSystemScore >= 80) return "green" as const;
+    if (metrics.avgSystemScore >= TIER_THRESHOLDS.TRUSTED) return "green" as const;
     if (metrics.avgSystemScore >= 60) return "blue" as const;
     if (metrics.avgSystemScore >= 40) return "amber" as const;
     return "red" as const;
