@@ -42,11 +42,18 @@ const TIER_CONFIGS: Record<TierKey, TierConfig> = {
   },
 };
 
+/** Score thresholds for tier classification */
+export const TIER_THRESHOLDS = {
+  TRUSTED: 80,
+  STABLE: 65,
+  ELEVATED_RISK: 50,
+} as const;
+
 /** Score (0-100) → tier key */
 export function getTier(score: number): TierKey {
-  if (score >= 80) return "trusted";
-  if (score >= 65) return "stable";
-  if (score >= 50) return "elevated_risk";
+  if (score >= TIER_THRESHOLDS.TRUSTED) return "trusted";
+  if (score >= TIER_THRESHOLDS.STABLE) return "stable";
+  if (score >= TIER_THRESHOLDS.ELEVATED_RISK) return "elevated_risk";
   return "critical";
 }
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { createSupabaseBrowserClient } from "@/lib/supabase-auth-browser";
 import AuthenticatedShell from "@/components/AuthenticatedShell";
 import RequireAuth from "@/components/RequireAuth";
 import { useAuth } from "@/context/AuthContext";
@@ -37,6 +37,7 @@ export default function SurveyManagePage() {
 }
 
 function SurveyManageContent() {
+  const supabase = createSupabaseBrowserClient();
   const { profile } = useAuth();
   const exportAllowed = canExportResults(profile?.plan);
   const params = useParams<{ runId: string }>();

@@ -1,29 +1,22 @@
-import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { requireAuth, apiError, apiOk, withErrorHandling, parseBody } from "@/lib/apiHelpers";
 import {
   getUserPlan,
   getUserSystemCount,
   canCreateSystem,
   getPlanLimits,
 } from "@/lib/entitlements";
+import { createSystemSchema } from "@/lib/validations";
 
 // ---------------------------------------------------------------------------
 // GET /api/systems — list authenticated user's non-archived systems
 // ---------------------------------------------------------------------------
 
 export async function GET() {
-  try {
-    const authClient = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await authClient.auth.getUser();
+  return withErrorHandling(async () => {
+    const auth = await requireAuth({ withPlan: false });
+    if (auth.error) return auth.error;
 
-    if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    const db = supabaseServer();
+    const { user, db } = auth;
 
     // Fetch non-archived systems owned by this user
     const { data: systems, error: sysErr } = await db
@@ -34,11 +27,11 @@ export async function GET() {
       .order("created_at", { ascending: false });
 
     if (sysErr) {
-      return NextResponse.json({ error: sysErr.message }, { status: 500 });
+      return apiError(sysErr.message, 500);
     }
 
     if (!systems || systems.length === 0) {
-      return NextResponse.json({ systems: [] });
+      return apiOk({ systems: [] });
     }
 
     // For each system, fetch runs (submitted + draft) for score/count/draft info
@@ -78,11 +71,8 @@ export async function GET() {
       has_draft: hasDraftMap.get(s.id as string) ?? false,
     }));
 
-    return NextResponse.json({ systems: result });
-  } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+    return apiOk({ systems: result });
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -90,31 +80,14 @@ export async function GET() {
 // ---------------------------------------------------------------------------
 
 export async function POST(req: Request) {
-  try {
-    const authClient = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await authClient.auth.getUser();
+  return withErrorHandling(async () => {
+    const auth = await requireAuth({ withPlan: false });
+    if (auth.error) return auth.error;
 
-    if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    const body = await req.json();
-    const name = String(body.name || "").trim();
-    const versionLabel = String(body.version_label || "").trim();
-    const systemType =
-      typeof body.type === "string" && body.type.trim()
-        ? body.type.trim()
-        : null;
-    const environment =
-      typeof body.environment === "string" && body.environment.trim()
-        ? body.environment.trim()
-        : null;
-
-    if (!name) {
-      return NextResponse.json({ error: "name is required" }, { status: 400 });
-    }
+    const { user, db } = auth;
+    const parsed = await parseBody(req, createSystemSchema);
+    if (parsed.error) return parsed.error;
+    const { name, description, vendor, risk_level, status, owner_name, department } = parsed.data;
 
     // Enforce plan caps
     const [plan, systemCount] = await Promise.all([
@@ -124,42 +97,33 @@ export async function POST(req: Request) {
 
     if (!canCreateSystem(plan, systemCount)) {
       const limits = getPlanLimits(plan);
-      return NextResponse.json(
-        {
-          error:
-            limits.maxSystems === 0
-              ? "Systems assessment is available on Pro plans and above."
-              : `You've reached your plan limit of ${limits.maxSystems} system${limits.maxSystems !== 1 ? "s" : ""}. Upgrade to continue.`,
-          code: "PLAN_CAP_REACHED",
-        },
-        { status: 403 }
+      return apiError(
+        limits.maxSystems === 0
+          ? "Systems assessment is available on Pro plans and above."
+          : `You've reached your plan limit of ${limits.maxSystems} system${limits.maxSystems !== 1 ? "s" : ""}. Upgrade to continue.`,
+        403
       );
     }
-
-    const db = supabaseServer();
 
     const { data: system, error: insertErr } = await db
       .from("systems")
       .insert({
         owner_id: user.id,
         name,
-        version_label: versionLabel,
-        type: systemType,
-        environment,
+        description,
+        vendor,
+        risk_level,
+        status,
+        owner_name,
+        department,
       })
-      .select("id, name, version_label, type, environment, created_at")
+      .select("id, name, description, vendor, risk_level, status, owner_name, department, created_at")
       .single();
 
     if (insertErr || !system) {
-      return NextResponse.json(
-        { error: insertErr?.message || "Failed to create system" },
-        { status: 500 }
-      );
+      return apiError(insertErr?.message || "Failed to create system", 500);
     }
 
-    return NextResponse.json({ system }, { status: 201 });
-  } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+    return apiOk({ system }, 201);
+  });
 }

@@ -1,6 +1,5 @@
-import { NextResponse } from "next/server";
+import { requireAuth, apiError, apiOk, withErrorHandling } from "@/lib/apiHelpers";
 import { supabaseServer } from "@/lib/supabaseServer";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
 
 // ---------------------------------------------------------------------------
 // GET /api/dashboard/control-centre
@@ -17,33 +16,12 @@ function safeData<T>(result: PromiseSettledResult<any>): T | null {
 }
 
 export async function GET() {
-  try {
-    const authClient = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await authClient.auth.getUser();
-    if (!user) {
-      return NextResponse.json(
-        { error: "Not authenticated" },
-        { status: 401 },
-      );
-    }
+  return withErrorHandling(async () => {
+    const auth = await requireAuth({ withPlan: true });
+    if (auth.error) return auth.error;
 
+    const { orgId, plan } = auth;
     const db = supabaseServer();
-    const { data: profile } = await db
-      .from("profiles")
-      .select("organisation_id, plan, full_name")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile?.organisation_id) {
-      return NextResponse.json(
-        { error: "No organisation linked" },
-        { status: 400 },
-      );
-    }
-
-    const orgId = profile.organisation_id;
 
     // ---- Parallel fetch all data sources ----
     const [
@@ -233,8 +211,8 @@ export async function GET() {
     );
 
     // ---- Build response ----
-    return NextResponse.json({
-      plan: profile.plan ?? "explorer",
+    return apiOk({
+      plan: plan ?? "explorer",
       govern: {
         health_score: health?.health_score ?? null,
         org_base: health?.org_base ?? null,
@@ -258,10 +236,5 @@ export async function GET() {
       regulatory,
       activity,
     });
-  } catch (err: unknown) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Internal server error" },
-      { status: 500 },
-    );
-  }
+  });
 }

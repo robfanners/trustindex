@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { createSupabaseBrowserClient } from "@/lib/supabase-auth-browser";
 import AppShell from "@/components/AppShell";
 
 type RunRow = { id: string; mode: "explorer" | "org"; title: string };
@@ -22,6 +22,7 @@ type RecentRun = {
 };
 
 export default function AdminRunPage() {
+  const supabase = createSupabaseBrowserClient();
   const params = useParams<{ runId: string }>();
   const runId = params?.runId;
   const router = useRouter();

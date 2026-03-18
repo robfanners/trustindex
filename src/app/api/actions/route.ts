@@ -1,48 +1,17 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { NextRequest } from "next/server";
+import { requireAuth, apiOk, withErrorHandling, parseBody } from "@/lib/apiHelpers";
 import { writeAuditLog } from "@/lib/audit";
+import { createActionSchema } from "@/lib/validations";
 
-// ---------------------------------------------------------------------------
-// Helper: authenticate + get org_id
-// ---------------------------------------------------------------------------
-
-async function getAuthenticatedOrg() {
-  const authClient = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await authClient.auth.getUser();
-
-  if (!user) {
-    return { error: NextResponse.json({ error: "Not authenticated" }, { status: 401 }) };
-  }
-
-  const db = supabaseServer();
-  const { data: profile } = await db
-    .from("profiles")
-    .select("organisation_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile?.organisation_id) {
-    return { error: NextResponse.json({ error: "No organisation linked" }, { status: 400 }) };
-  }
-
-  return { user, orgId: profile.organisation_id };
-}
-
-// ---------------------------------------------------------------------------
 // GET /api/actions — list actions for the user's org
-// ---------------------------------------------------------------------------
 // Query params: status, severity, source_type, linked_run_id, owner_id, page, per_page
 
 export async function GET(req: NextRequest) {
-  try {
-    const result = await getAuthenticatedOrg();
-    if ("error" in result) return result.error;
+  return withErrorHandling(async () => {
+    const auth = await requireAuth();
+    if (auth.error) return auth.error;
 
-    const { orgId } = result;
-    const db = supabaseServer();
+    const { orgId, db } = auth;
     const url = req.nextUrl;
 
     const status = url.searchParams.get("status");
@@ -69,54 +38,42 @@ export async function GET(req: NextRequest) {
     const { data: actions, error: fetchErr, count } = await query;
 
     if (fetchErr) {
-      return NextResponse.json({ error: fetchErr.message }, { status: 500 });
+      throw new Error(fetchErr.message);
     }
 
-    return NextResponse.json({
+    return apiOk({
       actions: actions || [],
       total: count ?? 0,
       page,
       per_page: perPage,
     });
-  } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+  });
 }
 
-// ---------------------------------------------------------------------------
 // POST /api/actions — create a new action
-// ---------------------------------------------------------------------------
 // Body: { title, description?, severity?, owner_id?, due_date?,
 //         linked_run_id?, linked_run_type?, linked_dimension?,
 //         source_recommendation?, source_type? }
 
 export async function POST(req: NextRequest) {
-  try {
-    const result = await getAuthenticatedOrg();
-    if ("error" in result) return result.error;
+  return withErrorHandling(async () => {
+    const auth = await requireAuth();
+    if (auth.error) return auth.error;
 
-    const { user, orgId } = result;
-    const db = supabaseServer();
-    const body = await req.json();
+    const { user, orgId, db } = auth;
+    const parsed = await parseBody(req, createActionSchema);
+    if (parsed.error) return parsed.error;
+    const body = parsed.data;
 
-    const title = String(body.title || "").trim();
-    if (!title) {
-      return NextResponse.json({ error: "title is required" }, { status: 400 });
-    }
-
-    const description = typeof body.description === "string" ? body.description.trim() : null;
-    const severity = ["low", "medium", "high", "critical"].includes(body.severity)
-      ? body.severity
-      : "medium";
+    const title = body.title.trim();
+    const description = body.description?.trim() ?? null;
+    const severity = body.severity ?? "medium";
     const status = "open"; // always starts open
-    const ownerId = typeof body.owner_id === "string" ? body.owner_id : null;
-    const dueDate = typeof body.due_date === "string" ? body.due_date : null;
-    const linkedRunId = typeof body.linked_run_id === "string" ? body.linked_run_id : null;
-    const linkedRunType = ["org", "sys"].includes(body.linked_run_type)
-      ? body.linked_run_type
-      : null;
-    const linkedDimension = typeof body.linked_dimension === "string" ? body.linked_dimension.trim() : null;
+    const ownerId = body.owner_id ?? null;
+    const dueDate = body.due_date ?? null;
+    const linkedRunId = body.linked_run_id ?? null;
+    const linkedRunType = body.linked_run_type ?? null;
+    const linkedDimension = body.linked_dimension?.trim() ?? null;
 
     // Resolve dimension name to dimension_id if provided
     let dimensionId: string | null = null;
@@ -134,7 +91,7 @@ export async function POST(req: NextRequest) {
       ? { source: "recommendation", recommendation: body.source_recommendation }
       : null;
 
-    const sourceType = typeof body.source_type === "string" ? body.source_type.trim() : null;
+    const sourceType = body.source_type?.trim() ?? null;
 
     const { data: action, error: insertErr } = await db
       .from("actions")
@@ -156,10 +113,7 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (insertErr || !action) {
-      return NextResponse.json(
-        { error: insertErr?.message || "Failed to create action" },
-        { status: 500 }
-      );
+      throw new Error(insertErr?.message || "Failed to create action");
     }
 
     // Create initial audit entry
@@ -180,9 +134,6 @@ export async function POST(req: NextRequest) {
       metadata: { title, severity, source_type: sourceType },
     });
 
-    return NextResponse.json({ action }, { status: 201 });
-  } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+    return apiOk({ action }, 201);
+  });
 }

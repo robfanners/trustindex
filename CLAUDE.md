@@ -171,6 +171,18 @@ See `.env.example` for full list. Critical ones:
 - Materialized views for performance-critical health score queries
 - All API errors return `{ error: string }` with appropriate HTTP status
 
+## Deployment — MANDATORY RULES
+
+**Read `DEPLOY.md` for full details. These rules are non-negotiable:**
+
+1. **app.verisum.org deploys via git push to `main`** — Hostinger auto-builds from GitHub. NEVER zip this repo. NEVER disconnect the GitHub ↔ Hostinger integration.
+2. **The marketing site (verisum.org) is a SEPARATE project** — it uses static zip upload to Hostinger. Do not confuse the two.
+3. **Always run `npm run predeploy` before pushing to main** — this runs TypeScript checks, lint, build, and tests. The git pre-push hook enforces this automatically.
+4. **Database migrations go to Supabase FIRST, then deploy code** — never deploy code that references columns/tables that don't exist yet.
+5. **Environment variables are set in the Hostinger dashboard** — never commit secrets to git, never modify env vars on the server directly.
+6. **Never force-push to main** — use `git revert` for rollbacks.
+7. **Feature branches merge to main via PR** — squash merge preferred for clean history.
+
 ## In Progress
 
 See `docs/plans/` for implementation plans:

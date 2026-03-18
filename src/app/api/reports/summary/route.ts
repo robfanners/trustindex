@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { getAuthenticatedOrgWithRole } from "@/lib/reportAuth.server";
+import { apiError, apiOk, withErrorHandling } from "@/lib/apiHelpers";
 import { supabaseServer } from "@/lib/supabaseServer";
 
 // ---------------------------------------------------------------------------
@@ -8,7 +9,7 @@ import { supabaseServer } from "@/lib/supabaseServer";
 // Query params: from (ISO date), to (ISO date)
 
 export async function GET(req: NextRequest) {
-  try {
+  return withErrorHandling(async () => {
     const result = await getAuthenticatedOrgWithRole();
     if ("error" in result) return result.error;
 
@@ -20,10 +21,7 @@ export async function GET(req: NextRequest) {
     const to = url.searchParams.get("to");
 
     if (!from || !to) {
-      return NextResponse.json(
-        { error: "from and to date params are required" },
-        { status: 400 }
-      );
+      return apiError("from and to date params are required", 400);
     }
 
     // 1) Health scores — try MV first, fallback to RPC
@@ -161,7 +159,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({
+    return apiOk({
       summary: {
         health_score: health
           ? (health as { health_score: number }).health_score
@@ -185,8 +183,5 @@ export async function GET(req: NextRequest) {
         computed_at: new Date().toISOString(),
       },
     });
-  } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+  });
 }

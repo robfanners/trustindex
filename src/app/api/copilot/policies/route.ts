@@ -1,37 +1,20 @@
-import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { requireAuth, apiOk, withErrorHandling } from "@/lib/apiHelpers";
 
 // GET — list policies for org (latest version of each type)
 export async function GET() {
-  try {
-    const authClient = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await authClient.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
+  return withErrorHandling(async () => {
+    const auth = await requireAuth();
+    if (auth.error) return auth.error;
+    const { orgId, db } = auth;
 
-    const sb = supabaseServer();
-    const { data: profile } = await sb
-      .from("profiles")
-      .select("organisation_id")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile?.organisation_id) {
-      return NextResponse.json({ error: "No organisation" }, { status: 400 });
-    }
-
-    const { data: policies, error } = await sb
+    const { data: policies, error } = await db
       .from("ai_policies")
       .select("id, policy_type, version, created_at")
-      .eq("organisation_id", profile.organisation_id)
+      .eq("organisation_id", orgId)
       .order("created_at", { ascending: false });
 
     if (error) {
-      return NextResponse.json({ error: "Failed to fetch policies" }, { status: 500 });
+      throw new Error("Failed to fetch policies");
     }
 
     // Deduplicate: keep latest version of each policy type
@@ -42,9 +25,6 @@ export async function GET() {
       return true;
     });
 
-    return NextResponse.json({ policies: latest });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Internal server error";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+    return apiOk({ policies: latest });
+  });
 }

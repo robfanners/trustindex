@@ -1,100 +1,58 @@
-import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { requireAuth, apiError, apiOk, withErrorHandling, parseBody } from "@/lib/apiHelpers";
 import { maxVendors } from "@/lib/entitlements";
+import { createVendorSchema, updateVendorSchema } from "@/lib/validations";
 
 // GET — list vendors for org
 export async function GET() {
-  try {
-    const authClient = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await authClient.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
+  return withErrorHandling(async () => {
+    const auth = await requireAuth();
+    if (auth.error) return auth.error;
+    const { orgId, plan, db } = auth;
 
-    const sb = supabaseServer();
-    const { data: profile } = await sb
-      .from("profiles")
-      .select("organisation_id, plan")
-      .eq("id", user.id)
-      .single();
+    const limit = maxVendors(plan);
 
-    if (!profile?.organisation_id) {
-      return NextResponse.json({ error: "No organisation" }, { status: 400 });
-    }
-
-    const limit = maxVendors(profile.plan);
-
-    const { data: vendors, error } = await sb
+    const { data: vendors, error } = await db
       .from("ai_vendors")
       .select("*")
-      .eq("organisation_id", profile.organisation_id)
+      .eq("organisation_id", orgId)
       .order("created_at", { ascending: false });
 
-    if (error) {
-      return NextResponse.json({ error: "Failed to fetch vendors" }, { status: 500 });
-    }
+    if (error) return apiError("Failed to fetch vendors", 500);
 
-    return NextResponse.json({
+    return apiOk({
       vendors: vendors ?? [],
       limit: limit === Infinity ? -1 : limit,
       count: vendors?.length ?? 0,
     });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Internal server error";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+  });
 }
 
 // POST — add vendor
 export async function POST(req: Request) {
-  try {
-    const authClient = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await authClient.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    const sb = supabaseServer();
-    const { data: profile } = await sb
-      .from("profiles")
-      .select("organisation_id, plan")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile?.organisation_id) {
-      return NextResponse.json({ error: "No organisation" }, { status: 400 });
-    }
+  return withErrorHandling(async () => {
+    const auth = await requireAuth();
+    if (auth.error) return auth.error;
+    const { orgId, plan, db } = auth;
 
     // Check limit
-    const limit = maxVendors(profile.plan);
-    const { count } = await sb
+    const limit = maxVendors(plan);
+    const { count } = await db
       .from("ai_vendors")
       .select("id", { count: "exact", head: true })
-      .eq("organisation_id", profile.organisation_id);
+      .eq("organisation_id", orgId);
 
     if ((count ?? 0) >= limit) {
-      return NextResponse.json(
-        { error: "Vendor limit reached. Upgrade your plan for more." },
-        { status: 403 }
-      );
+      return apiError("Vendor limit reached. Upgrade your plan for more.", 403);
     }
 
-    const body = await req.json();
-    const { vendorName, vendorUrl, dataLocation, dataTypes, riskCategory, notes } = body;
+    const parsed = await parseBody(req, createVendorSchema);
+    if (parsed.error) return parsed.error;
+    const { vendorName, vendorUrl, dataLocation, dataTypes, riskCategory, notes } = parsed.data;
 
-    if (!vendorName) {
-      return NextResponse.json({ error: "vendorName is required" }, { status: 400 });
-    }
-
-    const { data: vendor, error } = await sb
+    const { data: vendor, error } = await db
       .from("ai_vendors")
       .insert({
-        organisation_id: profile.organisation_id,
+        organisation_id: orgId,
         vendor_name: vendorName,
         vendor_url: vendorUrl || null,
         data_location: dataLocation || null,
@@ -106,45 +64,22 @@ export async function POST(req: Request) {
       .select()
       .single();
 
-    if (error) {
-      return NextResponse.json({ error: "Failed to add vendor" }, { status: 500 });
-    }
+    if (error) return apiError("Failed to add vendor", 500);
 
-    return NextResponse.json({ vendor });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Internal server error";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+    return apiOk({ vendor });
+  });
 }
 
 // PATCH — update vendor
 export async function PATCH(req: Request) {
-  try {
-    const authClient = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await authClient.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
+  return withErrorHandling(async () => {
+    const auth = await requireAuth();
+    if (auth.error) return auth.error;
+    const { orgId, db } = auth;
 
-    const sb = supabaseServer();
-    const { data: profile } = await sb
-      .from("profiles")
-      .select("organisation_id")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile?.organisation_id) {
-      return NextResponse.json({ error: "No organisation" }, { status: 400 });
-    }
-
-    const body = await req.json();
-    const { id, ...updates } = body;
-
-    if (!id) {
-      return NextResponse.json({ error: "id is required" }, { status: 400 });
-    }
+    const parsed = await parseBody(req, updateVendorSchema);
+    if (parsed.error) return parsed.error;
+    const { id, ...updates } = parsed.data;
 
     // Map camelCase to snake_case for allowed fields
     const allowedUpdates: Record<string, unknown> = {};
@@ -159,67 +94,40 @@ export async function PATCH(req: Request) {
     if (updates.notes !== undefined) allowedUpdates.notes = updates.notes;
     allowedUpdates.updated_at = new Date().toISOString();
 
-    const { data: vendor, error } = await sb
+    const { data: vendor, error } = await db
       .from("ai_vendors")
       .update(allowedUpdates)
       .eq("id", id)
-      .eq("organisation_id", profile.organisation_id)
+      .eq("organisation_id", orgId)
       .select()
       .single();
 
-    if (error) {
-      return NextResponse.json({ error: "Failed to update vendor" }, { status: 500 });
-    }
+    if (error) return apiError("Failed to update vendor", 500);
 
-    return NextResponse.json({ vendor });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Internal server error";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+    return apiOk({ vendor });
+  });
 }
 
 // DELETE — remove vendor
 export async function DELETE(req: Request) {
-  try {
-    const authClient = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await authClient.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    const sb = supabaseServer();
-    const { data: profile } = await sb
-      .from("profiles")
-      .select("organisation_id")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile?.organisation_id) {
-      return NextResponse.json({ error: "No organisation" }, { status: 400 });
-    }
+  return withErrorHandling(async () => {
+    const auth = await requireAuth();
+    if (auth.error) return auth.error;
+    const { orgId, db } = auth;
 
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
 
-    if (!id) {
-      return NextResponse.json({ error: "id is required" }, { status: 400 });
-    }
+    if (!id) return apiError("id is required", 400);
 
-    const { error } = await sb
+    const { error } = await db
       .from("ai_vendors")
       .delete()
       .eq("id", id)
-      .eq("organisation_id", profile.organisation_id);
+      .eq("organisation_id", orgId);
 
-    if (error) {
-      return NextResponse.json({ error: "Failed to delete vendor" }, { status: 500 });
-    }
+    if (error) return apiError("Failed to delete vendor", 500);
 
-    return NextResponse.json({ deleted: true });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Internal server error";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+    return apiOk({ deleted: true });
+  });
 }

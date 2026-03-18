@@ -1,6 +1,4 @@
-import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { requireAuth, apiError, apiOk, withErrorHandling } from "@/lib/apiHelpers";
 
 // ---------------------------------------------------------------------------
 // GET /api/trustgraph/health — Verisum Health Score for the user's org
@@ -9,30 +7,11 @@ import { supabaseServer } from "@/lib/supabaseServer";
 // view (fast) with a fallback to direct function call.
 
 export async function GET() {
-  try {
-    const authClient = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await authClient.auth.getUser();
+  return withErrorHandling(async () => {
+    const auth = await requireAuth({ withPlan: false });
+    if (auth.error) return auth.error;
 
-    if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    const db = supabaseServer();
-
-    // Get user's org
-    const { data: profile } = await db
-      .from("profiles")
-      .select("organisation_id")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile?.organisation_id) {
-      return NextResponse.json({ health: null, message: "No organisation linked" });
-    }
-
-    const orgId = profile.organisation_id;
+    const { orgId, db } = auth;
 
     // Try materialized view first (fast)
     const { data: mvRow } = await db
@@ -42,7 +21,7 @@ export async function GET() {
       .maybeSingle();
 
     if (mvRow) {
-      return NextResponse.json({
+      return apiOk({
         health: {
           health_score: Number(mvRow.health_score) || 0,
           base_health: Number(mvRow.base_health) || 0,
@@ -68,7 +47,7 @@ export async function GET() {
 
     if (fnErr) {
       // Function may not exist yet (migration not run) — return null gracefully
-      return NextResponse.json({
+      return apiOk({
         health: null,
         message: "Health scoring not yet configured",
       });
@@ -77,13 +56,13 @@ export async function GET() {
     const row = Array.isArray(fnResult) ? fnResult[0] : fnResult;
 
     if (!row) {
-      return NextResponse.json({
+      return apiOk({
         health: null,
         message: "No data available for health calculation",
       });
     }
 
-    return NextResponse.json({
+    return apiOk({
       health: {
         health_score: Number(row.health_score) || 0,
         base_health: Number(row.base_health) || 0,
@@ -100,10 +79,7 @@ export async function GET() {
       },
       source: "function_direct",
     });
-  } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -111,31 +87,22 @@ export async function GET() {
 // ---------------------------------------------------------------------------
 
 export async function POST() {
-  try {
-    const authClient = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await authClient.auth.getUser();
+  return withErrorHandling(async () => {
+    const auth = await requireAuth({ withPlan: false });
+    if (auth.error) return auth.error;
 
-    if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    const db = supabaseServer();
+    const { db } = auth;
 
     // Trigger the queue processor (refreshes MV)
     const { error: rpcErr } = await db.rpc("tg_process_recalc_queue");
 
     if (rpcErr) {
-      return NextResponse.json({
+      return apiOk({
         refreshed: false,
         message: "Recalc function not available yet",
       });
     }
 
-    return NextResponse.json({ refreshed: true });
-  } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+    return apiOk({ refreshed: true });
+  });
 }

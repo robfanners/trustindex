@@ -67,16 +67,19 @@ export async function POST(req: Request) {
       );
     }
 
-    // Parse request
-    const body = await req.json();
-    const policyType = body.policyType as PolicyType;
+    // Parse request body
+    let body: Record<string, unknown>;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+
+    const policyType = (body.policyType as PolicyType) || "acceptable_use";
     const questionnaire = body.questionnaire as PolicyQuestionnaire;
 
-    if (!policyType || !questionnaire?.companyName) {
-      return NextResponse.json(
-        { error: "Missing policyType or questionnaire" },
-        { status: 400 }
-      );
+    if (!questionnaire?.companyName) {
+      return NextResponse.json({ error: "questionnaire.companyName is required" }, { status: 400 });
     }
 
     // Fetch active IBG specs for the org's systems to enrich policy context

@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { canAccessReport, accessibleReports } from "@/lib/reportAuth";
 import type { ReportType } from "@/lib/reportAuth";
 import { exportElementToPdf } from "@/lib/pdfExport";
+import { TIER_THRESHOLDS } from "@/lib/trustGraphTiers";
 import {
   CHART_COLORS,
   SEVERITY_COLORS,
@@ -456,19 +457,19 @@ function ChartExportBar({ chartId, title }: { chartId: string; title: string }) 
 }
 
 function getHealthBand(score: number) {
-  if (score >= 80)
+  if (score >= TIER_THRESHOLDS.TRUSTED)
     return {
       label: "Healthy",
       color: "text-success",
       bgColor: "bg-success/10",
     };
-  if (score >= 65)
+  if (score >= TIER_THRESHOLDS.STABLE)
     return {
       label: "Watch",
       color: "text-warning",
       bgColor: "bg-warning/10",
     };
-  if (score >= 50)
+  if (score >= TIER_THRESHOLDS.ELEVATED_RISK)
     return {
       label: "At Risk",
       color: "text-orange-600",

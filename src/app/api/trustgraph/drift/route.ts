@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { NextRequest } from "next/server";
+import { requireAuth, apiError, apiOk, withErrorHandling } from "@/lib/apiHelpers";
 import { requireTier } from "@/lib/requireTier";
 
 // ---------------------------------------------------------------------------
@@ -9,16 +9,19 @@ import { requireTier } from "@/lib/requireTier";
 //               page, per_page
 
 export async function GET(req: NextRequest) {
-  try {
+  return withErrorHandling(async () => {
     const check = await requireTier("Assure");
     if (!check.authorized) return check.response;
 
     if (!check.orgId) {
-      return NextResponse.json({ error: "No organisation linked" }, { status: 400 });
+      return apiError("No organisation linked", 400);
     }
 
-    const db = supabaseServer();
+    const auth = await requireAuth({ withPlan: false });
+    if (auth.error) return auth.error;
+
     const orgId = check.orgId;
+    const db = auth.db;
     const url = req.nextUrl;
 
     const runType = url.searchParams.get("run_type"); // 'org' | 'sys' | null
@@ -148,14 +151,14 @@ export async function GET(req: NextRequest) {
       const { data: events, error: fetchErr, count: evCount } = await query;
 
       if (fetchErr) {
-        return NextResponse.json({ error: fetchErr.message }, { status: 500 });
+        return apiError(fetchErr.message, 500);
       }
 
       driftEvents = events || [];
       driftTotal = evCount ?? 0;
     }
 
-    return NextResponse.json({
+    return apiOk({
       drift_events: driftEvents,
       total: driftTotal,
       page,
@@ -163,8 +166,5 @@ export async function GET(req: NextRequest) {
       reassessment_status: reassessmentStatus,
       drift_summary: driftSummary,
     });
-  } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+  });
 }

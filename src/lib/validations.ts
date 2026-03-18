@@ -207,6 +207,120 @@ export const updateComplianceFrameworkSchema = z.object({
   notes: z.string().max(2000).nullable().optional(),
 });
 
+// --- Vendor schemas ---
+
+export const createVendorSchema = z.object({
+  vendorName: z.string().min(1, "vendorName is required").max(200),
+  vendorUrl: z.string().max(500).optional().or(z.literal("")),
+  dataLocation: z.string().max(200).optional().or(z.literal("")),
+  dataTypes: z.array(z.string().max(100)).max(20).optional(),
+  riskCategory: z.enum(["unassessed", "low", "medium", "high", "critical"]).optional(),
+  notes: z.string().max(2000).optional().or(z.literal("")),
+});
+
+export const updateVendorSchema = z.object({
+  id: z.string().uuid("Invalid vendor ID"),
+  vendorName: z.string().min(1).max(200).optional(),
+  vendorUrl: z.string().max(500).optional().or(z.literal("")),
+  dataLocation: z.string().max(200).optional().or(z.literal("")),
+  dataTypes: z.array(z.string().max(100)).max(20).optional(),
+  riskCategory: z.enum(["unassessed", "low", "medium", "high", "critical"]).optional(),
+  notes: z.string().max(2000).optional().or(z.literal("")),
+});
+
+// --- Incident schemas ---
+
+export const createIncidentSchema = z.object({
+  title: z.string().min(1, "title is required").max(500),
+  description: z.string().max(5000).optional().or(z.literal("")),
+  aiVendorId: z.string().uuid().optional().or(z.literal("")),
+  impactLevel: z.enum(["low", "medium", "high", "critical"]).optional(),
+  sourceEscalationId: z.string().uuid().optional().or(z.literal("")),
+  sourceSignalId: z.string().uuid().optional().or(z.literal("")),
+  systemId: z.string().uuid().optional().or(z.literal("")),
+});
+
+export const updateIncidentSchema = z.object({
+  id: z.string().uuid("Invalid incident ID"),
+  status: z.enum(["open", "investigating", "resolved", "closed"]).optional(),
+  resolution: z.string().max(5000).optional(),
+  impactLevel: z.enum(["low", "medium", "high", "critical"]).optional(),
+  title: z.string().min(1).max(500).optional(),
+  description: z.string().max(5000).optional(),
+  aiVendorId: z.string().uuid().optional().nullable(),
+});
+
+// --- Action schemas ---
+
+export const createActionSchema = z.object({
+  title: z.string().min(1, "title is required").max(500),
+  description: z.string().max(5000).optional(),
+  severity: z.enum(["low", "medium", "high", "critical"]).optional(),
+  owner_id: z.string().uuid().optional(),
+  due_date: z.string().max(50).optional(),
+  linked_run_id: z.string().uuid().optional(),
+  linked_run_type: z.enum(["org", "sys"]).optional(),
+  linked_dimension: z.string().max(200).optional(),
+  source_recommendation: z.string().max(5000).optional(),
+  source_type: z.string().max(100).optional(),
+});
+
+export const updateActionSchema = z.object({
+  status: z.enum(["open", "in_progress", "resolved", "closed"]).optional(),
+  severity: z.enum(["low", "medium", "high", "critical"]).optional(),
+  title: z.string().min(1).max(500).optional(),
+  description: z.string().max(5000).optional(),
+  owner_id: z.string().uuid().optional().nullable(),
+  due_date: z.string().max(50).optional().nullable(),
+  notes: z.string().max(5000).optional(),
+});
+
+// --- Regulatory schemas ---
+
+export const createRegulatoryUpdateSchema = z.object({
+  title: z.string().min(1, "title is required").max(500),
+  summary: z.string().max(5000).optional(),
+  source: z.string().max(500).optional(),
+  sourceUrl: z.string().max(500).optional().or(z.literal("")),
+  jurisdiction: z.string().max(100).optional(),
+  effectiveDate: z.string().max(50).optional(),
+  category: z.string().max(100).optional(),
+});
+
+// --- Declaration schemas ---
+
+export const createDeclarationTokenSchema = z.object({
+  label: z.string().min(1, "label is required").max(200),
+  assignee_email: z.string().email("Invalid email").max(320).optional(),
+  expires_at: z.string().max(50).optional(),
+});
+
+// --- Escalation schemas ---
+
+export const createEscalationSchema = z.object({
+  run_id: z.string().uuid("Invalid run ID"),
+  dimension: z.string().min(1, "dimension is required").max(200),
+  severity: z.enum(["low", "medium", "high", "critical"]),
+  message: z.string().min(1, "message is required").max(2000),
+  assigned_to: z.string().uuid().optional(),
+});
+
+// --- System schemas ---
+
+export const createSystemSchema = z.object({
+  name: z.string().min(1, "name is required").max(200),
+  description: z.string().max(2000).optional(),
+  vendor: z.string().max(200).optional(),
+  risk_level: z.enum(["low", "medium", "high", "critical"]).optional(),
+  status: z.enum(["active", "retired", "evaluating"]).optional(),
+  owner_name: z.string().max(200).optional(),
+  department: z.string().max(200).optional(),
+});
+
+// --- Copilot schemas ---
+// Note: generate-policy uses PolicyQuestionnaire from policyPrompts.ts directly
+// due to its complex nested structure. A Zod schema can be added later if needed.
+
 // --- Helper to extract first error message ---
 
 export function firstZodError(error: z.ZodError): string {

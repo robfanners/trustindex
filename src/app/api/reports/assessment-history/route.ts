@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { getAuthenticatedOrgWithRole } from "@/lib/reportAuth.server";
 import { canAccessReport } from "@/lib/reportAuth";
 import type { VersiumRole } from "@/lib/roles";
+import { apiError, apiOk, withErrorHandling } from "@/lib/apiHelpers";
 import { supabaseServer } from "@/lib/supabaseServer";
 
 // ---------------------------------------------------------------------------
@@ -10,17 +11,14 @@ import { supabaseServer } from "@/lib/supabaseServer";
 // Query params: from, to (ISO date), run_type (org|sys), assessment_id, survey_id
 
 export async function GET(req: NextRequest) {
-  try {
+  return withErrorHandling(async () => {
     const result = await getAuthenticatedOrgWithRole();
     if ("error" in result) return result.error;
 
     const { orgId, role } = result;
 
     if (!canAccessReport(role as VersiumRole, "assessment_history")) {
-      return NextResponse.json(
-        { error: "Insufficient permissions" },
-        { status: 403 }
-      );
+      return apiError("Insufficient permissions", 403);
     }
 
     const db = supabaseServer();
@@ -33,10 +31,7 @@ export async function GET(req: NextRequest) {
     const surveyId = url.searchParams.get("survey_id");
 
     if (!from || !to) {
-      return NextResponse.json(
-        { error: "from and to date params are required" },
-        { status: 400 }
-      );
+      return apiError("from and to date params are required", 400);
     }
 
     type RunRow = {
@@ -139,15 +134,12 @@ export async function GET(req: NextRequest) {
       .select("id, name, type, weight")
       .order("display_order", { ascending: true });
 
-    return NextResponse.json({
+    return apiOk({
       history: {
         org_runs: orgRuns,
         sys_runs: sysRuns,
         dimensions: dimensions || [],
       },
     });
-  } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+  });
 }
