@@ -791,7 +791,7 @@ export default function AIRegistryPage() {
 
                 {models.length === 0 && !showLinkModel ? (
                   <p className="text-sm text-muted-foreground">
-                    No models linked to this system. <Link href="/govern/models" className="text-brand hover:underline">Go to Model Registry</Link> to link models.
+                    No models linked to this system yet. Click <span className="font-medium text-brand">+ Link Model</span> above to connect a model from the registry.
                   </p>
                 ) : (
                   models.map((m) => (

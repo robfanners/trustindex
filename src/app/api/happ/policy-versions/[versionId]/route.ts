@@ -16,7 +16,7 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
 
   const { data, error } = await db
     .from("policy_versions")
-    .select("*, ai_policies(title)")
+    .select("*, ai_policies(policy_type)")
     .eq("id", versionId)
     .eq("organisation_id", check.orgId)
     .single();

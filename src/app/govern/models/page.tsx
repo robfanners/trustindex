@@ -722,7 +722,7 @@ export default function ModelRegistryPage() {
                   )}
 
                   {linkedSystems.length === 0 && !showLinkSystem ? (
-                    <p className="text-sm text-muted-foreground">This model is not linked to any systems yet.</p>
+                    <p className="text-sm text-muted-foreground">This model is not linked to any systems yet. Click <span className="font-medium text-brand">+ Link System</span> above to connect it.</p>
                   ) : (
                     linkedSystems.map((link) => (
                       <div key={link.system_id} className="border border-border rounded-lg p-3 flex items-center justify-between">
