@@ -98,13 +98,20 @@ export default function DashboardHome() {
 function DashboardContent() {
   useAuth();
   const [data, setData] = useState<ControlCentreData | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch("/api/dashboard/control-centre")
       .then((r) => r.json())
-      .then((d) => setData(d))
-      .catch(() => {})
+      .then((d) => {
+        if (d.error) {
+          setError(d.error);
+        } else {
+          setData(d);
+        }
+      })
+      .catch(() => setError("Failed to load dashboard"))
       .finally(() => setLoading(false));
   }, []);
 
@@ -140,6 +147,19 @@ function DashboardContent() {
         {loading && (
           <div className="flex items-center justify-center py-24">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          </div>
+        )}
+
+        {/* Error state */}
+        {!loading && error && (
+          <div className="rounded-xl border border-border bg-card p-8 text-center">
+            <p className="text-sm text-muted-foreground mb-3">{error}</p>
+            <Link
+              href="/setup"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover transition-colors"
+            >
+              Complete setup
+            </Link>
           </div>
         )}
 
