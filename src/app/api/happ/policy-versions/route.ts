@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
   const db = supabaseServer();
   let query = db
     .from("policy_versions")
-    .select("*, ai_policies(title)", { count: "exact" })
+    .select("*, ai_policies(policy_type)", { count: "exact" })
     .eq("organisation_id", check.orgId)
     .order("created_at", { ascending: false })
     .range(offset, offset + perPage - 1);
