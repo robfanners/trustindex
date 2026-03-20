@@ -112,6 +112,7 @@ export default function TryExplorerPage() {
   // 1. Create anonymous Explorer run + load questions
   // -------------------------------------------------------------------------
 
+   
   useEffect(() => {
     let cancelled = false;
 
@@ -233,6 +234,7 @@ export default function TryExplorerPage() {
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // -------------------------------------------------------------------------

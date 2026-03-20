@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextResponse } from "next/server";
+import type { Mock } from "vitest";
 import {
   mockPostRequest,
   mockGetRequest,
@@ -52,7 +53,7 @@ describe("POST /api/prove/attestations", () => {
   });
 
   it("returns 401 when unauthenticated", async () => {
-    (requireTier as any).mockResolvedValue(mockUnauthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockUnauthorized);
 
     const req = mockPostRequest({ title: "T", statement: "S" });
     const res = await POST(req);
@@ -63,7 +64,7 @@ describe("POST /api/prove/attestations", () => {
   });
 
   it("returns 400 when no organisation linked", async () => {
-    (requireTier as any).mockResolvedValue(mockNoOrg);
+    (requireTier as unknown as Mock).mockResolvedValue(mockNoOrg);
 
     const req = mockPostRequest({ title: "T", statement: "S" });
     const res = await POST(req);
@@ -74,7 +75,7 @@ describe("POST /api/prove/attestations", () => {
   });
 
   it("returns 400 when title is missing", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     const req = mockPostRequest({ statement: "Some statement" });
     const res = await POST(req);
@@ -85,7 +86,7 @@ describe("POST /api/prove/attestations", () => {
   });
 
   it("returns 400 when title is empty string", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     const req = mockPostRequest({ title: "", statement: "Some statement" });
     const res = await POST(req);
@@ -96,7 +97,7 @@ describe("POST /api/prove/attestations", () => {
   });
 
   it("returns 400 when statement is missing", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     const req = mockPostRequest({ title: "Some title" });
     const res = await POST(req);
@@ -107,7 +108,7 @@ describe("POST /api/prove/attestations", () => {
   });
 
   it("returns 400 when statement is empty string", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     const req = mockPostRequest({ title: "Some title", statement: "" });
     const res = await POST(req);
@@ -118,7 +119,7 @@ describe("POST /api/prove/attestations", () => {
   });
 
   it("returns 400 when both title and statement missing", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     const req = mockPostRequest({});
     const res = await POST(req);
@@ -127,7 +128,7 @@ describe("POST /api/prove/attestations", () => {
   });
 
   it("returns 201 on valid input", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     const insertedRow = {
       id: "att-1",
@@ -141,7 +142,7 @@ describe("POST /api/prove/attestations", () => {
     };
 
     const mockDb = createMockSupabase(insertedRow);
-    (supabaseServer as any).mockReturnValue(mockDb);
+    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
 
     const req = mockPostRequest({
       title: "Our AI Ethics Policy",
@@ -156,7 +157,7 @@ describe("POST /api/prove/attestations", () => {
   });
 
   it("returns 201 with optional posture_snapshot", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     const insertedRow = {
       id: "att-2",
@@ -167,7 +168,7 @@ describe("POST /api/prove/attestations", () => {
     };
 
     const mockDb = createMockSupabase(insertedRow);
-    (supabaseServer as any).mockReturnValue(mockDb);
+    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
 
     const req = mockPostRequest({
       title: "Policy Update",
@@ -182,10 +183,10 @@ describe("POST /api/prove/attestations", () => {
   });
 
   it("returns 500 when Supabase insert fails", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     const mockDb = createMockSupabase(null, { message: "DB insert failed" });
-    (supabaseServer as any).mockReturnValue(mockDb);
+    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
 
     const req = mockPostRequest({
       title: "Good title",
@@ -208,7 +209,7 @@ describe("GET /api/prove/attestations", () => {
   });
 
   it("returns 401 when unauthenticated", async () => {
-    (requireTier as any).mockResolvedValue(mockUnauthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockUnauthorized);
 
     const req = mockGetRequest("/api/prove/attestations");
     const res = await GET(req);
@@ -217,7 +218,7 @@ describe("GET /api/prove/attestations", () => {
   });
 
   it("returns 400 when no organisation linked", async () => {
-    (requireTier as any).mockResolvedValue(mockNoOrg);
+    (requireTier as unknown as Mock).mockResolvedValue(mockNoOrg);
 
     const req = mockGetRequest("/api/prove/attestations");
     const res = await GET(req);
@@ -228,7 +229,7 @@ describe("GET /api/prove/attestations", () => {
   });
 
   it("returns 200 with attestations array", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     const rows = [
       { id: "att-1", title: "Policy A" },
@@ -238,7 +239,7 @@ describe("GET /api/prove/attestations", () => {
     const mockDb = createMockSupabase(rows);
     // Override range to return data + count (GET uses range, not single)
     mockDb.range.mockResolvedValue({ data: rows, count: 2, error: null });
-    (supabaseServer as any).mockReturnValue(mockDb);
+    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
 
     const req = mockGetRequest("/api/prove/attestations?page=1&per_page=20");
     const res = await GET(req);
@@ -250,11 +251,11 @@ describe("GET /api/prove/attestations", () => {
   });
 
   it("returns empty array when no attestations exist", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     const mockDb = createMockSupabase([]);
     mockDb.range.mockResolvedValue({ data: [], count: 0, error: null });
-    (supabaseServer as any).mockReturnValue(mockDb);
+    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
 
     const req = mockGetRequest("/api/prove/attestations");
     const res = await GET(req);
@@ -266,7 +267,7 @@ describe("GET /api/prove/attestations", () => {
   });
 
   it("returns 500 when Supabase query fails", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     const mockDb = createMockSupabase(null, { message: "DB error" });
     mockDb.range.mockResolvedValue({
@@ -274,7 +275,7 @@ describe("GET /api/prove/attestations", () => {
       count: null,
       error: { message: "DB error" },
     });
-    (supabaseServer as any).mockReturnValue(mockDb);
+    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
 
     const req = mockGetRequest("/api/prove/attestations");
     const res = await GET(req);

@@ -1,4 +1,4 @@
-import { requireAuth, apiError, apiOk, withErrorHandling } from "@/lib/apiHelpers";
+import { requireAuth, apiOk, withErrorHandling } from "@/lib/apiHelpers";
 import { supabaseServer } from "@/lib/supabaseServer";
 
 // ---------------------------------------------------------------------------

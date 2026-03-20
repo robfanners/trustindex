@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import AuthenticatedShell from "@/components/AuthenticatedShell";
 import RequireAuth from "@/components/RequireAuth";
 import { useAuth } from "@/context/AuthContext";
@@ -124,7 +125,7 @@ function ReportsContent() {
             Your current role does not have access to reports. Ask your account
             owner to assign you a recognised role (Owner, Admin, Executive,
             Operator, or Risk) in{" "}
-            <a href="/dashboard/settings" className="text-brand underline">Account Settings</a>.
+            <Link href="/dashboard/settings" className="text-brand underline">Account Settings</Link>.
           </p>
         </div>
       </div>
@@ -456,7 +457,7 @@ function ChartExportBar({ chartId, title }: { chartId: string; title: string }) 
   );
 }
 
-function getHealthBand(score: number) {
+function _getHealthBand(score: number) {
   if (score >= TIER_THRESHOLDS.TRUSTED)
     return {
       label: "Healthy",
@@ -563,9 +564,6 @@ function BoardSummaryReport({
 
   if (loading) return <Spinner text="Loading board summary..." />;
   if (!data) return <EmptyState message="No data available for this period." />;
-
-  const band =
-    data.health_score !== null ? getHealthBand(data.health_score) : null;
 
   const penaltyBars = data.penalties
     ? [

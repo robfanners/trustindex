@@ -40,7 +40,7 @@ export const mockUnauthorized = {
 
 /** Create a chainable Supabase mock that simulates .from().select().eq().single() etc. */
 export function createMockSupabase(returnData: unknown = null, returnError: unknown = null) {
-  const chainable: any = {
+  const chainable: Record<string, unknown> = {
     from: vi.fn(() => chainable),
     select: vi.fn(() => chainable),
     insert: vi.fn(() => chainable),

@@ -26,6 +26,7 @@ export default function SurveyPage() {
   // Load invite + questions
   // -------------------------------------------------------------------------
 
+   
   useEffect(() => {
     if (!token) return;
 
@@ -73,6 +74,7 @@ export default function SurveyPage() {
     };
 
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   // -------------------------------------------------------------------------

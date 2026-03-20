@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextResponse } from "next/server";
+import type { Mock } from "vitest";
 import {
   mockPostRequest,
   mockGetRequest,
@@ -47,7 +48,7 @@ describe("POST /api/prove/exchanges", () => {
   });
 
   it("returns 401 when unauthenticated", async () => {
-    (requireTier as any).mockResolvedValue(mockUnauthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockUnauthorized);
 
     const req = mockPostRequest({
       proof_type: "attestation",
@@ -62,7 +63,7 @@ describe("POST /api/prove/exchanges", () => {
   });
 
   it("returns 400 when no organisation linked", async () => {
-    (requireTier as any).mockResolvedValue(mockNoOrg);
+    (requireTier as unknown as Mock).mockResolvedValue(mockNoOrg);
 
     const req = mockPostRequest({
       proof_type: "attestation",
@@ -77,7 +78,7 @@ describe("POST /api/prove/exchanges", () => {
   });
 
   it("returns 400 with invalid proof_type", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     const req = mockPostRequest({
       proof_type: "invalid_type",
@@ -92,7 +93,7 @@ describe("POST /api/prove/exchanges", () => {
   });
 
   it("returns 400 with missing shared_with_name", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     const req = mockPostRequest({
       proof_type: "attestation",
@@ -106,7 +107,7 @@ describe("POST /api/prove/exchanges", () => {
   });
 
   it("returns 400 with empty shared_with_name", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     const req = mockPostRequest({
       proof_type: "attestation",
@@ -119,7 +120,7 @@ describe("POST /api/prove/exchanges", () => {
   });
 
   it("returns 400 with missing proof_id", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     const req = mockPostRequest({
       proof_type: "attestation",
@@ -131,7 +132,7 @@ describe("POST /api/prove/exchanges", () => {
   });
 
   it("returns 400 with invalid proof_id (not UUID)", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     const req = mockPostRequest({
       proof_type: "attestation",
@@ -144,7 +145,7 @@ describe("POST /api/prove/exchanges", () => {
   });
 
   it("returns 400 with invalid shared_with_email", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     const req = mockPostRequest({
       proof_type: "attestation",
@@ -158,11 +159,11 @@ describe("POST /api/prove/exchanges", () => {
   });
 
   it("returns 404 when proof record not found (attestation)", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     // Proof lookup returns null
     const mockDb = createMockSupabase(null, null);
-    (supabaseServer as any).mockReturnValue(mockDb);
+    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
 
     const req = mockPostRequest({
       proof_type: "attestation",
@@ -177,10 +178,10 @@ describe("POST /api/prove/exchanges", () => {
   });
 
   it("returns 404 when proof record not found (provenance)", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     const mockDb = createMockSupabase(null, null);
-    (supabaseServer as any).mockReturnValue(mockDb);
+    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
 
     const req = mockPostRequest({
       proof_type: "provenance",
@@ -193,10 +194,10 @@ describe("POST /api/prove/exchanges", () => {
   });
 
   it("returns 404 when proof record not found (incident_lock)", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     const mockDb = createMockSupabase(null, null);
-    (supabaseServer as any).mockReturnValue(mockDb);
+    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
 
     const req = mockPostRequest({
       proof_type: "incident_lock",
@@ -209,7 +210,7 @@ describe("POST /api/prove/exchanges", () => {
   });
 
   it("returns 201 on valid exchange with verify_url in response", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     const proofLookup = {
       verification_id: "VER-ABCD1234",
@@ -229,7 +230,13 @@ describe("POST /api/prove/exchanges", () => {
     };
 
     let callCount = 0;
-    const mockDb: any = {
+    const mockDb: Record<string, unknown> & {
+      from: Mock;
+      select: Mock;
+      insert: Mock;
+      eq: Mock;
+      single: Mock;
+    } = {
       from: vi.fn(() => mockDb),
       select: vi.fn(() => mockDb),
       insert: vi.fn(() => mockDb),
@@ -245,7 +252,7 @@ describe("POST /api/prove/exchanges", () => {
       }),
     };
 
-    (supabaseServer as any).mockReturnValue(mockDb);
+    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
 
     const req = mockPostRequest({
       proof_type: "attestation",
@@ -263,7 +270,7 @@ describe("POST /api/prove/exchanges", () => {
   });
 
   it("returns 201 for provenance exchange", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     const proofLookup = {
       verification_id: "VER-PROV1234",
@@ -279,7 +286,13 @@ describe("POST /api/prove/exchanges", () => {
     };
 
     let callCount = 0;
-    const mockDb: any = {
+    const mockDb: Record<string, unknown> & {
+      from: Mock;
+      select: Mock;
+      insert: Mock;
+      eq: Mock;
+      single: Mock;
+    } = {
       from: vi.fn(() => mockDb),
       select: vi.fn(() => mockDb),
       insert: vi.fn(() => mockDb),
@@ -293,7 +306,7 @@ describe("POST /api/prove/exchanges", () => {
       }),
     };
 
-    (supabaseServer as any).mockReturnValue(mockDb);
+    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
 
     const req = mockPostRequest({
       proof_type: "provenance",
@@ -308,7 +321,7 @@ describe("POST /api/prove/exchanges", () => {
   });
 
   it("returns 500 when exchange insert fails", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     const proofLookup = {
       verification_id: "VER-ABCD1234",
@@ -316,7 +329,13 @@ describe("POST /api/prove/exchanges", () => {
     };
 
     let callCount = 0;
-    const mockDb: any = {
+    const mockDb: Record<string, unknown> & {
+      from: Mock;
+      select: Mock;
+      insert: Mock;
+      eq: Mock;
+      single: Mock;
+    } = {
       from: vi.fn(() => mockDb),
       select: vi.fn(() => mockDb),
       insert: vi.fn(() => mockDb),
@@ -333,7 +352,7 @@ describe("POST /api/prove/exchanges", () => {
       }),
     };
 
-    (supabaseServer as any).mockReturnValue(mockDb);
+    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
 
     const req = mockPostRequest({
       proof_type: "attestation",
@@ -357,7 +376,7 @@ describe("GET /api/prove/exchanges", () => {
   });
 
   it("returns 401 when unauthenticated", async () => {
-    (requireTier as any).mockResolvedValue(mockUnauthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockUnauthorized);
 
     const req = mockGetRequest("/api/prove/exchanges");
     const res = await GET(req);
@@ -366,7 +385,7 @@ describe("GET /api/prove/exchanges", () => {
   });
 
   it("returns 200 with exchanges array", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     const rows = [
       { id: "exc-1", proof_type: "attestation" },
@@ -375,7 +394,7 @@ describe("GET /api/prove/exchanges", () => {
 
     const mockDb = createMockSupabase(rows);
     mockDb.range.mockResolvedValue({ data: rows, count: 2, error: null });
-    (supabaseServer as any).mockReturnValue(mockDb);
+    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
 
     const req = mockGetRequest("/api/prove/exchanges");
     const res = await GET(req);
@@ -387,12 +406,12 @@ describe("GET /api/prove/exchanges", () => {
   });
 
   it("supports proof_type filter", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     const rows = [{ id: "exc-1", proof_type: "attestation" }];
     const mockDb = createMockSupabase(rows);
     mockDb.range.mockResolvedValue({ data: rows, count: 1, error: null });
-    (supabaseServer as any).mockReturnValue(mockDb);
+    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
 
     const req = mockGetRequest(
       "/api/prove/exchanges?proof_type=attestation"

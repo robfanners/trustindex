@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ data: { status: "connected", repos: parsed.data.repos } });
 }
 
-export async function DELETE(req: NextRequest) {
+export async function DELETE(_req: NextRequest) {
   const authClient = await createSupabaseServerClient();
   const { data: { user } } = await authClient.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });

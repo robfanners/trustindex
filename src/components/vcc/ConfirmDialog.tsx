@@ -45,10 +45,10 @@ export default function ConfirmDialog({
   // Reset state when dialog opens
   useEffect(() => {
     if (open) {
-      setTypedConfirm("");
-      setReason("");
+      setTypedConfirm(""); // eslint-disable-line react-hooks/set-state-in-effect
+      setReason("");  
     }
-  }, [open]);
+  }, [open, setTypedConfirm, setReason]);
 
   // Close on Escape
   useEffect(() => {

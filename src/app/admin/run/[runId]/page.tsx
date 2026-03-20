@@ -54,7 +54,7 @@ export default function AdminRunPage() {
     setTimeout(() => setCopied(null), 1500);
   }
 
-  function escapeCsv(value: any) {
+  function escapeCsv(value: unknown) {
     const str = value == null ? "" : String(value);
     if (/[",\n]/.test(str)) {
       return `"${str.replace(/"/g, '""')}"`;
@@ -62,7 +62,7 @@ export default function AdminRunPage() {
     return str;
   }
 
-  function toCsvValue(v: any) {
+  function toCsvValue(v: unknown) {
     if (v == null) return "";
     if (typeof v === "object") return JSON.stringify(v);
     return String(v);
@@ -248,6 +248,7 @@ export default function AdminRunPage() {
   useEffect(() => {
     const history = getHistory();
     setRecentRuns(history);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rememberDevice]);
 
   // Fetch invite counts for all runs in Your surveys list (for status and X/Y display)
@@ -272,6 +273,7 @@ export default function AdminRunPage() {
         }
         setRunCounts(counts);
       });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recentRuns]);
 
   // Save current run to recent surveys when successfully loaded
@@ -285,6 +287,7 @@ export default function AdminRunPage() {
     };
     const updated = addOrUpdateHistoryEntry(entry);
     setRecentRuns(updated);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [run, runId, loading, rememberDevice]);
 
   useEffect(() => {
@@ -355,7 +358,7 @@ export default function AdminRunPage() {
     pendingFilterType === "all" || !pendingFilterValue
       ? pendingInvites
       : pendingInvites.filter(
-          (i) => (i as any)[pendingFilterType] && (i as any)[pendingFilterType] === pendingFilterValue
+          (i) => (i[pendingFilterType as keyof InviteRow]) && (i[pendingFilterType as keyof InviteRow]) === pendingFilterValue
         );
   const pendingLinks = filteredPendingInvites
   .map((i) => `${window.location.origin}/survey/${i.token}`)
@@ -426,8 +429,8 @@ export default function AdminRunPage() {
         throw new Error(responsesErr?.message || "Could not load responses.");
       }
 
-      let questions: any[] | null = null;
-      let questionsErr: any = null;
+      let questions: Array<{ id: string; dimension: string; prompt?: string; question?: string; text?: string }> | null = null;
+      let questionsErr: { message?: string } | null = null;
 
       const questionsPrompt = await supabase
         .from("questions")
@@ -482,7 +485,7 @@ export default function AdminRunPage() {
 
       sorted.forEach((r) => {
         const invite = inviteByToken.get(r.invite_token);
-        const q = questionById.get(r.question_id) as any;
+        const q = questionById.get(r.question_id);
         const questionText = q?.prompt ?? q?.text ?? q?.question ?? "";
         const row = [
           r.run_id,
@@ -519,8 +522,9 @@ export default function AdminRunPage() {
       a.click();
       URL.revokeObjectURL(url);
       setExportStatus("CSV downloaded.");
-    } catch (err: any) {
-      setExportStatus(err?.message || "Failed to export CSV.");
+    } catch (err) {
+      const error = err as Error | null;
+      setExportStatus(error?.message || "Failed to export CSV.");
     } finally {
       setExporting(false);
     }
@@ -616,8 +620,9 @@ export default function AdminRunPage() {
       a.click();
       URL.revokeObjectURL(url);
       setExportStatus("Summary CSV downloaded.");
-    } catch (err: any) {
-      setExportStatus(err?.message || "Failed to export summary CSV.");
+    } catch (err) {
+      const error = err as Error | null;
+      setExportStatus(error?.message || "Failed to export summary CSV.");
     } finally {
       setSummaryExporting(false);
     }
@@ -744,7 +749,7 @@ export default function AdminRunPage() {
                         Manage Survey
                       </button>
                     ) : (
-                      <a className="px-3 py-2 border border-border rounded hover:bg-[#f5f5f5] text-sm" href={`/admin/run/${r.runId}`}>
+                      <a href={`/admin/run/${r.runId}`} className="px-3 py-2 border border-border rounded hover:bg-[#f5f5f5] text-sm">
                         Manage Survey
                       </a>
                     )}
@@ -926,7 +931,7 @@ export default function AdminRunPage() {
         {run?.mode === "org" && (
           <>
             <div className="text-sm text-muted-foreground">
-              Copy links and send one per person (recommended for organisational mode). Use "pending" for reminders.
+              Copy links and send one per person (recommended for organisational mode). Use &quot;pending&quot; for reminders.
             </div>
 
             <div className="flex flex-wrap items-end gap-3">

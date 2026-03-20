@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import Link from "next/link";
 import AuthenticatedShell from "@/components/AuthenticatedShell";
 import RequireAuth from "@/components/RequireAuth";
 import { useAuth } from "@/context/AuthContext";
@@ -119,16 +120,19 @@ function NewSurveyForm() {
     }
   }, []);
 
+  // Note: fetchHierarchy calls setState, but this is necessary for initialization
   useEffect(() => {
-    fetchHierarchy();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchHierarchy();
   }, [fetchHierarchy]);
 
   // Pre-fill org name from profile
   useEffect(() => {
     if (profile?.company_name && !orgName) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOrgName(profile.company_name);
     }
-  }, [profile?.company_name]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [profile?.company_name, orgName]);
 
   // Cascade: filter functions when subsidiary selection changes
   const filteredFunctions = useMemo(() => {
@@ -150,13 +154,15 @@ function NewSurveyForm() {
   // Clear downstream selections when upstream changes
   useEffect(() => {
     const validFnIds = filteredFunctions.map((f) => f.id);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedFnIds((prev) => prev.filter((id) => validFnIds.includes(id)));
-  }, [filteredFunctions]);
+  }, [filteredFunctions, setSelectedFnIds]);
 
   useEffect(() => {
     const validTeamIds = filteredTeams.map((t) => t.id);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedTeamIds((prev) => prev.filter((id) => validTeamIds.includes(id)));
-  }, [filteredTeams]);
+  }, [filteredTeams, setSelectedTeamIds]);
 
   async function copyText(label: string, text: string) {
     await navigator.clipboard.writeText(text);
@@ -425,12 +431,12 @@ function NewSurveyForm() {
             >
               Upgrade your plan
             </a>
-            <a
+            <Link
               href="/dashboard"
               className="text-sm text-brand underline hover:text-foreground transition-colors"
             >
               Back to dashboard
-            </a>
+            </Link>
           </div>
         </div>
       </div>
@@ -553,7 +559,7 @@ function NewSurveyForm() {
             {profile?.company_name && (
               <p className="text-xs text-muted-foreground">
                 Pre-filled from your profile. Change in{" "}
-                <a href="/dashboard/settings" className="text-brand hover:underline">Settings</a> if needed.
+                <Link href="/dashboard/settings" className="text-brand hover:underline">Settings</Link> if needed.
               </p>
             )}
           </div>
@@ -615,9 +621,9 @@ function NewSurveyForm() {
                   <div className="px-3 py-2 text-sm text-muted-foreground">
                     No subsidiaries defined.{" "}
                     {isOwner && (
-                      <a href="/dashboard/settings/organisation" className="text-brand underline">
+                      <Link href="/dashboard/settings/organisation" className="text-brand underline">
                         Add in Settings
-                      </a>
+                      </Link>
                     )}
                   </div>
                 ) : (
@@ -662,9 +668,9 @@ function NewSurveyForm() {
                   <div className="px-3 py-2 text-sm text-muted-foreground">
                     No functions defined.{" "}
                     {isOwner && (
-                      <a href="/dashboard/settings/organisation" className="text-brand underline">
+                      <Link href="/dashboard/settings/organisation" className="text-brand underline">
                         Add in Settings
-                      </a>
+                      </Link>
                     )}
                   </div>
                 ) : (
@@ -714,9 +720,9 @@ function NewSurveyForm() {
                   <div className="px-3 py-2 text-sm text-muted-foreground">
                     No teams defined.{" "}
                     {isOwner && (
-                      <a href="/dashboard/settings/organisation" className="text-brand underline">
+                      <Link href="/dashboard/settings/organisation" className="text-brand underline">
                         Add in Settings
-                      </a>
+                      </Link>
                     )}
                   </div>
                 ) : (
@@ -779,9 +785,9 @@ function NewSurveyForm() {
             {errorCode === "PLAN_CAP_REACHED" && (
               <>
                 {" "}
-                <a href="/upgrade" className="underline hover:text-foreground transition-colors">
+                <Link href="/upgrade" className="underline hover:text-foreground transition-colors">
                   Upgrade your plan
-                </a>
+                </Link>
               </>
             )}
           </div>

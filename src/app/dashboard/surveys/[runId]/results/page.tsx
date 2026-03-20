@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase-auth-browser";
 import AuthenticatedShell from "@/components/AuthenticatedShell";
@@ -56,13 +57,13 @@ type InviteRow = {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function escapeCsv(value: any) {
+function escapeCsv(value: unknown) {
   const str = value == null ? "" : String(value);
   if (/[",\n]/.test(str)) return `"${str.replace(/"/g, '""')}"`;
   return str;
 }
 
-function toCsvValue(v: any) {
+function toCsvValue(v: unknown) {
   if (v == null) return "";
   if (typeof v === "object") return JSON.stringify(v);
   return String(v);
@@ -293,6 +294,7 @@ function SurveyResultsContent() {
   // Load data
   // -------------------------------------------------------------------------
 
+   
   useEffect(() => {
     if (!runId) return;
 
@@ -379,6 +381,7 @@ function SurveyResultsContent() {
     };
 
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [runId]);
 
   // -------------------------------------------------------------------------
@@ -475,8 +478,9 @@ function SurveyResultsContent() {
       a.click();
       URL.revokeObjectURL(url);
       setExportStatus("CSV downloaded.");
-    } catch (err: any) {
-      setExportStatus(err?.message || "Failed to export CSV.");
+    } catch (err) {
+      const error = err as Error | null;
+      setExportStatus(error?.message || "Failed to export CSV.");
     } finally {
       setExporting(false);
     }
@@ -779,12 +783,12 @@ function SurveyResultsContent() {
             organisational survey with 5\u201315 respondents. Results unlock once
             5 people respond.
           </div>
-          <a
-            className="inline-flex items-center px-3 py-2 rounded bg-brand text-white text-sm font-semibold hover:bg-brand-hover"
+          <Link
             href="/dashboard/surveys/new"
+            className="inline-flex items-center px-3 py-2 rounded bg-brand text-white text-sm font-semibold hover:bg-brand-hover"
           >
             Run an organisational survey
-          </a>
+          </Link>
           <div className="text-xs text-muted-foreground">
             Takes ~2 minutes to set up. Results unlock once 5 people respond.
           </div>
@@ -865,12 +869,12 @@ function SurveyResultsContent() {
             <p className="text-sm text-muted-foreground">
               Export is available on Verisum Assure and Verify plans.
             </p>
-            <a
-              className="inline-block px-4 py-2 rounded bg-brand text-white text-sm font-semibold hover:bg-brand-hover"
+            <Link
               href="/upgrade"
+              className="inline-block px-4 py-2 rounded bg-brand text-white text-sm font-semibold hover:bg-brand-hover"
             >
               Upgrade to Verisum Assure
-            </a>
+            </Link>
           </>
         )}
       </div>

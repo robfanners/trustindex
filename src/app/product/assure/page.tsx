@@ -1,9 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import AppShell from "@/components/AppShell";
 
 const TEAL = "#0d9488";
-const BRAND = "#0066FF";
 
 export default function ProductAssurePage() {
   return (
@@ -38,7 +38,7 @@ export default function ProductAssurePage() {
       <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
         <div className="rounded-lg border border-border bg-brand/5 p-4 text-center text-sm">
           <span className="font-medium">Everything in</span>{" "}
-          <a href="/product/core" className="text-brand font-semibold hover:underline">Verisum Core</a>
+          <Link href="/product/core" className="text-brand font-semibold hover:underline">Verisum Core</Link>
           <span className="font-medium">, plus continuous monitoring and team features.</span>
         </div>
       </section>

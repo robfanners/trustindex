@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import TierGate from "@/components/TierGate";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
@@ -268,7 +269,7 @@ export default function DriftPage() {
                   No score changes detected yet. Drift events are recorded automatically when
                   you complete a second assessment run, allowing comparison with the previous score.
                 </p>
-                <a
+                <Link
                   href="/dashboard"
                   className="inline-flex items-center gap-1 mt-3 text-sm text-brand hover:text-brand/80 font-medium transition-colors"
                 >
@@ -276,7 +277,7 @@ export default function DriftPage() {
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
-                </a>
+                </Link>
               </div>
             ) : (
               <>

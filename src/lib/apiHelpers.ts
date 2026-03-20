@@ -36,10 +36,10 @@ type AuthFailure = {
 type AuthResult = AuthSuccess | AuthFailure;
 
 type RequireAuthOptions = {
-  /** If true, also fetches the user's plan from the profile. Default: true */
-  withPlan?: boolean;
   /** If true, allows routes that don't require an organisation. Default: false */
   orgOptional?: boolean;
+  /** If true, fetches the user's plan alongside auth. Default: false */
+  withPlan?: boolean;
 };
 
 // ---------------------------------------------------------------------------
@@ -60,7 +60,7 @@ type RequireAuthOptions = {
 export async function requireAuth(
   options: RequireAuthOptions = {}
 ): Promise<AuthResult> {
-  const { withPlan = true, orgOptional = false } = options;
+  const { withPlan: _withPlan = true, orgOptional = false } = options;
 
   // 1. Authenticate
   const authClient = await createSupabaseServerClient();

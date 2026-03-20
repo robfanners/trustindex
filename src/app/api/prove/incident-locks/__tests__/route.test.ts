@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextResponse } from "next/server";
+import type { Mock } from "vitest";
 import {
   mockPostRequest,
   mockGetRequest,
@@ -54,7 +55,7 @@ describe("POST /api/prove/incident-locks", () => {
   });
 
   it("returns 401 when unauthenticated", async () => {
-    (requireTier as any).mockResolvedValue(mockUnauthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockUnauthorized);
 
     const req = mockPostRequest({
       incident_id: VALID_UUID,
@@ -68,7 +69,7 @@ describe("POST /api/prove/incident-locks", () => {
   });
 
   it("returns 400 when no organisation linked", async () => {
-    (requireTier as any).mockResolvedValue(mockNoOrg);
+    (requireTier as unknown as Mock).mockResolvedValue(mockNoOrg);
 
     const req = mockPostRequest({
       incident_id: VALID_UUID,
@@ -82,7 +83,7 @@ describe("POST /api/prove/incident-locks", () => {
   });
 
   it("returns 400 when incident_id is missing", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     const req = mockPostRequest({ lock_reason: "Compliance freeze" });
     const res = await POST(req);
@@ -93,7 +94,7 @@ describe("POST /api/prove/incident-locks", () => {
   });
 
   it("returns 400 when lock_reason is missing", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     const req = mockPostRequest({ incident_id: VALID_UUID });
     const res = await POST(req);
@@ -104,7 +105,7 @@ describe("POST /api/prove/incident-locks", () => {
   });
 
   it("returns 400 when lock_reason is empty string", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     const req = mockPostRequest({
       incident_id: VALID_UUID,
@@ -116,7 +117,7 @@ describe("POST /api/prove/incident-locks", () => {
   });
 
   it("returns 400 when incident_id is not a valid UUID", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     const req = mockPostRequest({
       incident_id: "not-a-uuid",
@@ -130,11 +131,11 @@ describe("POST /api/prove/incident-locks", () => {
   });
 
   it("returns 404 when incident not found", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     // First call: incident lookup returns null
     const mockDb = createMockSupabase(null, null);
-    (supabaseServer as any).mockReturnValue(mockDb);
+    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
 
     const req = mockPostRequest({
       incident_id: VALID_UUID,
@@ -148,10 +149,10 @@ describe("POST /api/prove/incident-locks", () => {
   });
 
   it("returns 404 when incident lookup returns error", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     const mockDb = createMockSupabase(null, { message: "not found" });
-    (supabaseServer as any).mockReturnValue(mockDb);
+    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
 
     const req = mockPostRequest({
       incident_id: VALID_UUID,
@@ -163,7 +164,7 @@ describe("POST /api/prove/incident-locks", () => {
   });
 
   it("returns 201 on valid input", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     const incidentData = {
       title: "Data breach incident",
@@ -190,7 +191,13 @@ describe("POST /api/prove/incident-locks", () => {
     // The route makes two DB calls: first .single() for incident lookup,
     // then .single() for insert. We need the mock to return different data.
     let callCount = 0;
-    const mockDb: any = {
+    const mockDb: Record<string, unknown> & {
+      from: Mock;
+      select: Mock;
+      insert: Mock;
+      eq: Mock;
+      single: Mock;
+    } = {
       from: vi.fn(() => mockDb),
       select: vi.fn(() => mockDb),
       insert: vi.fn(() => mockDb),
@@ -206,7 +213,7 @@ describe("POST /api/prove/incident-locks", () => {
       }),
     };
 
-    (supabaseServer as any).mockReturnValue(mockDb);
+    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
 
     const req = mockPostRequest({
       incident_id: VALID_UUID,
@@ -221,7 +228,7 @@ describe("POST /api/prove/incident-locks", () => {
   });
 
   it("returns 500 when lock insert fails", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     const incidentData = {
       title: "Some incident",
@@ -235,7 +242,13 @@ describe("POST /api/prove/incident-locks", () => {
     };
 
     let callCount = 0;
-    const mockDb: any = {
+    const mockDb: Record<string, unknown> & {
+      from: Mock;
+      select: Mock;
+      insert: Mock;
+      eq: Mock;
+      single: Mock;
+    } = {
       from: vi.fn(() => mockDb),
       select: vi.fn(() => mockDb),
       insert: vi.fn(() => mockDb),
@@ -252,7 +265,7 @@ describe("POST /api/prove/incident-locks", () => {
       }),
     };
 
-    (supabaseServer as any).mockReturnValue(mockDb);
+    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
 
     const req = mockPostRequest({
       incident_id: VALID_UUID,
@@ -275,7 +288,7 @@ describe("GET /api/prove/incident-locks", () => {
   });
 
   it("returns 401 when unauthenticated", async () => {
-    (requireTier as any).mockResolvedValue(mockUnauthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockUnauthorized);
 
     const req = mockGetRequest("/api/prove/incident-locks");
     const res = await GET(req);
@@ -284,14 +297,14 @@ describe("GET /api/prove/incident-locks", () => {
   });
 
   it("returns 200 with locks array", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     const rows = [{ id: "lock-1" }, { id: "lock-2" }];
     const mockDb = createMockSupabase(rows);
     // GET uses a query that may end with .eq() for incident_id filter then awaits
     // The query chain ends at range() or resolves the full query
     mockDb.range.mockResolvedValue({ data: rows, count: 2, error: null });
-    (supabaseServer as any).mockReturnValue(mockDb);
+    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
 
     const req = mockGetRequest("/api/prove/incident-locks?page=1");
     const res = await GET(req);
@@ -303,7 +316,7 @@ describe("GET /api/prove/incident-locks", () => {
   });
 
   it("returns 200 when filtering by incident_id", async () => {
-    (requireTier as any).mockResolvedValue(mockAuthorized);
+    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
 
     const rows = [{ id: "lock-1", incident_id: VALID_UUID }];
 
@@ -311,17 +324,24 @@ describe("GET /api/prove/incident-locks", () => {
     // range() must return a chainable+thenable, not a plain Promise,
     // because .eq() is called on its return value when incident_id is present.
     const result = { data: rows, count: 1, error: null };
-    const mockDb: any = {
+    const mockDb: Record<string, unknown> & {
+      from: Mock;
+      select: Mock;
+      eq: Mock;
+      order: Mock;
+      range: Mock;
+      then: Mock;
+    } = {
       from: vi.fn(() => mockDb),
       select: vi.fn(() => mockDb),
       eq: vi.fn(() => mockDb),
       order: vi.fn(() => mockDb),
       range: vi.fn(() => mockDb),
       // Make the chainable thenable so `await query` resolves
-      then: vi.fn((resolve: any) => resolve(result)),
+      then: vi.fn((resolve: (value: unknown) => void) => resolve(result)),
     };
 
-    (supabaseServer as any).mockReturnValue(mockDb);
+    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
 
     const req = mockGetRequest(
       `/api/prove/incident-locks?incident_id=${VALID_UUID}`

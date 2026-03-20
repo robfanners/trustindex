@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useVCCAuth } from "@/context/VCCAuthContext";
@@ -165,6 +166,7 @@ export default function VCCShell({ children }: VCCShellProps) {
   useEffect(() => {
     try {
       const stored = localStorage.getItem(SIDEBAR_KEY);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (stored === "true") setSidebarCollapsed(true);
     } catch {
       // localStorage unavailable
@@ -263,12 +265,12 @@ export default function VCCShell({ children }: VCCShellProps) {
           <span className="text-sm text-gray-400 hidden sm:inline">
             {adminEmail}
           </span>
-          <a
+          <Link
             href="/dashboard"
             className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
           >
             Exit VCC
-          </a>
+          </Link>
         </div>
       </header>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase-auth-browser";
 import AppShell from "@/components/AppShell";
@@ -43,7 +44,7 @@ type InviteRow = {
   created_at: string;
 };
 
-function escapeCsv(value: any) {
+function escapeCsv(value: unknown) {
   const str = value == null ? "" : String(value);
   if (/[",\n]/.test(str)) {
     return `"${str.replace(/"/g, '""')}"`;
@@ -51,7 +52,7 @@ function escapeCsv(value: any) {
   return str;
 }
 
-function toCsvValue(v: any) {
+function toCsvValue(v: unknown) {
   if (v == null) return "";
   if (typeof v === "object") return JSON.stringify(v);
   return String(v);
@@ -208,6 +209,7 @@ const [invites, setInvites] = useState<InviteRow[]>([]);
   }));
 }, [dims]);
 
+   
   useEffect(() => {
     if (!runId) return;
 
@@ -285,6 +287,7 @@ setInvites((inviteData as InviteRow[]) || []);
     };
 
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [runId]);
 
   useEffect(() => {
@@ -567,8 +570,9 @@ if (!trust) {
       a.click();
       URL.revokeObjectURL(url);
       setExportStatus("CSV downloaded.");
-    } catch (err: any) {
-      setExportStatus(err?.message || "Failed to export CSV.");
+    } catch (err) {
+      const error = err as Error | null;
+      setExportStatus(error?.message || "Failed to export CSV.");
     } finally {
       setExporting(false);
     }
@@ -636,12 +640,12 @@ if (!trust) {
               Explorer is a single self-assessment. To validate, run an organisational survey with 5–15 respondents.
               Results unlock once 5 people respond.
             </div>
-            <a
-              className="inline-flex items-center px-3 py-2 rounded bg-brand text-white text-sm font-semibold hover:bg-brand-hover"
+            <Link
               href="/admin/new-run"
+              className="inline-flex items-center px-3 py-2 rounded bg-brand text-white text-sm font-semibold hover:bg-brand-hover"
             >
               Run an organisational survey
-            </a>
+            </Link>
             <div className="text-xs text-muted-foreground">
               Takes ~2 minutes to set up. Results unlock once 5 people respond.
             </div>

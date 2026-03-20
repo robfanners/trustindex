@@ -1,4 +1,4 @@
-import { requireAuth, apiOk, apiError, withErrorHandling } from "@/lib/apiHelpers";
+import { requireAuth, apiOk, withErrorHandling } from "@/lib/apiHelpers";
 
 export async function GET() {
   return withErrorHandling(async () => {

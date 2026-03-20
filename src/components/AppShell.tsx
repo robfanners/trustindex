@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
@@ -55,7 +56,7 @@ export default function AppShell({ children }: AppShellProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
           <div className="flex items-center justify-between h-full">
             {/* Left: Logo + Brand */}
-            <a
+            <Link
               href="/"
               className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
             >
@@ -70,12 +71,12 @@ export default function AppShell({ children }: AppShellProps) {
               <span className="text-base font-bold text-brand">
                 Verisum
               </span>
-            </a>
+            </Link>
 
             {/* Right: Navigation */}
             <nav className="hidden md:flex items-center gap-1">
               {navItems.map((item) => (
-                <a
+                <Link
                   key={`${item.href}-${item.label}`}
                   href={item.href}
                   target={item.isExternal ? "_blank" : undefined}
@@ -87,18 +88,18 @@ export default function AppShell({ children }: AppShellProps) {
                   }`}
                 >
                   {item.label}
-                </a>
+                </Link>
               ))}
 
               {!authLoading && (
                 user ? (
                   <div className="flex items-center gap-2 ml-3 pl-3 border-l border-border">
-                    <a
+                    <Link
                       href="/dashboard"
                       className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                     >
                       {user.email}
-                    </a>
+                    </Link>
                     <button
                       onClick={signOut}
                       className="text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -107,12 +108,12 @@ export default function AppShell({ children }: AppShellProps) {
                     </button>
                   </div>
                 ) : (
-                  <a
+                  <Link
                     href="/auth/login"
                     className="ml-3 text-sm font-semibold px-5 py-2 rounded-full bg-brand text-brand-foreground shadow-lg shadow-brand/20 hover:bg-brand-hover hover:-translate-y-0.5 hover:shadow-brand/30 transition-all duration-300"
                   >
                     Log in
-                  </a>
+                  </Link>
                 )
               )}
             </nav>
@@ -163,13 +164,13 @@ export default function AppShell({ children }: AppShellProps) {
                 {!authLoading && (
                   user ? (
                     <div className="border-t border-border mt-2 pt-2 flex flex-col gap-1">
-                      <a
+                      <Link
                         href="/dashboard"
                         className="text-sm px-3 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         {user.email}
-                      </a>
+                      </Link>
                       <button
                         onClick={() => { signOut(); setMobileMenuOpen(false); }}
                         className="text-sm px-3 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted w-full text-left transition-all"

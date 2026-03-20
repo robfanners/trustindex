@@ -40,10 +40,11 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ url: session.url });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Internal server error";
     console.error("Stripe portal error:", err);
     return NextResponse.json(
-      { error: err?.message || "Internal server error" },
+      { error: message },
       { status: 500 }
     );
   }

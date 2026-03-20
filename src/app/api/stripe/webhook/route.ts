@@ -22,10 +22,11 @@ export async function POST(req: Request) {
   try {
     const rawBody = await req.text();
     event = getStripe().webhooks.constructEvent(rawBody, sig, webhookSecret);
-  } catch (err: any) {
-    console.error("Webhook signature verification failed:", err?.message);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    console.error("Webhook signature verification failed:", message);
     return NextResponse.json(
-      { error: `Webhook Error: ${err?.message}` },
+      { error: `Webhook Error: ${message}` },
       { status: 400 }
     );
   }
@@ -122,7 +123,7 @@ export async function POST(req: Request) {
         // Acknowledge all other event types
         break;
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error(`[stripe] Error processing ${event.type}:`, err);
     // Still return 200 so Stripe doesn't retry
   }

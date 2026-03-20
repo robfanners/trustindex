@@ -67,8 +67,9 @@ export default function AccessGate() {
       // Use the next from response if provided, otherwise use our computed next
       const redirectTo = (json?.next && isSafePath(json.next)) ? json.next : next;
       router.push(redirectTo);
-    } catch (e: any) {
-      setError(e?.message || "Failed");
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Failed";
+      setError(message);
     } finally {
       setLoading(false);
     }

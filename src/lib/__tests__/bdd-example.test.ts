@@ -4,7 +4,7 @@
 // This test demonstrates the methodology using the tier system.
 // Use this as a reference when writing new tests.
 
-import { Feature, Scenario, Given, When, Then, And, But } from "./bdd-helpers";
+import { Feature, Scenario, Then, And, But } from "./bdd-helpers";
 import { planToTier, hasTierAccess } from "@/lib/tiers";
 
 Feature("Tier-Based Access Control", () => {
@@ -86,15 +86,15 @@ Feature("Tier-Based Access Control", () => {
 
   Scenario("handling unknown or missing plan data", () => {
     Then("null plan defaults to Core tier", () => {
-      expect(planToTier(null as any)).toBe("Core");
+      expect(planToTier(null as unknown as string)).toBe("Core");
     });
 
     And("undefined plan defaults to Core tier", () => {
-      expect(planToTier(undefined as any)).toBe("Core");
+      expect(planToTier(undefined as unknown as string)).toBe("Core");
     });
 
     And("unknown plan string defaults to Core tier", () => {
-      expect(planToTier("nonexistent" as any)).toBe("Core");
+      expect(planToTier("nonexistent" as unknown as string)).toBe("Core");
     });
   });
 });

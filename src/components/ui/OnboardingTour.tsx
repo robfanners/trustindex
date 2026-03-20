@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useState, useEffect, useCallback } from "react";
-import type { CallBackProps, STATUS } from "react-joyride";
+import type { CallBackProps } from "react-joyride";
 
 const Joyride = dynamic(() => import("react-joyride"), { ssr: false });
 
@@ -38,6 +38,7 @@ export default function OnboardingTour({
   useEffect(() => {
     const done = localStorage.getItem(storageKey(tourId));
     if (!done) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRun(true);
     }
   }, [tourId]);
