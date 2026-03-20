@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import type { Mock } from "vitest";
 import {
   mockGetRequest,
-  createMockSupabase,
 } from "@/lib/__tests__/test-helpers";
 
 // ---------------------------------------------------------------------------
@@ -26,7 +26,7 @@ describe("GET /api/public/verify", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Default: rate limit allows requests
-    (checkRateLimit as any).mockReturnValue({ allowed: true });
+    (checkRateLimit as unknown as Mock).mockReturnValue({ allowed: true });
   });
 
   it("returns 400 when id param is missing", async () => {
@@ -80,7 +80,7 @@ describe("GET /api/public/verify", () => {
   });
 
   it("returns 429 when rate limited", async () => {
-    (checkRateLimit as any).mockReturnValue({
+    (checkRateLimit as unknown as Mock).mockReturnValue({
       allowed: false,
       retryAfterMs: 30000,
     });
@@ -110,7 +110,12 @@ describe("GET /api/public/verify", () => {
     const orgData = { name: "Acme Corp" };
 
     let singleCallCount = 0;
-    const mockDb: any = {
+    const mockDb: Record<string, unknown> & {
+      from: Mock;
+      select: Mock;
+      eq: Mock;
+      single: Mock;
+    } = {
       from: vi.fn(() => mockDb),
       select: vi.fn(() => mockDb),
       eq: vi.fn(() => mockDb),
@@ -128,7 +133,7 @@ describe("GET /api/public/verify", () => {
       }),
     };
 
-    (supabaseServer as any).mockReturnValue(mockDb);
+    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
 
     const req = mockGetRequest("/api/public/verify?id=VER-ABCD1234");
     const res = await GET(req);
@@ -159,7 +164,12 @@ describe("GET /api/public/verify", () => {
     const orgData = { name: "Test Org" };
 
     let singleCallCount = 0;
-    const mockDb: any = {
+    const mockDb: Record<string, unknown> & {
+      from: Mock;
+      select: Mock;
+      eq: Mock;
+      single: Mock;
+    } = {
       from: vi.fn(() => mockDb),
       select: vi.fn(() => mockDb),
       eq: vi.fn(() => mockDb),
@@ -181,7 +191,7 @@ describe("GET /api/public/verify", () => {
       }),
     };
 
-    (supabaseServer as any).mockReturnValue(mockDb);
+    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
 
     const req = mockGetRequest("/api/public/verify?id=VER-BBBB2222");
     const res = await GET(req);
@@ -210,7 +220,12 @@ describe("GET /api/public/verify", () => {
     const orgData = { name: "Lock Org" };
 
     let singleCallCount = 0;
-    const mockDb: any = {
+    const mockDb: Record<string, unknown> & {
+      from: Mock;
+      select: Mock;
+      eq: Mock;
+      single: Mock;
+    } = {
       from: vi.fn(() => mockDb),
       select: vi.fn(() => mockDb),
       eq: vi.fn(() => mockDb),
@@ -236,7 +251,7 @@ describe("GET /api/public/verify", () => {
       }),
     };
 
-    (supabaseServer as any).mockReturnValue(mockDb);
+    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
 
     const req = mockGetRequest("/api/public/verify?id=VER-CCCC3333");
     const res = await GET(req);
@@ -252,14 +267,19 @@ describe("GET /api/public/verify", () => {
   });
 
   it("returns found:false when nothing found", async () => {
-    const mockDb: any = {
+    const mockDb: Record<string, unknown> & {
+      from: Mock;
+      select: Mock;
+      eq: Mock;
+      single: Mock;
+    } = {
       from: vi.fn(() => mockDb),
       select: vi.fn(() => mockDb),
       eq: vi.fn(() => mockDb),
       single: vi.fn(() => Promise.resolve({ data: null, error: null })),
     };
 
-    (supabaseServer as any).mockReturnValue(mockDb);
+    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
 
     const req = mockGetRequest("/api/public/verify?id=VER-EEEE9999");
     const res = await GET(req);
@@ -283,7 +303,12 @@ describe("GET /api/public/verify", () => {
     };
 
     let singleCallCount = 0;
-    const mockDb: any = {
+    const mockDb: Record<string, unknown> & {
+      from: Mock;
+      select: Mock;
+      eq: Mock;
+      single: Mock;
+    } = {
       from: vi.fn(() => mockDb),
       select: vi.fn(() => mockDb),
       eq: vi.fn(() => mockDb),
@@ -297,7 +322,7 @@ describe("GET /api/public/verify", () => {
       }),
     };
 
-    (supabaseServer as any).mockReturnValue(mockDb);
+    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
 
     const req = mockGetRequest("/api/public/verify?id=VER-DDDD4444");
     const res = await GET(req);
@@ -310,14 +335,19 @@ describe("GET /api/public/verify", () => {
 
   it("validates id format is case-insensitive", async () => {
     // VER-abcd1234 (lowercase) should also be valid per the regex /i flag
-    const mockDb: any = {
+    const mockDb: Record<string, unknown> & {
+      from: Mock;
+      select: Mock;
+      eq: Mock;
+      single: Mock;
+    } = {
       from: vi.fn(() => mockDb),
       select: vi.fn(() => mockDb),
       eq: vi.fn(() => mockDb),
       single: vi.fn(() => Promise.resolve({ data: null, error: null })),
     };
 
-    (supabaseServer as any).mockReturnValue(mockDb);
+    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
 
     const req = mockGetRequest("/api/public/verify?id=VER-abcd1234");
     const res = await GET(req);

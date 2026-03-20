@@ -1,7 +1,6 @@
 "use client";
 
 import AppShell from "@/components/AppShell";
-import Image from "next/image";
 
 /* ------------------------------------------------------------------ */
 /*  Screenshot placeholder — swap for real <Image> once assets exist  */

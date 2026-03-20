@@ -1,4 +1,4 @@
-import { requireAuth, apiError, apiOk, withErrorHandling } from "@/lib/apiHelpers";
+import { requireAuth, apiOk, withErrorHandling } from "@/lib/apiHelpers";
 
 // ---------------------------------------------------------------------------
 // GET /api/trustgraph/health — Verisum Health Score for the user's org

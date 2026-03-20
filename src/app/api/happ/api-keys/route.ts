@@ -6,7 +6,7 @@ import { createApiKeySchema, firstZodError } from "@/lib/validations";
 import { writeAuditLog } from "@/lib/audit";
 import { planToTier } from "@/lib/tiers";
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   const check = await requireTier("Assure");
   if (!check.authorized) return check.response;
   if (!check.orgId) return NextResponse.json({ error: "No organisation linked" }, { status: 400 });

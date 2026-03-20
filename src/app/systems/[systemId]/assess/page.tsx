@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import AuthenticatedShell from "@/components/AuthenticatedShell";
 import RequireAuth from "@/components/RequireAuth";
@@ -804,24 +805,24 @@ function SystemAssessContent() {
               <p className="text-sm text-muted-foreground">
                 CSV export is available on Pro and Enterprise plans.
               </p>
-              <a
-                className="inline-block px-4 py-2 rounded bg-brand text-white text-sm font-semibold hover:bg-brand-hover"
+              <Link
                 href="/upgrade"
+                className="inline-block px-4 py-2 rounded bg-brand text-white text-sm font-semibold hover:bg-brand-hover"
               >
                 Upgrade to Verisum Assure
-              </a>
+              </Link>
             </>
           )}
         </div>
 
         {/* Navigation */}
         <div className="flex flex-wrap gap-3 text-sm">
-          <a
-            className="text-brand underline hover:text-foreground"
+          <Link
             href="/dashboard?tab=systems"
+            className="text-brand underline hover:text-foreground"
           >
             Back to Systems
-          </a>
+          </Link>
           <span className="text-muted-foreground">&middot;</span>
           <a
             className="text-brand underline hover:text-foreground"
@@ -915,12 +916,12 @@ function SystemAssessContent() {
             ? "Submit assessment"
             : `Answer ${totalQuestions - answeredCount} more to submit`}
         </button>
-        <a
+        <Link
           href="/dashboard?tab=systems"
           className="px-4 py-3 rounded border border-border hover:bg-gray-100 text-sm"
         >
           Save &amp; continue later
-        </a>
+        </Link>
         <span className="text-xs text-muted-foreground">
           Answers are saved automatically.
         </span>

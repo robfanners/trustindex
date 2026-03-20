@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 
 // ---------------------------------------------------------------------------
@@ -198,7 +199,7 @@ export default function OrganisationSettingsPage() {
           {error === "fetch_failed" && hrisConnected ? (
             <>
               We couldn&apos;t load data from your HRIS. Check your connection on the{" "}
-              <a href="/dashboard/settings/integrations" className="underline font-medium">Integrations page</a>{" "}
+              <Link href="/dashboard/settings/integrations" className="underline font-medium">Integrations page</Link>{" "}
               or add structure manually below.
             </>
           ) : error === "fetch_failed" ? (
@@ -219,7 +220,7 @@ export default function OrganisationSettingsPage() {
         <div className="rounded-lg border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
           No organisation structure yet. Add subsidiaries, functions and teams below
           {!hrisConnected && (
-            <>, or <a href="/dashboard/settings/integrations" className="text-brand underline">connect an HRIS</a> on the Integrations page to import automatically</>
+            <>, or <Link href="/dashboard/settings/integrations" className="text-brand underline">connect an HRIS</Link> on the Integrations page to import automatically</>
           )}.
         </div>
       )}

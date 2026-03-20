@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     let supabase: ReturnType<typeof supabaseServer>;
     try {
       supabase = supabaseServer();
-    } catch (configErr: any) {
+    } catch (_configErr: unknown) {
       return NextResponse.json(
         { error: "Server configuration error. Please try again later or contact support." },
         { status: 503 }
@@ -169,7 +169,8 @@ export async function POST(req: Request) {
       surveyLinks: tokens.map((t) => `/survey/${t}`),
       dashboardLink: `/dashboard/surveys/${runId}`,
     });
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message || "Unknown error" }, { status: 500 });
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

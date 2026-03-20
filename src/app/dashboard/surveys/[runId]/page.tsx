@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase-auth-browser";
 import AuthenticatedShell from "@/components/AuthenticatedShell";
@@ -69,13 +70,13 @@ function SurveyManageContent() {
     setTimeout(() => setCopied(null), 1500);
   }
 
-  function escapeCsv(value: any) {
+  function escapeCsv(value: unknown) {
     const str = value == null ? "" : String(value);
     if (/[",\n]/.test(str)) return `"${str.replace(/"/g, '""')}"`;
     return str;
   }
 
-  function toCsvValue(v: any) {
+  function toCsvValue(v: unknown) {
     if (v == null) return "";
     if (typeof v === "object") return JSON.stringify(v);
     return String(v);
@@ -205,8 +206,9 @@ function SurveyManageContent() {
         );
       }
 
-      let questions: any[] | null = null;
-      let questionsErr: any = null;
+      type Question = { id: string; dimension: string; prompt?: string; question?: string; text?: string };
+      let questions: Question[] | null = null;
+      let questionsErr: { message?: string } | null = null;
 
       const questionsPrompt = await supabase
         .from("questions")
@@ -272,7 +274,7 @@ function SurveyManageContent() {
 
       sorted.forEach((r) => {
         const invite = inviteByToken.get(r.invite_token);
-        const q = questionById.get(r.question_id) as any;
+        const q = questionById.get(r.question_id) as Question | undefined;
         const questionText = q?.prompt ?? q?.text ?? q?.question ?? "";
         const row = [
           r.run_id,
@@ -313,8 +315,9 @@ function SurveyManageContent() {
       a.click();
       URL.revokeObjectURL(url);
       setExportStatus("CSV downloaded.");
-    } catch (err: any) {
-      setExportStatus(err?.message || "Failed to export CSV.");
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      setExportStatus(error?.message || "Failed to export CSV.");
     } finally {
       setExporting(false);
     }
@@ -422,8 +425,9 @@ function SurveyManageContent() {
       a.click();
       URL.revokeObjectURL(url);
       setExportStatus("Summary CSV downloaded.");
-    } catch (err: any) {
-      setExportStatus(err?.message || "Failed to export summary CSV.");
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      setExportStatus(error?.message || "Failed to export summary CSV.");
     } finally {
       setSummaryExporting(false);
     }
@@ -488,8 +492,8 @@ function SurveyManageContent() {
       ? pendingInvites
       : pendingInvites.filter(
           (i) =>
-            (i as any)[pendingFilterType] &&
-            (i as any)[pendingFilterType] === pendingFilterValue
+            (i[pendingFilterType as keyof InviteRow]) &&
+            (i[pendingFilterType as keyof InviteRow]) === pendingFilterValue
         );
   const pendingLinks = filteredPendingInvites
     .map((i) => `${window.location.origin}/survey/${i.token}`)
@@ -893,12 +897,12 @@ function SurveyManageContent() {
             <p className="text-sm text-muted-foreground">
               CSV export is available on Pro and Enterprise plans.
             </p>
-            <a
-              className="inline-block px-4 py-2 rounded bg-brand text-white text-sm font-semibold hover:bg-brand-hover"
+            <Link
               href="/upgrade"
+              className="inline-block px-4 py-2 rounded bg-brand text-white text-sm font-semibold hover:bg-brand-hover"
             >
               Upgrade to Verisum Assure
-            </a>
+            </Link>
           </>
         )}
       </div>
@@ -919,12 +923,12 @@ function SurveyManageContent() {
         </div>
       )}
 
-      <a
-        className="text-brand underline"
+      <Link
         href="/dashboard/surveys/new"
+        className="text-brand underline"
       >
         Create another survey
-      </a>
+      </Link>
     </div>
   );
 }

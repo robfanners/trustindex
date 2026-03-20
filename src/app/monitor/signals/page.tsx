@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import TierGate from "@/components/TierGate";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
@@ -71,7 +72,7 @@ export default function SignalsPage() {
   const [formValue, setFormValue] = useState("");
   const [formSeverity, setFormSeverity] = useState("info");
   const [submitting, setSubmitting] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [selectedItem, setSelectedItem] = useState<Signal | null>(null);
 
   const fetchSignals = useCallback(async () => {
     setLoading(true);
@@ -255,7 +256,7 @@ export default function SignalsPage() {
           >
             {showForm ? "Cancel" : "Log Signal"}
           </button>
-          <a
+          <Link
             href="/dashboard/settings/integrations"
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-border text-sm font-medium hover:bg-muted/50 transition-colors"
           >
@@ -264,7 +265,7 @@ export default function SignalsPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
             Setup Auto Signal
-          </a>
+          </Link>
         </div>
         {showForm && (
             <form onSubmit={handleSubmit} className="border border-border rounded-lg p-4 space-y-4">

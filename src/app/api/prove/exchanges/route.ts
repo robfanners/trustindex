@@ -56,7 +56,6 @@ export async function POST(req: NextRequest) {
 
     // Look up the source record to get its verification_id
     let verificationId: string | null = null;
-    let proofTitle: string | null = null;
 
     if (proof_type === "attestation") {
       const { data } = await sb
@@ -66,7 +65,6 @@ export async function POST(req: NextRequest) {
         .eq("organisation_id", check.orgId)
         .single();
       verificationId = data?.verification_id ?? null;
-      proofTitle = data?.title ?? null;
     } else if (proof_type === "provenance") {
       const { data } = await sb
         .from("prove_provenance")
@@ -75,7 +73,6 @@ export async function POST(req: NextRequest) {
         .eq("organisation_id", check.orgId)
         .single();
       verificationId = data?.verification_id ?? null;
-      proofTitle = data?.title ?? null;
     } else if (proof_type === "incident_lock") {
       const { data } = await sb
         .from("prove_incident_locks")
@@ -84,7 +81,6 @@ export async function POST(req: NextRequest) {
         .eq("organisation_id", check.orgId)
         .single();
       verificationId = data?.verification_id ?? null;
-      proofTitle = (data?.snapshot as any)?.title ?? "Incident Lock";
     }
 
     if (!verificationId) {

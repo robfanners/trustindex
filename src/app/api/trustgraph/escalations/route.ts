@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { requireTier } from "@/lib/requireTier";
 import { writeAuditLog } from "@/lib/audit";
-import { parseBody, apiError } from "@/lib/apiHelpers";
+import { parseBody } from "@/lib/apiHelpers";
 import { createEscalationSchema } from "@/lib/validations";
 
 // ---------------------------------------------------------------------------

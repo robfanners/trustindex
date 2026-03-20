@@ -5,7 +5,7 @@
 // with priority (high / med) and actionable text.
 // ---------------------------------------------------------------------------
 
-import type { QuestionAnswer, SystemQuestion } from "./systemQuestionBank";
+import type { QuestionAnswer } from "./systemQuestionBank";
 import { SYSTEM_QUESTIONS } from "./systemQuestionBank";
 import { questionScore } from "./systemScoring";
 

@@ -657,9 +657,9 @@ function ActionsContent() {
                 ) : (
                   <p className="text-xs text-muted-foreground">
                     Connect your backlog via the{" "}
-                    <a href="/dashboard/settings/integrations" className="text-brand underline">
+                    <Link href="/dashboard/settings/integrations" className="text-brand underline">
                       Integrations page
-                    </a>{" "}
+                    </Link>{" "}
                     to create tickets from actions.
                   </p>
                 )}

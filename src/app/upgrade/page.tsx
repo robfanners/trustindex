@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import { useAuth } from "@/context/AuthContext";
@@ -211,6 +212,7 @@ function UpgradeContent() {
       });
       const data = await res.json();
       if (data.url) {
+        // eslint-disable-next-line react-hooks/immutability
         window.location.href = data.url;
       } else {
         alert(data.error || "Could not start checkout. Please try again.");
@@ -265,7 +267,7 @@ function UpgradeContent() {
       <div className="grid md:grid-cols-3 gap-6">
         {tiers.map((tier) => {
           const cta = ctaFor(tier);
-          const isBrand = tier.bannerColor === "brand";
+          const _isBrand = tier.bannerColor === "brand";
           const isTeal = tier.bannerColor === "teal";
           const hasBanner = !!tier.bannerText;
 
@@ -437,9 +439,9 @@ function UpgradeContent() {
 
       {/* Back link */}
       <div className="text-center text-sm text-muted-foreground">
-        <a href="/dashboard" className="text-brand underline hover:text-foreground">
+        <Link href="/dashboard" className="text-brand underline hover:text-foreground">
           Back to dashboard
-        </a>
+        </Link>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import ConfirmDialog from "@/components/vcc/ConfirmDialog";
 import { useVCCAuth } from "@/context/VCCAuthContext";
@@ -121,12 +122,12 @@ export default function OrgDetailPage() {
     return (
       <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
         <p className="text-red-700">{error}</p>
-        <a
+        <Link
           href="/verisum-admin/organisations"
           className="text-sm text-blue-600 hover:text-blue-800 mt-2 inline-block"
         >
           Back to organisations
-        </a>
+        </Link>
       </div>
     );
   }
@@ -141,12 +142,12 @@ export default function OrgDetailPage() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <a
+            <Link
               href="/verisum-admin/organisations"
               className="text-sm text-gray-500 hover:text-gray-700"
             >
               Organisations
-            </a>
+            </Link>
             <span className="text-gray-300">/</span>
           </div>
           <h1 className="text-2xl font-bold text-gray-900">{org.email}</h1>

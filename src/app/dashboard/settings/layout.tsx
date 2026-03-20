@@ -41,6 +41,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
 
   // Mounted guard to avoid hydration mismatch on plan-gated tabs
   const [mounted, setMounted] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMounted(true), []);
 
   const visibleTabs = mounted

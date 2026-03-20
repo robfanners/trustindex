@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import AppShell from "@/components/AppShell";
 
 type Result = {
@@ -76,11 +76,12 @@ async function copyText(label: string, text: string) {
 
       setResult(json as Result);
       setLoading(false);
-    } catch (e: any) {
-      const msg = e?.message ?? "";
+    } catch (e) {
+      const error = e as Error;
+      const msg = error?.message ?? "";
       const isNetworkError =
         msg === "fetch failed" ||
-        (e?.name === "TypeError" && typeof msg === "string" && msg.toLowerCase().includes("fetch"));
+        (error?.name === "TypeError" && typeof msg === "string" && msg.toLowerCase().includes("fetch"));
       setError(
         isNetworkError
           ? "Unable to reach the server. Check your connection and try again. If the problem persists, the server may be temporarily unavailable."
@@ -113,7 +114,7 @@ async function copyText(label: string, text: string) {
 
         <div className="space-y-1">
           <label className="text-sm font-semibold">Survey type</label>
-          <select className="w-full border border-border rounded px-3 py-2" value={mode} onChange={(e) => onModeChange(e.target.value as any)}>
+          <select className="w-full border border-border rounded px-3 py-2" value={mode} onChange={(e) => onModeChange(e.target.value as "explorer" | "org")}>
             <option value="explorer">Explorer (self-assessment)</option>
             <option value="org">Organisational (survey)</option>
           </select>

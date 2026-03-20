@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireAuth, apiError, apiOk, withErrorHandling } from "@/lib/apiHelpers";
+import { requireAuth, apiOk, withErrorHandling } from "@/lib/apiHelpers";
 
 export async function GET(req: NextRequest) {
   return withErrorHandling(async () => {
