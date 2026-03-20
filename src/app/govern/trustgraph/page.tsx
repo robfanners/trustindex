@@ -4,8 +4,6 @@ import { useEffect, useMemo, useState, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-import AuthenticatedShell from "@/components/AuthenticatedShell";
-import RequireAuth from "@/components/RequireAuth";
 import { getPlanLimits } from "@/lib/entitlements";
 import { getTierForScore } from "@/lib/trustGraphTiers";
 import { getStabilityBadge, type StabilityStatus } from "@/lib/assessmentLifecycle";
@@ -128,17 +126,13 @@ function TabButton({
 
 export default function TrustGraphPage() {
   return (
-    <RequireAuth>
-      <Suspense fallback={
-        <AuthenticatedShell>
-          <div className="flex items-center justify-center py-24">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-current border-t-transparent" />
-          </div>
-        </AuthenticatedShell>
-      }>
-        <TrustGraphContent />
-      </Suspense>
-    </RequireAuth>
+    <Suspense fallback={
+      <div className="flex items-center justify-center py-24">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-current border-t-transparent" />
+      </div>
+    }>
+      <TrustGraphContent />
+    </Suspense>
   );
 }
 
@@ -277,7 +271,6 @@ function TrustGraphContent() {
   const surveyAtCap = !surveysLoading && surveys.length >= limits.maxSurveys;
 
   return (
-    <AuthenticatedShell>
       <div className="flex flex-col gap-6">
         {/* Page header */}
         <div>
@@ -687,7 +680,6 @@ function TrustGraphContent() {
           </div>
         )}
       </div>
-    </AuthenticatedShell>
   );
 }
 

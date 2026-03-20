@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import AuthenticatedShell from "@/components/AuthenticatedShell";
-import RequireAuth from "@/components/RequireAuth";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -99,11 +97,7 @@ function StatBadge({ value, label, color }: { value: number | string; label: str
 // ---------------------------------------------------------------------------
 
 export default function GovernDashboard() {
-  return (
-    <RequireAuth>
-      <GovernContent />
-    </RequireAuth>
-  );
+  return <GovernContent />;
 }
 
 function GovernContent() {
@@ -134,7 +128,6 @@ function GovernContent() {
   }, []);
 
   return (
-    <AuthenticatedShell>
       <div className="flex flex-col gap-6">
         {/* Page header */}
         <div>
@@ -230,6 +223,5 @@ function GovernContent() {
           </>
         )}
       </div>
-    </AuthenticatedShell>
   );
 }
