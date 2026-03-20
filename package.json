@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "NEXT_DISABLE_TURBOPACK=1 next dev -H 127.0.0.1 -p 3000",
     "dev:3001": "NEXT_DISABLE_TURBOPACK=1 next dev -H 127.0.0.1 -p 3001",
+    "prebuild": "rm -rf .next",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
