@@ -25,6 +25,31 @@ type Policy = {
   updated_at: string;
 };
 
+type LinkedSystem = {
+  id: string;
+  system_id: string;
+  policy_id: string;
+  link_type: string;
+  created_at: string;
+  systems: { id: string; name: string; risk_category: string | null; type: string | null } | null;
+};
+
+type PolicyEvent = {
+  id: string;
+  event_type: string;
+  version: number | null;
+  performed_by: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+  profiles: { full_name: string | null } | null;
+};
+
+type OrgSystem = {
+  id: string;
+  name: string;
+  type: string | null;
+};
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -56,12 +81,60 @@ const STATUS_LABELS: Record<string, string> = {
   archived: "Archived",
 };
 
+const EVENT_LABELS: Record<string, string> = {
+  created: "Policy created",
+  updated: "Policy updated",
+  status_changed: "Status changed",
+  approved: "Policy approved",
+  archived: "Policy archived",
+  content_edited: "Content edited",
+  system_linked: "System linked",
+  system_unlinked: "System unlinked",
+  action_created: "Action item created",
+};
+
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-GB", {
     day: "numeric",
     month: "short",
     year: "numeric",
   });
+}
+
+function formatEventMeta(type: string, meta: Record<string, unknown>): string {
+  if (type === "status_changed" || type === "approved") {
+    return `${STATUS_LABELS[meta.from as string] ?? meta.from} → ${STATUS_LABELS[meta.to as string] ?? meta.to}`;
+  }
+  if (type === "system_linked" || type === "system_unlinked") {
+    return meta.system_name as string ?? "";
+  }
+  if (type === "action_created") {
+    return meta.action_title as string ?? "";
+  }
+  if (type === "created") {
+    return `${POLICY_TYPES[meta.policy_type as string] ?? meta.policy_type}${meta.source ? ` (${meta.source})` : ""}`;
+  }
+  return "";
+}
+
+function EventIcon({ type }: { type: string }) {
+  const cls = "w-3.5 h-3.5";
+  switch (type) {
+    case "created":
+      return <svg className={`${cls} text-blue-500`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>;
+    case "approved":
+      return <svg className={`${cls} text-green-600`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>;
+    case "archived":
+      return <svg className={`${cls} text-red-500`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 8v13H3V8M1 3h22v5H1z" /><path d="M10 12h4" /></svg>;
+    case "system_linked":
+      return <svg className={`${cls} text-purple-500`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" /></svg>;
+    case "system_unlinked":
+      return <svg className={`${cls} text-gray-400`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12" /></svg>;
+    case "action_created":
+      return <svg className={`${cls} text-amber-500`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5M2 12l10 5 10-5" /></svg>;
+    default:
+      return <svg className={`${cls} text-gray-400`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -100,6 +173,14 @@ function PoliciesContent() {
   const [editingContent, setEditingContent] = useState(false);
   const [editContent, setEditContent] = useState("");
 
+  // Linked systems & events
+  const [linkedSystems, setLinkedSystems] = useState<LinkedSystem[]>([]);
+  const [events, setEvents] = useState<PolicyEvent[]>([]);
+  const [orgSystems, setOrgSystems] = useState<OrgSystem[]>([]);
+  const [showLinkDropdown, setShowLinkDropdown] = useState(false);
+  const [linkRole, setLinkRole] = useState("applies_to");
+  const [linking, setLinking] = useState(false);
+
   const fetchPolicies = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -121,6 +202,89 @@ function PoliciesContent() {
   useEffect(() => {
     fetchPolicies();
   }, [fetchPolicies]);
+
+  // Fetch linked systems + events when a policy is selected
+  const fetchPolicyDetails = useCallback(async (policyId: string) => {
+    const [linksRes, eventsRes] = await Promise.all([
+      fetch(`/api/copilot/policies/${policyId}/links`),
+      fetch(`/api/copilot/policies/${policyId}/events`),
+    ]);
+    if (linksRes.ok) {
+      const d = await linksRes.json();
+      setLinkedSystems(d.links ?? []);
+    }
+    if (eventsRes.ok) {
+      const d = await eventsRes.json();
+      setEvents(d.events ?? []);
+    }
+  }, []);
+
+  // Fetch org systems for linking dropdown
+  const fetchOrgSystems = useCallback(async () => {
+    if (orgSystems.length > 0) return;
+    try {
+      const res = await fetch("/api/systems");
+      if (res.ok) {
+        const d = await res.json();
+        setOrgSystems(d.systems ?? []);
+      }
+    } catch { /* ignore */ }
+  }, [orgSystems.length]);
+
+  // When selected policy changes, fetch its details
+  useEffect(() => {
+    if (selected) {
+      fetchPolicyDetails(selected.id);
+    } else {
+      setLinkedSystems([]);
+      setEvents([]);
+      setShowLinkDropdown(false);
+    }
+  }, [selected, fetchPolicyDetails]);
+
+  // Link a system
+  async function handleLinkSystem(systemId: string) {
+    if (!selected || linking) return;
+    setLinking(true);
+    try {
+      const res = await fetch(`/api/copilot/policies/${selected.id}/links`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ system_id: systemId, link_type: linkRole }),
+      });
+      if (res.ok) {
+        showActionToast("System linked");
+        setShowLinkDropdown(false);
+        setLinkRole("applies_to");
+        fetchPolicyDetails(selected.id);
+      } else {
+        const d = await res.json();
+        showErrorToast(d.error ?? "Failed to link");
+      }
+    } catch {
+      showErrorToast("Failed to link system");
+    } finally {
+      setLinking(false);
+    }
+  }
+
+  // Unlink a system
+  async function handleUnlinkSystem(linkId: string) {
+    if (!selected) return;
+    try {
+      const res = await fetch(`/api/copilot/policies/${selected.id}/links?link_id=${linkId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        showActionToast("System unlinked");
+        fetchPolicyDetails(selected.id);
+      } else {
+        showErrorToast("Failed to unlink");
+      }
+    } catch {
+      showErrorToast("Failed to unlink");
+    }
+  }
 
   // Derived
   const filtered = useMemo(() => {
@@ -555,6 +719,136 @@ function PoliciesContent() {
                 ))}
               </div>
             </div>
+
+            {/* Linked Systems */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Linked Systems
+                </h4>
+                {selected.status !== "archived" && (
+                  <button
+                    onClick={() => {
+                      setShowLinkDropdown(!showLinkDropdown);
+                      if (!showLinkDropdown) fetchOrgSystems();
+                    }}
+                    className="text-xs text-[var(--brand,#0066FF)] hover:text-[var(--brand,#0066FF)]/80 font-medium"
+                  >
+                    {showLinkDropdown ? "Cancel" : "+ Link System"}
+                  </button>
+                )}
+              </div>
+
+              {/* Link dropdown */}
+              {showLinkDropdown && (
+                <div className="mb-3 rounded-lg border border-border bg-gray-50/50 p-3 flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={linkRole}
+                      onChange={(e) => setLinkRole(e.target.value)}
+                      className="h-7 rounded-md border border-border bg-white px-2 text-xs"
+                    >
+                      <option value="applies_to">Applies to</option>
+                      <option value="references">References</option>
+                      <option value="supersedes">Supersedes</option>
+                    </select>
+                  </div>
+                  {orgSystems.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">No systems found</p>
+                  ) : (
+                    <div className="flex flex-col gap-1 max-h-40 overflow-y-auto">
+                      {orgSystems
+                        .filter((s) => !linkedSystems.some((ls) => ls.system_id === s.id))
+                        .map((s) => (
+                          <button
+                            key={s.id}
+                            onClick={() => handleLinkSystem(s.id)}
+                            disabled={linking}
+                            className="flex items-center justify-between rounded-md px-2 py-1.5 text-xs hover:bg-white transition-colors text-left disabled:opacity-50"
+                          >
+                            <span className="font-medium">{s.name}</span>
+                            {s.type && <span className="text-muted-foreground">{s.type}</span>}
+                          </button>
+                        ))}
+                      {orgSystems.filter((s) => !linkedSystems.some((ls) => ls.system_id === s.id)).length === 0 && (
+                        <p className="text-xs text-muted-foreground px-2 py-1">All systems already linked</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Linked systems list */}
+              {linkedSystems.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-border p-4 text-center">
+                  <p className="text-xs text-muted-foreground">No systems linked to this policy</p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1">
+                  {linkedSystems.map((ls) => (
+                    <div key={ls.id} className="flex items-center justify-between rounded-lg border border-border bg-white px-3 py-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-muted-foreground shrink-0">
+                          <rect x="2" y="3" width="20" height="14" rx="2" />
+                          <path d="M8 21h8M12 17v4" />
+                        </svg>
+                        <span className="text-sm font-medium truncate">{ls.systems?.name ?? "Unknown"}</span>
+                        <span className="text-[10px] rounded-full bg-gray-100 text-gray-600 px-1.5 py-0.5 shrink-0">
+                          {ls.link_type.replace("_", " ")}
+                        </span>
+                      </div>
+                      {selected.status !== "archived" && (
+                        <button
+                          onClick={() => handleUnlinkSystem(ls.id)}
+                          className="text-gray-400 hover:text-red-500 transition-colors shrink-0 ml-2"
+                          title="Unlink"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M18 6L6 18M6 6l12 12" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Activity / Audit Trail */}
+            {events.length > 0 && (
+              <div>
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                  Activity
+                </h4>
+                <div className="flex flex-col gap-0">
+                  {events.slice(0, 10).map((ev) => (
+                    <div key={ev.id} className="flex items-start gap-2 py-2 border-b border-border last:border-0">
+                      <div className="mt-0.5 shrink-0">
+                        <EventIcon type={ev.event_type} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-medium text-foreground">
+                          {EVENT_LABELS[ev.event_type] ?? ev.event_type}
+                        </p>
+                        {ev.metadata && Object.keys(ev.metadata).length > 0 && (
+                          <p className="text-[11px] text-muted-foreground truncate">
+                            {formatEventMeta(ev.event_type, ev.metadata)}
+                          </p>
+                        )}
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          {ev.profiles?.full_name ?? "System"} &middot; {formatDate(ev.created_at)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                  {events.length > 10 && (
+                    <p className="text-[10px] text-muted-foreground text-center py-1">
+                      +{events.length - 10} more events
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Content */}
             <div>
