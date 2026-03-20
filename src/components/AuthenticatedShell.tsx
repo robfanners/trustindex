@@ -183,31 +183,32 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
   useEffect(() => {
     try {
       const stored = localStorage.getItem(SIDEBAR_KEY);
-      if (stored === "true") setSidebarCollapsed(true);
+      if (stored === "true") setSidebarCollapsed(true); // eslint-disable-line react-hooks/set-state-in-effect
       const navStored = localStorage.getItem("verisum_nav_expanded");
-      if (navStored) setExpandedSections(JSON.parse(navStored));
+      if (navStored) setExpandedSections(JSON.parse(navStored));  
     } catch {
       // localStorage unavailable
     }
-  }, []);
+  }, [setSidebarCollapsed, setExpandedSections]);
 
   const activeNav = useMemo(() => {
     // Exact matches first
     if (pathname.startsWith("/dashboard/settings")) return "/dashboard/settings";
     if (pathname === "/dashboard") return "/dashboard";
     // Section routes
-    if (pathname.startsWith("/trustorg")) return "/trustorg";
-    if (pathname.startsWith("/trustsys")) return "/trustsys";
+    if (pathname.startsWith("/trustorg")) return "/govern/trustgraph";
+    if (pathname.startsWith("/trustsys")) return "/govern/trustgraph";
     if (pathname.startsWith("/actions")) return "/actions";
     if (pathname.startsWith("/reports")) return "/reports";
     if (pathname.startsWith("/copilot")) return "/copilot/generate-policy";
+    if (pathname.startsWith("/govern/trustgraph")) return "/govern/trustgraph";
     if (pathname.startsWith("/govern/models")) return "/govern/models";
     if (pathname.startsWith("/govern")) return pathname;
     if (pathname.startsWith("/monitor")) return pathname;
     if (pathname.startsWith("/prove")) return pathname;
     // Legacy routes
-    if (pathname.startsWith("/dashboard/surveys")) return "/trustorg";
-    if (pathname.startsWith("/systems")) return "/trustsys";
+    if (pathname.startsWith("/dashboard/surveys")) return "/govern/trustgraph";
+    if (pathname.startsWith("/systems")) return "/govern/trustgraph";
     return pathname;
   }, [pathname]);
 
@@ -217,6 +218,7 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
       s.items.some((item) => activeNav === item.href)
     );
     if (activeSection?.label) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setExpandedSections((prev) => {
         if (prev[activeSection.id]) return prev; // already expanded
         const next = { ...prev, [activeSection.id]: true };

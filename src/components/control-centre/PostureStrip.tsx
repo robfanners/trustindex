@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 type PostureData = {
   govern: {
     health_score: number | null;
@@ -105,23 +107,31 @@ function TierColumn({
   label,
   icon,
   barColor,
+  href,
   children,
 }: {
   label: string;
   icon: React.ReactNode;
   barColor: string;
+  href: string;
   children: React.ReactNode;
 }) {
   return (
-    <div
-      className="group relative flex flex-1 flex-col items-center gap-3 rounded-lg px-4 py-4 transition-colors duration-150 hover:bg-black/[0.025]"
+    <Link
+      href={href}
+      className="group relative flex flex-1 flex-col items-center gap-3 rounded-lg px-4 py-4 transition-colors duration-150 hover:bg-black/[0.025] no-underline"
     >
       {/* tier label */}
       <div className="flex items-center gap-1.5">
         {icon}
-        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground,#6B7280)]">
+        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground,#6B7280)] group-hover:text-[var(--foreground,#111)]">
           {label}
         </span>
+        {/* arrow hint */}
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"
+          className="opacity-0 -translate-x-1 transition-all duration-150 group-hover:opacity-60 group-hover:translate-x-0">
+          <path d="M3.5 2L6.5 5L3.5 8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
       </div>
 
       {/* metrics row */}
@@ -132,7 +142,7 @@ function TierColumn({
         className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full"
         style={{ backgroundColor: barColor }}
       />
-    </div>
+    </Link>
   );
 }
 
@@ -148,6 +158,7 @@ export default function PostureStrip({ data }: PostureStripProps) {
         label="Govern"
         icon={<GovernIcon />}
         barColor="var(--brand, #0066FF)"
+        href="/govern"
       >
         <Metric
           value={govern.health_score != null ? govern.health_score : "--"}
@@ -162,6 +173,7 @@ export default function PostureStrip({ data }: PostureStripProps) {
         label="Monitor"
         icon={<MonitorIcon />}
         barColor="var(--coral, #e8614d)"
+        href="/monitor"
       >
         <Metric value={monitor.escalation_count} label="Escalations" />
         <Metric value={monitor.drift_count} label="Drift" />
@@ -173,6 +185,7 @@ export default function PostureStrip({ data }: PostureStripProps) {
         label="Prove"
         icon={<ProveIcon />}
         barColor="var(--teal, #0d9488)"
+        href="/prove"
       >
         <Metric value={prove.attestation_count} label="Attestations" />
         <Metric value={prove.provenance_count} label="Provenance" />
