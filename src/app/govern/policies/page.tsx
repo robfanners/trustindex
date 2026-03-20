@@ -2,8 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import AuthenticatedShell from "@/components/AuthenticatedShell";
-import RequireAuth from "@/components/RequireAuth";
 import DetailPanel from "@/components/ui/DetailPanel";
 import { showActionToast, showErrorToast } from "@/components/ui/Toast";
 import { useAuth } from "@/context/AuthContext";
@@ -71,13 +69,7 @@ function formatDate(iso: string) {
 // ---------------------------------------------------------------------------
 
 export default function PoliciesPage() {
-  return (
-    <RequireAuth>
-      <AuthenticatedShell>
-        <PoliciesContent />
-      </AuthenticatedShell>
-    </RequireAuth>
-  );
+  return <PoliciesContent />;
 }
 
 // ---------------------------------------------------------------------------

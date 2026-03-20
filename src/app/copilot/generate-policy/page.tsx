@@ -30,6 +30,48 @@ const POLICY_TYPES = [
     description:
       "Practical, non-technical guide for employees on responsible AI usage and escalation.",
   },
+  {
+    value: "risk_assessment",
+    label: "AI Risk Assessment Policy",
+    description:
+      "Framework for identifying, assessing, and mitigating risks associated with AI systems.",
+  },
+  {
+    value: "transparency",
+    label: "Transparency & Explainability",
+    description:
+      "Ensures AI systems provide appropriate transparency and explainability to users and regulators.",
+  },
+  {
+    value: "bias_monitoring",
+    label: "Bias Detection & Mitigation",
+    description:
+      "Processes for detecting, measuring, and mitigating bias in AI systems for fair outcomes.",
+  },
+  {
+    value: "vendor_management",
+    label: "AI Vendor Management",
+    description:
+      "Standards for evaluating, onboarding, and monitoring third-party AI vendors and services.",
+  },
+  {
+    value: "incident_response",
+    label: "AI Incident Response",
+    description:
+      "Procedures for identifying, reporting, investigating, and resolving AI-related incidents.",
+  },
+  {
+    value: "human_oversight",
+    label: "Human Oversight & Escalation",
+    description:
+      "Ensures appropriate human oversight of AI systems with clear escalation paths.",
+  },
+  {
+    value: "model_lifecycle",
+    label: "Model Lifecycle Governance",
+    description:
+      "Governs the full lifecycle of AI models from development through deployment and retirement.",
+  },
 ] as const;
 
 const INDUSTRIES = [
