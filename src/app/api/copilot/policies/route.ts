@@ -66,6 +66,16 @@ export async function POST(req: NextRequest) {
 
     if (error) throw new Error("Failed to create policy");
 
+    // Log creation event
+    await db.from("policy_events").insert({
+      organisation_id: orgId,
+      policy_id: policy.id,
+      event_type: "created",
+      version: 1,
+      performed_by: user.id,
+      metadata: { title, policy_type, source: "manual" },
+    });
+
     return apiOk({ policy }, 201);
   });
 }
