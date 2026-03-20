@@ -58,8 +58,7 @@ export const navSections: NavSection[] = [
     label: "GOVERN",
     minTier: null,
     items: [
-      { label: "TrustOrg", href: "/trustorg", icon: "clipboard", exists: true },
-      { label: "TrustSys", href: "/trustsys", icon: "cpu", exists: true },
+      { label: "TrustGraph", href: "/govern/trustgraph", icon: "git-branch", exists: true },
       { label: "Policies", href: "/copilot/generate-policy", icon: "scroll", exists: true },
       { label: "AI Registry", href: "/govern/registry", icon: "server", exists: true },
       { label: "Vendors", href: "/govern/vendors", icon: "building", exists: true },

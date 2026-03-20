@@ -190,7 +190,11 @@ function DashboardContent() {
                 incidents={data.monitor.incidents}
               />
               <div className="flex flex-col gap-4">
-                <ScoreRing score={data.govern.health_score} />
+                <ScoreRing
+                  score={data.govern.health_score}
+                  orgScore={data.govern.org_base}
+                  sysScore={data.govern.sys_base}
+                />
                 <QuickActions />
               </div>
             </div>
