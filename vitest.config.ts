@@ -13,8 +13,6 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      // ethers is an optional runtime-only dependency (not installed in dev/test)
-      ethers: path.resolve(__dirname, "./src/__mocks__/ethers.ts"),
     },
   },
 });

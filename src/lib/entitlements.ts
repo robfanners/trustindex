@@ -6,10 +6,32 @@
  */
 
 // ---------------------------------------------------------------------------
-// Types
+// Types & Constants
 // ---------------------------------------------------------------------------
 
 export type PlanName = "explorer" | "starter" | "pro" | "enterprise";
+
+// Plan limit constants for display/pricing pages
+export const PLAN_CONSTANTS = {
+  STARTER: {
+    SURVEYS: 3,
+    SYSTEMS: 1,
+    STAFF_DECLARATIONS: 50,
+    VENDORS: 10,
+    INCIDENTS_PER_MONTH: 5,
+    TEAM_MEMBERS: 1,
+    POLICY_GENERATIONS: 3,
+  },
+  PRO: {
+    SURVEYS: 5,
+    SYSTEMS: 2,
+    STAFF_DECLARATIONS: 250,
+    VENDORS: Infinity,
+    INCIDENTS_PER_MONTH: Infinity,
+    TEAM_MEMBERS: 5,
+    POLICY_GENERATIONS: 10,
+  },
+} as const;
 
 export type PlanLimits = {
   maxSurveys: number; // Infinity for enterprise

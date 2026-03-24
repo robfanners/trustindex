@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import { useAuth } from "@/context/AuthContext";
 import type { VersiumTier } from "@/lib/tiers";
+import { PLAN_CONSTANTS } from "@/lib/entitlements";
 
 // ---------------------------------------------------------------------------
 // Plan data — 3 Verisum tiers
@@ -46,9 +47,9 @@ const tiers: PlanTier[] = [
       "Governance Pack (3 PDF documents)",
       "1 TrustOrg assessment",
       "AI Policy Generator",
-      "Staff Declaration Portal (50 staff)",
-      "AI Vendor Register (10 vendors)",
-      "Incident Logging (5/month)",
+      `Staff Declaration Portal (${PLAN_CONSTANTS.STARTER.STAFF_DECLARATIONS} staff)`,
+      `AI Vendor Register (${PLAN_CONSTANTS.STARTER.VENDORS} vendors)`,
+      `Incident Logging (${PLAN_CONSTANTS.STARTER.INCIDENTS_PER_MONTH}/month)`,
       "Regulatory Feed (UK/EU)",
     ],
     bannerText: "Most Popular For Startups",
@@ -69,16 +70,16 @@ const tiers: PlanTier[] = [
     sectionLabel: "Govern + Monitor",
     features: [
       "Everything in Core, plus:",
-      "5 TrustOrg assessments",
-      "2 AI system assessments (TrustSys)",
+      `${PLAN_CONSTANTS.PRO.SURVEYS} TrustOrg assessments`,
+      `${PLAN_CONSTANTS.PRO.SYSTEMS} AI system assessments (TrustSys)`,
       "Drift detection & alerts",
       "Escalation workflows",
       "Incident management (unlimited)",
       "Runtime signals monitoring",
-      "Team management (5 users)",
+      `Team management (${PLAN_CONSTANTS.PRO.TEAM_MEMBERS} users)`,
       "CSV data export",
       "Advanced policy generation",
-      "Staff Declarations (250)",
+      `Staff Declarations (${PLAN_CONSTANTS.PRO.STAFF_DECLARATIONS})`,
       "Priority support",
     ],
     bannerText: "Advanced Governance",
@@ -127,12 +128,12 @@ const featureMatrix: MatrixRow[] = [
   // Govern
   { feature: "Self-assessment", core: "\u2713", assure: "\u2713", verify: "\u2713", section: "Govern" },
   { feature: "Governance Wizard + Pack", core: "\u2713", assure: "\u2713", verify: "\u2713" },
-  { feature: "TrustOrg assessments", core: "1", assure: "5", verify: "Unlimited" },
-  { feature: "TrustSys assessments", core: "\u2014", assure: "2", verify: "Unlimited" },
+  { feature: "TrustOrg assessments", core: "1", assure: String(PLAN_CONSTANTS.PRO.SURVEYS), verify: "Unlimited" },
+  { feature: "TrustSys assessments", core: "\u2014", assure: String(PLAN_CONSTANTS.PRO.SYSTEMS), verify: "Unlimited" },
   { feature: "AI Policy Generator", core: "1 (auto)", assure: "Editable", verify: "Custom templates" },
-  { feature: "Staff Declarations", core: "50 staff", assure: "250 staff", verify: "Unlimited" },
-  { feature: "AI Vendor Register", core: "10", assure: "Unlimited", verify: "Unlimited + risk scoring" },
-  { feature: "Incident Logging", core: "5/month", assure: "Unlimited", verify: "Unlimited + routing" },
+  { feature: "Staff Declarations", core: String(PLAN_CONSTANTS.STARTER.STAFF_DECLARATIONS) + " staff", assure: String(PLAN_CONSTANTS.PRO.STAFF_DECLARATIONS) + " staff", verify: "Unlimited" },
+  { feature: "AI Vendor Register", core: String(PLAN_CONSTANTS.STARTER.VENDORS), assure: "Unlimited", verify: "Unlimited + risk scoring" },
+  { feature: "Incident Logging", core: String(PLAN_CONSTANTS.STARTER.INCIDENTS_PER_MONTH) + "/month", assure: "Unlimited", verify: "Unlimited + routing" },
   { feature: "Regulatory Feed", core: "UK/EU", assure: "UK/EU + sector", verify: "Custom jurisdictions" },
   // Monitor
   { feature: "Drift detection & alerts", core: "\u2014", assure: "\u2713", verify: "\u2713", section: "Monitor" },

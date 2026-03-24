@@ -1,6 +1,4 @@
-import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { requireAuth, apiError, apiOk, withErrorHandling } from "@/lib/apiHelpers";
 import { getStripe } from "@/lib/stripe";
 import type Stripe from "stripe";
 
@@ -9,19 +7,13 @@ import type Stripe from "stripe";
 // ---------------------------------------------------------------------------
 
 export async function GET() {
-  try {
+  return withErrorHandling(async () => {
     // 1. Authenticate
-    const authClient = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await authClient.auth.getUser();
+    const auth = await requireAuth({ orgOptional: true, withPlan: false });
+    if (auth.error) return auth.error;
+    const { user, db } = auth;
 
-    if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    // 2. Get profile
-    const db = supabaseServer();
+    // 2. Get profile (fetch additional Stripe fields)
     const { data: profile } = await db
       .from("profiles")
       .select("plan, stripe_customer_id, stripe_subscription_id")
@@ -29,12 +21,12 @@ export async function GET() {
       .single();
 
     if (!profile) {
-      return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+      return apiError("Profile not found", 404);
     }
 
     // 3. If no subscription, return basic info
     if (!profile.stripe_subscription_id) {
-      return NextResponse.json({
+      return apiOk({
         plan: profile.plan,
         interval: null,
         status: null,
@@ -57,16 +49,12 @@ export async function GET() {
       ? new Date(periodEnd * 1000).toISOString()
       : null;
 
-    return NextResponse.json({
+    return apiOk({
       plan: profile.plan,
       interval,
       status: sub.status,
       renewal_date: renewalDate,
       stripe_customer_id: profile.stripe_customer_id,
     });
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : "Unknown error";
-    console.error("Billing API error:", msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
-  }
+  });
 }
