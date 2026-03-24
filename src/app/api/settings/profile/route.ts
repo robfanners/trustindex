@@ -1,6 +1,4 @@
-import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { requireAuth, apiError, apiOk, withErrorHandling } from "@/lib/apiHelpers";
 
 // ---------------------------------------------------------------------------
 // PATCH /api/settings/profile — update profile fields
@@ -10,16 +8,11 @@ const ALLOWED_FIELDS = ["full_name", "company_name", "company_size", "role"] as 
 const MAX_LENGTH = 200;
 
 export async function PATCH(req: Request) {
-  try {
+  return withErrorHandling(async () => {
     // 1. Authenticate
-    const authClient = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await authClient.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
+    const auth = await requireAuth({ orgOptional: true });
+    if (auth.error) return auth.error;
+    const { user, db } = auth;
 
     // 2. Parse + validate body
     const body = await req.json();
@@ -29,30 +22,20 @@ export async function PATCH(req: Request) {
       if (field in body) {
         const val = body[field];
         if (typeof val !== "string") {
-          return NextResponse.json(
-            { error: `${field} must be a string` },
-            { status: 400 }
-          );
+          return apiError(`${field} must be a string`, 400);
         }
         if (val.length > MAX_LENGTH) {
-          return NextResponse.json(
-            { error: `${field} must be at most ${MAX_LENGTH} characters` },
-            { status: 400 }
-          );
+          return apiError(`${field} must be at most ${MAX_LENGTH} characters`, 400);
         }
         updates[field] = val;
       }
     }
 
     if (Object.keys(updates).length === 0) {
-      return NextResponse.json(
-        { error: "No valid fields to update" },
-        { status: 400 }
-      );
+      return apiError("No valid fields to update", 400);
     }
 
     // 3. Update profile
-    const db = supabaseServer();
     const { data, error } = await db
       .from("profiles")
       .update(updates)
@@ -61,12 +44,9 @@ export async function PATCH(req: Request) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return apiError(error.message, 500);
     }
 
-    return NextResponse.json({ profile: data });
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: msg }, { status: 500 });
-  }
+    return apiOk({ profile: data });
+  });
 }

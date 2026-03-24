@@ -64,24 +64,31 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // --- Auth protection for all authenticated routes ---
-  if (
-    pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/systems") ||
-    pathname.startsWith("/trustorg") ||
-    pathname.startsWith("/trustsys") ||
-    pathname.startsWith("/actions") ||
-    pathname.startsWith("/reports") ||
-    pathname.startsWith("/monitor") ||
-    pathname.startsWith("/prove") ||
-    pathname.startsWith("/verisum-admin")
-  ) {
-    if (!user) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/auth/login";
-      url.searchParams.set("next", `${pathname}${search || ""}`);
-      return NextResponse.redirect(url);
-    }
+  // --- Auth protection: protect ALL routes by default, whitelist public paths ---
+  const publicPaths = [
+    "/auth",
+    "/api/public",
+    "/api/keepalive",
+    "/survey",
+    "/try",
+    "/verify",
+    "/api/auth",
+    "/_next",
+    "/favicon.ico",
+  ];
+
+  const isPublicPath = publicPaths.some(
+    (publicPath) => pathname === publicPath || pathname.startsWith(publicPath + "/")
+  );
+
+  const isStaticFile =
+    pathname.match(/\.(js|css|png|jpg|jpeg|svg|gif|ico|webp|woff|woff2|ttf|eot)$/);
+
+  if (!isPublicPath && !isStaticFile && !user) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/login";
+    url.searchParams.set("next", `${pathname}${search || ""}`);
+    return NextResponse.redirect(url);
   }
 
   return response;
@@ -89,15 +96,13 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/admin/:path*",
-    "/dashboard/:path*",
-    "/systems/:path*",
-    "/trustorg/:path*",
-    "/trustsys/:path*",
-    "/actions/:path*",
-    "/reports/:path*",
-    "/monitor/:path*",
-    "/prove/:path*",
-    "/verisum-admin/:path*",
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api/webhooks (webhooks, auth, etc.)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    "/((?!api/webhooks|_next/static|_next/image|favicon.ico).*)",
   ],
 };
