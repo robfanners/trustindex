@@ -120,7 +120,6 @@ export async function POST(req: Request) {
 
     try {
       // ── 1. Generate governance statement ─────────────────────────────
-      console.log("[pack] Generating governance statement for pack", packId);
       const statementPrompt = buildGovernanceStatementPrompt(responses, version);
       const statementContent = await generateText(
         GOVERNANCE_STATEMENT_SYSTEM,
@@ -129,7 +128,6 @@ export async function POST(req: Request) {
       );
 
       // ── 2. Build usage inventory ─────────────────────────────────────
-      console.log("[pack] Building usage inventory for pack", packId);
       const { data: vendors } = await sb
         .from("ai_vendors")
         .select("vendor_name, risk_category, data_types, notes, source")
@@ -179,7 +177,6 @@ export async function POST(req: Request) {
       };
 
       // ── 3. Generate gap analysis ─────────────────────────────────────
-      console.log("[pack] Generating gap analysis for pack", packId);
       const gapPrompt = buildGapAnalysisPrompt(responses);
       const gapContent = await generateText(
         GAP_ANALYSIS_SYSTEM,
@@ -209,7 +206,6 @@ export async function POST(req: Request) {
         );
       }
 
-      console.log("[pack] Pack generated successfully:", packId);
       return NextResponse.json({ pack: updatedPack });
     } catch (genError: unknown) {
       // Generation failed — mark pack as failed
