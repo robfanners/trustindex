@@ -91,10 +91,6 @@ export async function POST() {
       );
     }
 
-    console.log(
-      `[org/ensure] Created org "${orgName}" (${org.id}) for user ${user.id}`
-    );
-
     return NextResponse.json({
       organisation_id: org.id,
       created: true,
