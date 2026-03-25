@@ -7,7 +7,7 @@ type RouteContext = { params: Promise<{ runId: string }> };
 // Helper: verify run ownership via system → run chain
 // ---------------------------------------------------------------------------
 
-async function verifyRunOwnership(db: any, userId: string, runId: string) {
+async function verifyRunOwnership(db: SupabaseClient, userId: string, runId: string) {
   // Fetch run with its system_id
   const { data: run, error: runErr } = await db
     .from("system_runs")

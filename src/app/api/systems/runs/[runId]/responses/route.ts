@@ -8,7 +8,7 @@ type RouteContext = { params: Promise<{ runId: string }> };
 // Helper: verify run ownership + run is still draft
 // ---------------------------------------------------------------------------
 
-async function verifyDraftRunOwnership(db: any, userId: string, runId: string) {
+async function verifyDraftRunOwnership(db: SupabaseClient, userId: string, runId: string) {
   const { data: run, error: runErr } = await db
     .from("system_runs")
     .select("id, system_id, status")

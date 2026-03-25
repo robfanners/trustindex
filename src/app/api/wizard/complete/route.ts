@@ -8,7 +8,7 @@ export async function POST(req: Request) {
   try {
     const auth = await requireAuth({ withPlan: true });
     if (auth.error) return auth.error;
-    const { user, orgId, plan, db: sb } = auth;
+    const { orgId, plan, db: sb } = auth;
 
     if (!canAccessWizard(plan)) {
       return apiError("Upgrade to access the governance wizard", 403);

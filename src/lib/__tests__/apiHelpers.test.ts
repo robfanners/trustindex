@@ -1,4 +1,12 @@
+// @vitest-environment node
+
 import { describe, it, expect, vi } from "vitest";
+
+// Mock Supabase auth server to prevent next/headers from being loaded in tests
+vi.mock("@/lib/supabase-auth-server", () => ({
+  createSupabaseServerClient: vi.fn(),
+}));
+
 import { apiError, apiOk, parseBody, withErrorHandling } from "@/lib/apiHelpers";
 import { z } from "zod";
 

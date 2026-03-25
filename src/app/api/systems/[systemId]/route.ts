@@ -7,7 +7,7 @@ type RouteContext = { params: Promise<{ systemId: string }> };
  * Verify the user owns this system.
  * Returns { system } on success, or an error response.
  */
-async function verifySystemOwnership(db: any, userId: string, systemId: string) {
+async function verifySystemOwnership(db: SupabaseClient, userId: string, systemId: string) {
   const { data: system, error: sysErr } = await db
     .from("systems")
     .select("id, owner_id, name, version_label, archived, created_at")

@@ -7,7 +7,7 @@ type RouteContext = { params: Promise<{ systemId: string }> };
 // Helper: verify system ownership
 // ---------------------------------------------------------------------------
 
-async function verifySystemOwnership(db: any, userId: string, systemId: string) {
+async function verifySystemOwnership(db: SupabaseClient, userId: string, systemId: string) {
   const { data: system, error: sysErr } = await db
     .from("systems")
     .select("id, owner_id")

@@ -8,7 +8,7 @@ type RouteContext = { params: Promise<{ actionId: string }> };
 // Helper: verify org ownership of action
 // ---------------------------------------------------------------------------
 
-async function verifyActionOwnership(db: any, orgId: string, actionId: string) {
+async function verifyActionOwnership(db: SupabaseClient, orgId: string, actionId: string) {
   const { data: action, error: fetchErr } = await db
     .from("actions")
     .select("*")

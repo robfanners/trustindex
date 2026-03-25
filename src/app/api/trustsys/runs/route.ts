@@ -1,6 +1,5 @@
 import { NextRequest } from "next/server";
 import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
-import { supabaseServer } from "@/lib/supabaseServer";
 import { SYSTEM_QUESTIONS } from "@/lib/systemQuestionBank";
 import type { QuestionAnswer } from "@/lib/systemQuestionBank";
 import { computeAllScores, computeRiskFlags } from "@/lib/systemScoring";

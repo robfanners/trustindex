@@ -11,7 +11,7 @@ import {
   computeRiskFlags,
 } from "@/lib/systemScoring";
 import { SYSTEM_QUESTIONS } from "@/lib/systemQuestionBank";
-import type { QuestionAnswer, MaturityLevel } from "@/lib/systemQuestionBank";
+import type { QuestionAnswer } from "@/lib/systemQuestionBank";
 
 // ---------------------------------------------------------------------------
 // maturityToScore — Maturity level to numeric score

@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 
 export async function GET() {
