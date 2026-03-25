@@ -1,24 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { NextRequest } from "next/server";
+import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 
 type RouteContext = { params: Promise<{ systemId: string }> };
 
 /**
- * Authenticate the request and verify the user owns this system.
- * Returns { user, system } on success, or a NextResponse error.
+ * Verify the user owns this system.
+ * Returns { system } on success, or an error response.
  */
-async function authenticateAndAuthorise(systemId: string) {
-  const authClient = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await authClient.auth.getUser();
-
-  if (!user) {
-    return { error: NextResponse.json({ error: "Not authenticated" }, { status: 401 }) };
-  }
-
-  const db = supabaseServer();
+async function verifySystemOwnership(db: any, userId: string, systemId: string) {
   const { data: system, error: sysErr } = await db
     .from("systems")
     .select("id, owner_id, name, version_label, archived, created_at")
@@ -26,14 +15,14 @@ async function authenticateAndAuthorise(systemId: string) {
     .single();
 
   if (sysErr || !system) {
-    return { error: NextResponse.json({ error: "System not found" }, { status: 404 }) };
+    return { error: apiError("System not found", 404) };
   }
 
-  if (system.owner_id !== user.id) {
-    return { error: NextResponse.json({ error: "Not authorised" }, { status: 403 }) };
+  if (system.owner_id !== userId) {
+    return { error: apiError("Not authorised", 403) };
   }
 
-  return { user, system };
+  return { system };
 }
 
 // ---------------------------------------------------------------------------
@@ -41,13 +30,16 @@ async function authenticateAndAuthorise(systemId: string) {
 // ---------------------------------------------------------------------------
 
 export async function GET(_req: NextRequest, context: RouteContext) {
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
+  const { user, db } = auth;
+
   try {
     const { systemId } = await context.params;
-    const result = await authenticateAndAuthorise(systemId);
+    const result = await verifySystemOwnership(db, user.id, systemId);
     if ("error" in result) return result.error;
 
     const { system } = result;
-    const db = supabaseServer();
 
     const { data: runs, error: runsErr } = await db
       .from("system_runs")
@@ -58,10 +50,10 @@ export async function GET(_req: NextRequest, context: RouteContext) {
       .order("created_at", { ascending: false });
 
     if (runsErr) {
-      return NextResponse.json({ error: runsErr.message }, { status: 500 });
+      return apiError(runsErr.message, 500);
     }
 
-    return NextResponse.json({
+    return apiOk({
       system: {
         id: system.id,
         name: system.name,
@@ -73,7 +65,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
     });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return apiError(message, 500);
   }
 }
 
@@ -82,9 +74,13 @@ export async function GET(_req: NextRequest, context: RouteContext) {
 // ---------------------------------------------------------------------------
 
 export async function PATCH(req: NextRequest, context: RouteContext) {
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
+  const { user, db } = auth;
+
   try {
     const { systemId } = await context.params;
-    const result = await authenticateAndAuthorise(systemId);
+    const result = await verifySystemOwnership(db, user.id, systemId);
     if ("error" in result) return result.error;
 
     const body = await req.json();
@@ -98,10 +94,9 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     }
 
     if (Object.keys(updates).length === 0) {
-      return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
+      return apiError("No valid fields to update", 400);
     }
 
-    const db = supabaseServer();
     const { data: updated, error: updateErr } = await db
       .from("systems")
       .update(updates)
@@ -110,16 +105,13 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       .single();
 
     if (updateErr || !updated) {
-      return NextResponse.json(
-        { error: updateErr?.message || "Failed to update system" },
-        { status: 500 }
-      );
+      return apiError(updateErr?.message || "Failed to update system", 500);
     }
 
-    return NextResponse.json({ system: updated });
+    return apiOk({ system: updated });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return apiError(message, 500);
   }
 }
 
@@ -128,24 +120,27 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 // ---------------------------------------------------------------------------
 
 export async function DELETE(_req: NextRequest, context: RouteContext) {
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
+  const { user, db } = auth;
+
   try {
     const { systemId } = await context.params;
-    const result = await authenticateAndAuthorise(systemId);
+    const result = await verifySystemOwnership(db, user.id, systemId);
     if ("error" in result) return result.error;
 
-    const db = supabaseServer();
     const { error: archiveErr } = await db
       .from("systems")
       .update({ archived: true })
       .eq("id", systemId);
 
     if (archiveErr) {
-      return NextResponse.json({ error: archiveErr.message }, { status: 500 });
+      return apiError(archiveErr.message, 500);
     }
 
-    return NextResponse.json({ success: true });
+    return apiOk({ success: true });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return apiError(message, 500);
   }
 }

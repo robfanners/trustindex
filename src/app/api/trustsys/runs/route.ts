@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
+import { NextRequest } from "next/server";
+import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { SYSTEM_QUESTIONS } from "@/lib/systemQuestionBank";
 import type { QuestionAnswer } from "@/lib/systemQuestionBank";
@@ -13,49 +13,21 @@ import {
 } from "@/lib/assessmentLifecycle";
 
 // ---------------------------------------------------------------------------
-// Helper: authenticate + get org
-// ---------------------------------------------------------------------------
-
-async function getAuthContext() {
-  const authClient = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await authClient.auth.getUser();
-
-  if (!user) return null;
-
-  const db = supabaseServer();
-  const { data: profile } = await db
-    .from("profiles")
-    .select("organisation_id")
-    .eq("id", user.id)
-    .single();
-
-  return { user, orgId: profile?.organisation_id ?? null };
-}
-
-// ---------------------------------------------------------------------------
 // POST /api/trustsys/runs — create a new versioned run for an assessment
 // ---------------------------------------------------------------------------
 
 export async function POST(req: NextRequest) {
   try {
-    const ctx = await getAuthContext();
-    if (!ctx) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
+    const auth = await requireAuth();
+    if (auth.error) return auth.error;
+    const { user, orgId, db } = auth;
 
     const body = await req.json();
     const assessmentId = body.assessment_id;
 
     if (!assessmentId) {
-      return NextResponse.json(
-        { error: "assessment_id is required" },
-        { status: 400 }
-      );
+      return apiError("assessment_id is required", 400);
     }
-
-    const db = supabaseServer();
 
     // Verify assessment exists and belongs to user's org
     const { data: assessment, error: assessErr } = await db
@@ -65,14 +37,11 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (assessErr || !assessment) {
-      return NextResponse.json(
-        { error: "Assessment not found" },
-        { status: 404 }
-      );
+      return apiError("Assessment not found", 404);
     }
 
-    if (ctx.orgId && assessment.organisation_id !== ctx.orgId) {
-      return NextResponse.json({ error: "Not authorised" }, { status: 403 });
+    if (assessment.organisation_id !== orgId) {
+      return apiError("Not authorised", 403);
     }
 
     // Get current max version_number for this assessment
@@ -91,7 +60,7 @@ export async function POST(req: NextRequest) {
       .from("trustsys_runs")
       .insert({
         assessment_id: assessmentId,
-        created_by: ctx.user.id,
+        created_by: user.id,
         version_number: nextVersion,
         status: "in_progress",
         stability_status: "provisional",
@@ -100,16 +69,13 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (insertErr || !run) {
-      return NextResponse.json(
-        { error: insertErr?.message || "Failed to create run" },
-        { status: 500 }
-      );
+      return apiError(insertErr?.message || "Failed to create run", 500);
     }
 
-    return NextResponse.json({ run }, { status: 201 });
+    return apiOk({ run });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return apiError(message, 500);
   }
 }
 
@@ -119,27 +85,21 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const ctx = await getAuthContext();
-    if (!ctx) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
+    const auth = await requireAuth();
+    if (auth.error) return auth.error;
+    const { orgId, db } = auth;
 
     const { searchParams } = new URL(req.url);
     const runId = searchParams.get("id");
     const action = searchParams.get("action");
 
     if (!runId) {
-      return NextResponse.json({ error: "id is required" }, { status: 400 });
+      return apiError("id is required", 400);
     }
 
     if (action !== "submit") {
-      return NextResponse.json(
-        { error: "Only action=submit is supported" },
-        { status: 400 }
-      );
+      return apiError("Only action=submit is supported", 400);
     }
-
-    const db = supabaseServer();
 
     // Fetch the run
     const { data: run, error: runErr } = await db
@@ -149,14 +109,11 @@ export async function PATCH(req: NextRequest) {
       .single();
 
     if (runErr || !run) {
-      return NextResponse.json({ error: "Run not found" }, { status: 404 });
+      return apiError("Run not found", 404);
     }
 
     if (run.status !== "in_progress") {
-      return NextResponse.json(
-        { error: "Run is not in progress" },
-        { status: 409 }
-      );
+      return apiError("Run is not in progress", 409);
     }
 
     // Check org ownership via the linked assessment
@@ -166,8 +123,8 @@ export async function PATCH(req: NextRequest) {
       .eq("id", run.assessment_id)
       .single();
 
-    if (ctx.orgId && runAssessment?.organisation_id !== ctx.orgId) {
-      return NextResponse.json({ error: "Not authorised" }, { status: 403 });
+    if (runAssessment?.organisation_id !== orgId) {
+      return apiError("Not authorised", 403);
     }
 
     // -----------------------------------------------------------------------

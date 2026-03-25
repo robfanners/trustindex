@@ -1,22 +1,11 @@
-import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 
 export async function GET() {
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
+  const { user, db } = auth;
+
   try {
-    // Authenticate the request
-    const authClient = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await authClient.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    // Query surveys owned by this user (using service role to bypass RLS)
-    const db = supabaseServer();
-
     const { data: runs, error: runsErr } = await db
       .from("survey_runs")
       .select("id, title, mode, status, opens_at")
@@ -24,11 +13,11 @@ export async function GET() {
       .order("opens_at", { ascending: false });
 
     if (runsErr) {
-      return NextResponse.json({ error: runsErr.message }, { status: 500 });
+      return apiError(runsErr.message, 500);
     }
 
     if (!runs || runs.length === 0) {
-      return NextResponse.json({ surveys: [] });
+      return apiOk({ surveys: [] });
     }
 
     // Fetch response counts for all run IDs
@@ -58,9 +47,9 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json({ surveys });
+    return apiOk({ surveys });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return apiError(message, 500);
   }
 }

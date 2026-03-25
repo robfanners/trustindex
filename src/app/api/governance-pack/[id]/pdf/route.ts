@@ -1,6 +1,5 @@
+import { requireAuth, apiError } from "@/lib/apiHelpers";
 import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
 import {
   generateGovernanceStatementPdf,
   generateUsageInventoryPdf,
@@ -18,49 +17,33 @@ export async function GET(req: Request, context: RouteContext) {
     const { id } = await context.params;
 
     // ---- Auth ----
-    const authClient = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await authClient.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
+    const auth = await requireAuth();
+    if (auth.error) return auth.error;
+    const { db } = auth;
 
-    const db = supabaseServer();
-
-    // ---- Profile + org ----
+    // ---- Profile + company name ----
     const { data: profile } = await db
       .from("profiles")
-      .select("organisation_id, company_name")
-      .eq("id", user.id)
+      .select("company_name")
+      .eq("id", auth.user.id)
       .single();
 
-    if (!profile?.organisation_id) {
-      return NextResponse.json({ error: "No organisation" }, { status: 400 });
-    }
-
-    const orgName = profile.company_name || "Organisation";
+    const orgName = profile?.company_name || "Organisation";
 
     // ---- Load pack ----
     const { data: pack, error: packErr } = await db
       .from("governance_packs")
       .select("*")
       .eq("id", id)
-      .eq("organisation_id", profile.organisation_id)
+      .eq("organisation_id", auth.orgId)
       .single();
 
     if (packErr || !pack) {
-      return NextResponse.json(
-        { error: "Governance pack not found" },
-        { status: 404 },
-      );
+      return apiError("Governance pack not found", 404);
     }
 
     if (pack.status !== "ready") {
-      return NextResponse.json(
-        { error: "Pack is not ready for download" },
-        { status: 400 },
-      );
+      return apiError("Pack is not ready for download", 400);
     }
 
     // ---- Determine document type ----
@@ -68,10 +51,7 @@ export async function GET(req: Request, context: RouteContext) {
     const type = searchParams.get("type");
 
     if (!type || !["statement", "inventory", "gap"].includes(type)) {
-      return NextResponse.json(
-        { error: 'Invalid type. Must be one of: statement, inventory, gap' },
-        { status: 400 },
-      );
+      return apiError("Invalid type. Must be one of: statement, inventory, gap", 400);
     }
 
     let pdfBytes: Uint8Array;
@@ -107,7 +87,7 @@ export async function GET(req: Request, context: RouteContext) {
         break;
 
       default:
-        return NextResponse.json({ error: "Invalid type" }, { status: 400 });
+        return apiError("Invalid type", 400);
     }
 
     return new NextResponse(Buffer.from(pdfBytes), {
@@ -118,6 +98,6 @@ export async function GET(req: Request, context: RouteContext) {
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Internal server error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return apiError(message, 500);
   }
 }

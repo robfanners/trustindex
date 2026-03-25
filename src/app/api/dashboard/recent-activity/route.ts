@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabaseServer";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
+import { requireAuth, apiOk } from "@/lib/apiHelpers";
 
 // ---------------------------------------------------------------------------
 // GET /api/dashboard/recent-activity
@@ -13,52 +12,34 @@ import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
 
 export async function GET() {
   try {
-    const authClient = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await authClient.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    const db = supabaseServer();
-    const { data: profile } = await db
-      .from("profiles")
-      .select("organisation_id")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile?.organisation_id) {
-      return NextResponse.json({ error: "No organisation" }, { status: 400 });
-    }
-
-    const orgId = profile.organisation_id;
+    const auth = await requireAuth();
+    if (auth.error) return auth.error;
 
     // Run 3 queries in parallel
     const [signalsResult, escalationsResult, auditResult] = await Promise.all([
       // Recent critical/warning signals (last 7 days)
-      db
+      auth.db
         .from("runtime_signals")
         .select("id, system_name, signal_type, metric_name, metric_value, severity, created_at")
-        .eq("organisation_id", orgId)
+        .eq("organisation_id", auth.orgId)
         .in("severity", ["critical", "warning"])
         .order("created_at", { ascending: false })
         .limit(5),
 
       // Recent unresolved escalations with source signal
-      db
+      auth.db
         .from("escalations")
         .select("id, reason, severity, created_at, source_signal:runtime_signals(system_name, metric_name)")
-        .eq("organisation_id", orgId)
+        .eq("organisation_id", auth.orgId)
         .eq("resolved", false)
         .order("created_at", { ascending: false })
         .limit(5),
 
       // Recent audit log entries
-      db
+      auth.db
         .from("audit_logs")
         .select("id, entity_type, entity_id, action_type, performed_by, metadata, created_at")
-        .eq("organisation_id", orgId)
+        .eq("organisation_id", auth.orgId)
         .order("created_at", { ascending: false })
         .limit(5),
     ]);
@@ -110,7 +91,7 @@ export async function GET() {
     // Sort by created_at DESC and cap at 15
     feed.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-    return NextResponse.json({ feed: feed.slice(0, 15) });
+    return apiOk({ feed: feed.slice(0, 15) });
   } catch (err: unknown) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Internal server error" },

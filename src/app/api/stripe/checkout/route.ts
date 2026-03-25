@@ -1,45 +1,30 @@
-import { NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
-import { supabaseServer } from "@/lib/supabaseServer";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
+import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 import { getServerOrigin } from "@/lib/url";
 
 export async function POST(req: Request) {
-  try {
-    // 1. Authenticate
-    const authClient = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await authClient.auth.getUser();
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
+  const { user, plan, db } = auth;
 
-    if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  try {
+    // Only explorer users can upgrade via checkout (existing paid users use portal)
+    if (plan !== "explorer") {
+      return apiError("Already on a paid plan. Use billing portal to change.", 400);
     }
 
-    // 2. Look up profile
-    const sb = supabaseServer();
-    const { data: profile, error: profileErr } = await sb
+    // Look up profile for email + Stripe customer ID
+    const { data: profile, error: profileErr } = await db
       .from("profiles")
-      .select("id, email, plan, stripe_customer_id")
+      .select("id, email, stripe_customer_id")
       .eq("id", user.id)
       .single();
 
     if (profileErr || !profile) {
-      return NextResponse.json(
-        { error: "Could not load profile" },
-        { status: 500 }
-      );
+      return apiError("Could not load profile", 500);
     }
 
-    // Only explorer users can upgrade via checkout (existing paid users use portal)
-    if (profile.plan !== "explorer") {
-      return NextResponse.json(
-        { error: "Already on a paid plan. Use billing portal to change." },
-        { status: 400 }
-      );
-    }
-
-    // 3. Parse body for plan + interval
+    // Parse body for plan + interval
     let targetPlan: "starter" | "pro" = "pro";
     let interval: "monthly" | "yearly" = "monthly";
     try {
@@ -50,7 +35,7 @@ export async function POST(req: Request) {
       // defaults
     }
 
-    // 4. Resolve price ID
+    // Resolve price ID
     let priceId: string | undefined;
     if (targetPlan === "starter") {
       priceId =
@@ -65,13 +50,10 @@ export async function POST(req: Request) {
     }
 
     if (!priceId) {
-      return NextResponse.json(
-        { error: "Stripe price not configured" },
-        { status: 500 }
-      );
+      return apiError("Stripe price not configured", 500);
     }
 
-    // 5. Get or create Stripe customer
+    // Get or create Stripe customer
     let customerId = profile.stripe_customer_id;
 
     if (!customerId) {
@@ -81,13 +63,13 @@ export async function POST(req: Request) {
       });
       customerId = customer.id;
 
-      await sb
+      await db
         .from("profiles")
         .update({ stripe_customer_id: customerId })
         .eq("id", user.id);
     }
 
-    // 6. Create Checkout Session
+    // Create Checkout Session
     const origin = getServerOrigin(req);
 
     const session = await getStripe().checkout.sessions.create({
@@ -99,13 +81,10 @@ export async function POST(req: Request) {
       metadata: { supabase_user_id: user.id, target_plan: targetPlan },
     });
 
-    return NextResponse.json({ url: session.url });
+    return apiOk({ url: session.url });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Internal server error";
     console.error("Stripe checkout error:", err);
-    return NextResponse.json(
-      { error: message },
-      { status: 500 }
-    );
+    return apiError(message, 500);
   }
 }

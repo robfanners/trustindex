@@ -1,10 +1,8 @@
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
-import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
-import { getUserPlan, canGeneratePack } from "@/lib/entitlements";
+import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
+import { canGeneratePack } from "@/lib/entitlements";
 import { generateText } from "@/lib/llm";
 import {
   GOVERNANCE_STATEMENT_SYSTEM,
@@ -17,39 +15,13 @@ import {
 export async function POST(req: Request) {
   try {
     // ── Auth ──────────────────────────────────────────────────────────
-    const authClient = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await authClient.auth.getUser();
-    if (!user) {
-      return NextResponse.json(
-        { error: "Not authenticated" },
-        { status: 401 }
-      );
-    }
+    const auth = await requireAuth({ withPlan: true });
+    if (auth.error) return auth.error;
+    const { user, orgId, plan, db: sb } = auth;
 
     // ── Plan check ───────────────────────────────────────────────────
-    const plan = await getUserPlan(user.id);
     if (!canGeneratePack(plan)) {
-      return NextResponse.json(
-        { error: "Upgrade to generate governance packs" },
-        { status: 403 }
-      );
-    }
-
-    // ── Org lookup ───────────────────────────────────────────────────
-    const sb = supabaseServer();
-    const { data: profile } = await sb
-      .from("profiles")
-      .select("organisation_id")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile?.organisation_id) {
-      return NextResponse.json(
-        { error: "No organisation found" },
-        { status: 400 }
-      );
+      return apiError("Upgrade to generate governance packs", 403);
     }
 
     // ── Parse request ────────────────────────────────────────────────
@@ -57,10 +29,7 @@ export async function POST(req: Request) {
     const { wizardId } = body;
 
     if (!wizardId) {
-      return NextResponse.json(
-        { error: "wizardId is required" },
-        { status: 400 }
-      );
+      return apiError("wizardId is required", 400);
     }
 
     // ── Load wizard responses ────────────────────────────────────────
@@ -68,30 +37,24 @@ export async function POST(req: Request) {
       .from("governance_wizard")
       .select("*")
       .eq("id", wizardId)
-      .eq("organisation_id", profile.organisation_id)
+      .eq("organisation_id", orgId)
       .single();
 
     if (wizardError || !wizard) {
       console.error("[pack] Error loading wizard run:", wizardError);
-      return NextResponse.json(
-        { error: "Wizard run not found" },
-        { status: 404 }
-      );
+      return apiError("Wizard run not found", 404);
     }
 
     const responses = wizard.responses as WizardResponses;
     if (!responses?.company || !responses?.controls) {
-      return NextResponse.json(
-        { error: "Wizard responses are incomplete" },
-        { status: 400 }
-      );
+      return apiError("Wizard responses are incomplete", 400);
     }
 
     // ── Version number ───────────────────────────────────────────────
     const { count } = await sb
       .from("governance_packs")
       .select("id", { count: "exact", head: true })
-      .eq("organisation_id", profile.organisation_id);
+      .eq("organisation_id", orgId);
 
     const version = (count ?? 0) + 1;
 
@@ -99,7 +62,7 @@ export async function POST(req: Request) {
     const { data: pack, error: insertError } = await sb
       .from("governance_packs")
       .insert({
-        organisation_id: profile.organisation_id,
+        organisation_id: orgId,
         wizard_id: wizardId,
         version,
         status: "generating",
@@ -110,10 +73,7 @@ export async function POST(req: Request) {
 
     if (insertError || !pack) {
       console.error("[pack] Error creating pack row:", insertError);
-      return NextResponse.json(
-        { error: "Failed to create governance pack" },
-        { status: 500 }
-      );
+      return apiError("Failed to create governance pack", 500);
     }
 
     const packId = pack.id as string;
@@ -131,13 +91,13 @@ export async function POST(req: Request) {
       const { data: vendors } = await sb
         .from("ai_vendors")
         .select("vendor_name, risk_category, data_types, notes, source")
-        .eq("organisation_id", profile.organisation_id);
+        .eq("organisation_id", orgId);
 
       // Fetch active IBG specs for the org's systems
       const { data: ibgSpecs } = await sb
         .from("ibg_specifications")
         .select("authorised_goals, decision_authorities, action_spaces, blast_radius, assessment_id, version, status, effective_from")
-        .eq("organisation_id", profile.organisation_id)
+        .eq("organisation_id", orgId)
         .eq("status", "active");
 
       let ibgInventory: Record<string, unknown>[] = [];
@@ -200,13 +160,10 @@ export async function POST(req: Request) {
 
       if (updateError) {
         console.error("[pack] Error updating pack with results:", updateError);
-        return NextResponse.json(
-          { error: "Failed to save governance pack" },
-          { status: 500 }
-        );
+        return apiError("Failed to save governance pack", 500);
       }
 
-      return NextResponse.json({ pack: updatedPack });
+      return apiOk({ pack: updatedPack });
     } catch (genError: unknown) {
       // Generation failed — mark pack as failed
       console.error("[pack] Generation failed for pack", packId, genError);
@@ -215,21 +172,16 @@ export async function POST(req: Request) {
         .update({ status: "failed" })
         .eq("id", packId);
 
-      return NextResponse.json(
-        {
-          error:
-            genError instanceof Error
-              ? genError.message
-              : "Generation failed",
-        },
-        { status: 500 }
+      return apiError(
+        genError instanceof Error ? genError.message : "Generation failed",
+        500
       );
     }
   } catch (err: unknown) {
     console.error("[pack] Unexpected error:", err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Internal server error" },
-      { status: 500 }
+    return apiError(
+      err instanceof Error ? err.message : "Internal server error",
+      500
     );
   }
 }

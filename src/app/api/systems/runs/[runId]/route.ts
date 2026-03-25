@@ -1,27 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { NextRequest } from "next/server";
+import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 
 type RouteContext = { params: Promise<{ runId: string }> };
 
 // ---------------------------------------------------------------------------
-// Helper: authenticate + verify run ownership via system → run chain
+// Helper: verify run ownership via system → run chain
 // ---------------------------------------------------------------------------
 
-async function authenticateAndAuthoriseRun(runId: string) {
-  const authClient = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await authClient.auth.getUser();
-
-  if (!user) {
-    return {
-      error: NextResponse.json({ error: "Not authenticated" }, { status: 401 }),
-    };
-  }
-
-  const db = supabaseServer();
-
+async function verifyRunOwnership(db: any, userId: string, runId: string) {
   // Fetch run with its system_id
   const { data: run, error: runErr } = await db
     .from("system_runs")
@@ -31,7 +17,7 @@ async function authenticateAndAuthoriseRun(runId: string) {
 
   if (runErr || !run) {
     return {
-      error: NextResponse.json({ error: "Run not found" }, { status: 404 }),
+      error: apiError("Run not found", 404),
     };
   }
 
@@ -42,13 +28,13 @@ async function authenticateAndAuthoriseRun(runId: string) {
     .eq("id", run.system_id)
     .single();
 
-  if (sysErr || !system || system.owner_id !== user.id) {
+  if (sysErr || !system || system.owner_id !== userId) {
     return {
-      error: NextResponse.json({ error: "Not authorised" }, { status: 403 }),
+      error: apiError("Not authorised", 403),
     };
   }
 
-  return { user, run, system };
+  return { run, system };
 }
 
 // ---------------------------------------------------------------------------
@@ -56,13 +42,16 @@ async function authenticateAndAuthoriseRun(runId: string) {
 // ---------------------------------------------------------------------------
 
 export async function GET(_req: NextRequest, context: RouteContext) {
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
+  const { user, db } = auth;
+
   try {
     const { runId } = await context.params;
-    const result = await authenticateAndAuthoriseRun(runId);
+    const result = await verifyRunOwnership(db, user.id, runId);
     if ("error" in result) return result.error;
 
     const { run } = result;
-    const db = supabaseServer();
 
     // Fetch responses
     const { data: responses, error: respErr } = await db
@@ -72,7 +61,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
       .order("created_at", { ascending: true });
 
     if (respErr) {
-      return NextResponse.json({ error: respErr.message }, { status: 500 });
+      return apiError(respErr.message, 500);
     }
 
     // Fetch recommendations (only if submitted)
@@ -87,18 +76,18 @@ export async function GET(_req: NextRequest, context: RouteContext) {
         .order("priority", { ascending: true });
 
       if (recErr) {
-        return NextResponse.json({ error: recErr.message }, { status: 500 });
+        return apiError(recErr.message, 500);
       }
       recommendations = recs || [];
     }
 
-    return NextResponse.json({
+    return apiOk({
       run,
       responses: responses || [],
       recommendations,
     });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return apiError(message, 500);
   }
 }

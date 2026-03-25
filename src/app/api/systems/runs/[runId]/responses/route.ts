@@ -1,28 +1,14 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { NextRequest } from "next/server";
+import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 import { SYSTEM_QUESTIONS } from "@/lib/systemQuestionBank";
 
 type RouteContext = { params: Promise<{ runId: string }> };
 
 // ---------------------------------------------------------------------------
-// Helper: authenticate + verify run ownership + run is still draft
+// Helper: verify run ownership + run is still draft
 // ---------------------------------------------------------------------------
 
-async function authenticateAndAuthoriseDraftRun(runId: string) {
-  const authClient = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await authClient.auth.getUser();
-
-  if (!user) {
-    return {
-      error: NextResponse.json({ error: "Not authenticated" }, { status: 401 }),
-    };
-  }
-
-  const db = supabaseServer();
-
+async function verifyDraftRunOwnership(db: any, userId: string, runId: string) {
   const { data: run, error: runErr } = await db
     .from("system_runs")
     .select("id, system_id, status")
@@ -31,16 +17,13 @@ async function authenticateAndAuthoriseDraftRun(runId: string) {
 
   if (runErr || !run) {
     return {
-      error: NextResponse.json({ error: "Run not found" }, { status: 404 }),
+      error: apiError("Run not found", 404),
     };
   }
 
   if (run.status !== "draft") {
     return {
-      error: NextResponse.json(
-        { error: "Run has already been submitted" },
-        { status: 409 }
-      ),
+      error: apiError("Run has already been submitted", 409),
     };
   }
 
@@ -51,13 +34,13 @@ async function authenticateAndAuthoriseDraftRun(runId: string) {
     .eq("id", run.system_id)
     .single();
 
-  if (sysErr || !system || system.owner_id !== user.id) {
+  if (sysErr || !system || system.owner_id !== userId) {
     return {
-      error: NextResponse.json({ error: "Not authorised" }, { status: 403 }),
+      error: apiError("Not authorised", 403),
     };
   }
 
-  return { user, run };
+  return { run };
 }
 
 // ---------------------------------------------------------------------------
@@ -65,9 +48,13 @@ async function authenticateAndAuthoriseDraftRun(runId: string) {
 // ---------------------------------------------------------------------------
 
 export async function POST(req: NextRequest, context: RouteContext) {
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
+  const { user, db } = auth;
+
   try {
     const { runId } = await context.params;
-    const result = await authenticateAndAuthoriseDraftRun(runId);
+    const result = await verifyDraftRunOwnership(db, user.id, runId);
     if ("error" in result) return result.error;
 
     const body = await req.json();
@@ -78,25 +65,17 @@ export async function POST(req: NextRequest, context: RouteContext) {
       typeof questionId !== "string" ||
       !SYSTEM_QUESTIONS.some((q) => q.id === questionId)
     ) {
-      return NextResponse.json(
-        { error: "Invalid question_id" },
-        { status: 400 }
-      );
+      return apiError("Invalid question_id", 400);
     }
 
     // Validate answer
     const answer = body.answer;
     if (!answer || typeof answer !== "object") {
-      return NextResponse.json(
-        { error: "answer is required and must be an object" },
-        { status: 400 }
-      );
+      return apiError("answer is required and must be an object", 400);
     }
 
     // Evidence is optional
     const evidence = body.evidence ?? null;
-
-    const db = supabaseServer();
 
     const { data: response, error: upsertErr } = await db
       .from("system_responses")
@@ -113,15 +92,12 @@ export async function POST(req: NextRequest, context: RouteContext) {
       .single();
 
     if (upsertErr || !response) {
-      return NextResponse.json(
-        { error: upsertErr?.message || "Failed to save response" },
-        { status: 500 }
-      );
+      return apiError(upsertErr?.message || "Failed to save response", 500);
     }
 
-    return NextResponse.json({ response });
+    return apiOk({ response });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return apiError(message, 500);
   }
 }
