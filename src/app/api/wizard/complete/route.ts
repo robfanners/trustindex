@@ -1,45 +1,24 @@
 export const runtime = "nodejs";
 
-import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
-import { getUserPlan, canAccessWizard } from "@/lib/entitlements";
+import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
+import { canAccessWizard } from "@/lib/entitlements";
 
 // POST — mark wizard complete and pre-populate vendor register
 export async function POST(req: Request) {
   try {
-    const authClient = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await authClient.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
+    const auth = await requireAuth({ withPlan: true });
+    if (auth.error) return auth.error;
+    const { user, orgId, plan, db: sb } = auth;
 
-    const plan = await getUserPlan(user.id);
     if (!canAccessWizard(plan)) {
-      return NextResponse.json(
-        { error: "Upgrade to access the governance wizard" },
-        { status: 403 }
-      );
-    }
-
-    const sb = supabaseServer();
-    const { data: profile } = await sb
-      .from("profiles")
-      .select("organisation_id")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile?.organisation_id) {
-      return NextResponse.json({ error: "No organisation found" }, { status: 400 });
+      return apiError("Upgrade to access the governance wizard", 403);
     }
 
     const body = await req.json();
     const { wizardId } = body;
 
     if (!wizardId) {
-      return NextResponse.json({ error: "wizardId is required" }, { status: 400 });
+      return apiError("wizardId is required", 400);
     }
 
     // Mark wizard as complete
@@ -47,17 +26,17 @@ export async function POST(req: Request) {
       .from("governance_wizard")
       .update({ completed_at: new Date().toISOString() })
       .eq("id", wizardId)
-      .eq("organisation_id", profile.organisation_id)
+      .eq("organisation_id", orgId)
       .select()
       .single();
 
     if (updateError) {
       console.error("[wizard] Error completing wizard:", updateError);
-      return NextResponse.json({ error: "Failed to complete wizard" }, { status: 500 });
+      return apiError("Failed to complete wizard", 500);
     }
 
     if (!wizard) {
-      return NextResponse.json({ error: "Wizard run not found" }, { status: 404 });
+      return apiError("Wizard run not found", 404);
     }
 
     // Extract tools from responses and pre-populate vendor register
@@ -76,7 +55,7 @@ export async function POST(req: Request) {
       const { data: existingVendor } = await sb
         .from("ai_vendors")
         .select("id")
-        .eq("organisation_id", profile.organisation_id)
+        .eq("organisation_id", orgId)
         .ilike("vendor_name", tool.name)
         .maybeSingle();
 
@@ -95,7 +74,7 @@ export async function POST(req: Request) {
       const { error: insertError } = await sb
         .from("ai_vendors")
         .insert({
-          organisation_id: profile.organisation_id,
+          organisation_id: orgId,
           vendor_name: tool.name,
           data_types: tool.dataClassification ? [tool.dataClassification] : [],
           risk_category: "unassessed",
@@ -109,10 +88,10 @@ export async function POST(req: Request) {
       }
     }
 
-    return NextResponse.json({ wizard });
+    return apiOk({ wizard });
   } catch (err: unknown) {
     console.error("[wizard] complete POST error:", err);
     const message = err instanceof Error ? err.message : "Internal server error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return apiError(message, 500);
   }
 }

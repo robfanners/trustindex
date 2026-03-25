@@ -1,6 +1,4 @@
-import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 
 // ---------------------------------------------------------------------------
 // POST /api/trustgraph/check-expiry — trigger expiry check + escalation
@@ -10,18 +8,11 @@ import { supabaseServer } from "@/lib/supabaseServer";
 // Also refreshes the health materialized view after changes.
 
 export async function POST() {
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
+  const { db } = auth;
+
   try {
-    const authClient = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await authClient.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    const db = supabaseServer();
-
     // 1) Check and expire overdue assessments
     const { data: expiryResult, error: expiryErr } = await db.rpc("tg_check_and_expire");
 
@@ -53,7 +44,7 @@ export async function POST() {
       );
     }
 
-    return NextResponse.json({
+    return apiOk({
       expired_count: expiredCount,
       expiry_escalations: expiryEscalations,
       action_escalations: actionEscalations,
@@ -61,6 +52,6 @@ export async function POST() {
     });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return apiError(message, 500);
   }
 }

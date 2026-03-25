@@ -1,21 +1,18 @@
 import { NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabaseServer";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
+import { requireAuth, apiOk } from "@/lib/apiHelpers";
 
 export async function GET(req: Request) {
-  const authClient = await createSupabaseServerClient();
-  const { data: { user } } = await authClient.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
 
   const { searchParams } = new URL(req.url);
   const q = searchParams.get("q")?.trim();
-  if (!q) return NextResponse.json({ results: [] });
+  if (!q) return apiOk({ results: [] });
 
-  const db = supabaseServer();
   const results: Array<{ type: string; title: string; href: string }> = [];
 
   // Search survey_runs
-  const { data: surveys } = await db
+  const { data: surveys } = await auth.db
     .from("survey_runs")
     .select("id, title")
     .ilike("title", `%${q}%`)
@@ -28,7 +25,7 @@ export async function GET(req: Request) {
   }
 
   // Search trustsys_assessments
-  const { data: assessments } = await db
+  const { data: assessments } = await auth.db
     .from("trustsys_assessments")
     .select("id, system_name")
     .ilike("system_name", `%${q}%`)
@@ -41,7 +38,7 @@ export async function GET(req: Request) {
   }
 
   // Search actions
-  const { data: actions } = await db
+  const { data: actions } = await auth.db
     .from("actions")
     .select("id, title")
     .ilike("title", `%${q}%`)
@@ -53,5 +50,5 @@ export async function GET(req: Request) {
     }
   }
 
-  return NextResponse.json({ results });
+  return apiOk({ results });
 }

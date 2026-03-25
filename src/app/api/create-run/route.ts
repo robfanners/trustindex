@@ -1,6 +1,5 @@
-import { NextResponse } from "next/server";
+import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 import { supabaseServer } from "@/lib/supabaseServer";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
 import { getUserPlan, getUserSurveyCount, canCreateSurvey, getPlanLimits } from "@/lib/entitlements";
 
 function randomToken(length = 28) {
@@ -16,28 +15,14 @@ export async function POST(req: Request) {
     try {
       supabase = supabaseServer();
     } catch (_configErr: unknown) {
-      return NextResponse.json(
-        { error: "Server configuration error. Please try again later or contact support." },
-        { status: 503 }
-      );
+      return apiError("Server configuration error. Please try again later or contact support.", 503);
     }
 
     // Require authenticated user
-    let ownerUserId: string | null = null;
-    try {
-      const authClient = await createSupabaseServerClient();
-      const { data: { user } } = await authClient.auth.getUser();
-      ownerUserId = user?.id ?? null;
-    } catch {
-      // No auth session
-    }
-
-    if (!ownerUserId) {
-      return NextResponse.json(
-        { error: "Authentication required. Please sign in to create a survey." },
-        { status: 401 }
-      );
-    }
+    const auth = await requireAuth({ orgOptional: true });
+    if (auth.error) return auth.error;
+    const { user: ownerUser, db } = auth;
+    const ownerUserId = ownerUser.id;
 
     const body = await req.json();
 
@@ -48,40 +33,32 @@ export async function POST(req: Request) {
     const inviteCount = Math.max(1, Math.min(500, Math.floor(inviteCountRaw)));
 
     if (!orgName) {
-      return NextResponse.json({ error: "orgName is required" }, { status: 400 });
+      return apiError("orgName is required", 400);
     }
     if (!runTitle) {
-      return NextResponse.json({ error: "runTitle is required" }, { status: 400 });
+      return apiError("runTitle is required", 400);
     }
     if (mode === "explorer" && inviteCount !== 1) {
-      return NextResponse.json({ error: "Explorer mode must have inviteCount = 1" }, { status: 400 });
+      return apiError("Explorer mode must have inviteCount = 1", 400);
     }
 
     const MIN_ORG_RESPONDENTS = 5;
     if (mode === "org" && inviteCount < MIN_ORG_RESPONDENTS) {
-      return NextResponse.json(
-        { error: `Organisational mode requires inviteCount >= ${MIN_ORG_RESPONDENTS}` },
-        { status: 400 }
-      );
+      return apiError(`Organisational mode requires inviteCount >= ${MIN_ORG_RESPONDENTS}`, 400);
     }
 
     // Enforce plan caps for authenticated users
-    if (ownerUserId) {
-      const [plan, surveyCount] = await Promise.all([
-        getUserPlan(ownerUserId),
-        getUserSurveyCount(ownerUserId),
-      ]);
+    const [plan, surveyCount] = await Promise.all([
+      getUserPlan(ownerUserId),
+      getUserSurveyCount(ownerUserId),
+    ]);
 
-      if (!canCreateSurvey(plan, surveyCount)) {
-        const limits = getPlanLimits(plan);
-        return NextResponse.json(
-          {
-            error: `You've reached your plan limit of ${limits.maxSurveys} survey${limits.maxSurveys !== 1 ? "s" : ""}. Upgrade to continue.`,
-            code: "PLAN_CAP_REACHED",
-          },
-          { status: 403 }
-        );
-      }
+    if (!canCreateSurvey(plan, surveyCount)) {
+      const limits = getPlanLimits(plan);
+      return apiError(
+        `You've reached your plan limit of ${limits.maxSurveys} survey${limits.maxSurveys !== 1 ? "s" : ""}. Upgrade to continue.`,
+        403
+      );
     }
 
     const { data: existingOrgs, error: orgFindErr } = await supabase
@@ -91,7 +68,7 @@ export async function POST(req: Request) {
       .limit(1);
 
     if (orgFindErr) {
-      return NextResponse.json({ error: orgFindErr.message }, { status: 500 });
+      return apiError(orgFindErr.message, 500);
     }
 
     let organisationId = existingOrgs?.[0]?.id as string | undefined;
@@ -104,7 +81,7 @@ export async function POST(req: Request) {
         .single();
 
       if (orgInsertErr || !orgInsert) {
-        return NextResponse.json({ error: orgInsertErr?.message || "Failed to create organisation" }, { status: 500 });
+        return apiError(orgInsertErr?.message || "Failed to create organisation", 500);
       }
       organisationId = orgInsert.id;
     }
@@ -125,7 +102,7 @@ export async function POST(req: Request) {
       .single();
 
     if (runErr || !runInsert) {
-      return NextResponse.json({ error: runErr?.message || "Failed to create survey run" }, { status: 500 });
+      return apiError(runErr?.message || "Failed to create survey run", 500);
     }
 
     const runId = runInsert.id as string;
@@ -142,7 +119,7 @@ export async function POST(req: Request) {
     const { error: inviteErr } = await supabase.from("invites").insert(inviteRows);
 
     if (inviteErr) {
-      return NextResponse.json({ error: inviteErr.message }, { status: 500 });
+      return apiError(inviteErr.message, 500);
     }
 
     // Save survey scope (hierarchy selections)
@@ -162,7 +139,7 @@ export async function POST(req: Request) {
       await supabase.from("survey_scope").insert(scopeRows);
     }
 
-    return NextResponse.json({
+    return apiOk({
       runId,
       tokens,
       mode,
@@ -171,6 +148,6 @@ export async function POST(req: Request) {
     });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return apiError(message, 500);
   }
 }

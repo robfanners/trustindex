@@ -1,6 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { NextRequest } from "next/server";
+import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 import { SYSTEM_QUESTIONS } from "@/lib/systemQuestionBank";
 import type { QuestionAnswer } from "@/lib/systemQuestionBank";
 import { computeAllScores, computeRiskFlags } from "@/lib/systemScoring";
@@ -13,23 +12,12 @@ type RouteContext = { params: Promise<{ runId: string }> };
 // ---------------------------------------------------------------------------
 
 export async function POST(_req: NextRequest, context: RouteContext) {
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
+  const { user, db } = auth;
+
   try {
     const { runId } = await context.params;
-
-    // Authenticate
-    const authClient = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await authClient.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "Not authenticated" },
-        { status: 401 }
-      );
-    }
-
-    const db = supabaseServer();
 
     // Fetch run
     const { data: run, error: runErr } = await db
@@ -39,14 +27,11 @@ export async function POST(_req: NextRequest, context: RouteContext) {
       .single();
 
     if (runErr || !run) {
-      return NextResponse.json({ error: "Run not found" }, { status: 404 });
+      return apiError("Run not found", 404);
     }
 
     if (run.status !== "draft") {
-      return NextResponse.json(
-        { error: "Run has already been submitted" },
-        { status: 409 }
-      );
+      return apiError("Run has already been submitted", 409);
     }
 
     // Verify ownership via system
@@ -57,7 +42,7 @@ export async function POST(_req: NextRequest, context: RouteContext) {
       .single();
 
     if (sysErr || !system || system.owner_id !== user.id) {
-      return NextResponse.json({ error: "Not authorised" }, { status: 403 });
+      return apiError("Not authorised", 403);
     }
 
     // Fetch all responses for this run
@@ -67,7 +52,7 @@ export async function POST(_req: NextRequest, context: RouteContext) {
       .eq("run_id", runId);
 
     if (respErr) {
-      return NextResponse.json({ error: respErr.message }, { status: 500 });
+      return apiError(respErr.message, 500);
     }
 
     // Validate: all 25 questions must have responses
@@ -77,12 +62,9 @@ export async function POST(_req: NextRequest, context: RouteContext) {
     ).map((q) => q.id);
 
     if (missingIds.length > 0) {
-      return NextResponse.json(
-        {
-          error: `Missing responses for ${missingIds.length} question(s)`,
-          missing: missingIds,
-        },
-        { status: 400 }
+      return apiError(
+        `Missing responses for ${missingIds.length} question(s)`,
+        400
       );
     }
 
@@ -122,9 +104,9 @@ export async function POST(_req: NextRequest, context: RouteContext) {
         .insert(recRows);
 
       if (recInsertErr) {
-        return NextResponse.json(
-          { error: `Failed to save recommendations: ${recInsertErr.message}` },
-          { status: 500 }
+        return apiError(
+          `Failed to save recommendations: ${recInsertErr.message}`,
+          500
         );
       }
     }
@@ -165,18 +147,15 @@ export async function POST(_req: NextRequest, context: RouteContext) {
       .single();
 
     if (updateErr || !updatedRun) {
-      return NextResponse.json(
-        { error: updateErr?.message || "Failed to update run" },
-        { status: 500 }
-      );
+      return apiError(updateErr?.message || "Failed to update run", 500);
     }
 
-    return NextResponse.json({
+    return apiOk({
       run: updatedRun,
       recommendations,
     });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return apiError(message, 500);
   }
 }

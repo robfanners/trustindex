@@ -1,6 +1,4 @@
-import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { requireAuth, apiError } from "@/lib/apiHelpers";
 import { canExportResults, getUserPlan } from "@/lib/entitlements";
 
 // ---------------------------------------------------------------------------
@@ -16,29 +14,18 @@ function escapeCsv(val: unknown): string {
 }
 
 export async function GET() {
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
+  const { user, db } = auth;
+
   try {
-    // 1. Authenticate
-    const authClient = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await authClient.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    // 2. Plan check
+    // 1. Plan check
     const plan = await getUserPlan(user.id);
     if (!canExportResults(plan)) {
-      return NextResponse.json(
-        { error: "Export requires Pro or Enterprise plan" },
-        { status: 403 }
-      );
+      return apiError("Export requires Pro or Enterprise plan", 403);
     }
 
-    const db = supabaseServer();
-
-    // 3. Fetch user's systems
+    // 2. Fetch user's systems
     const { data: systems } = await db
       .from("systems")
       .select("id, name, version_label, type, environment")
@@ -58,7 +45,7 @@ export async function GET() {
     const systemIds = systems.map((s) => s.id);
     const systemMap = new Map(systems.map((s) => [s.id, s]));
 
-    // 4. Fetch system runs
+    // 3. Fetch system runs
     const { data: runs } = await db
       .from("system_runs")
       .select("id, system_id, version_label, status, overall_score, dimension_scores, created_at")
@@ -78,13 +65,13 @@ export async function GET() {
     const runIds = runs.map((r) => r.id);
     const runMap = new Map(runs.map((r) => [r.id, r]));
 
-    // 5. Fetch system responses
+    // 4. Fetch system responses
     const { data: responses } = await db
       .from("system_responses")
       .select("run_id, question_id, answer, evidence_type, evidence_note")
       .in("run_id", runIds);
 
-    // 6. Build CSV
+    // 5. Build CSV
     const header = [
       "system_name",
       "version",
@@ -133,6 +120,6 @@ export async function GET() {
     });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return apiError(msg, 500);
   }
 }

@@ -1,32 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 import { writeAuditLog } from "@/lib/audit";
 
 type RouteContext = { params: Promise<{ actionId: string }> };
 
 // ---------------------------------------------------------------------------
-// Helper: authenticate + verify org ownership of action
+// Helper: verify org ownership of action
 // ---------------------------------------------------------------------------
 
-async function authenticateAndAuthorise(actionId: string) {
-  const authClient = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await authClient.auth.getUser();
-
-  if (!user) {
-    return { error: NextResponse.json({ error: "Not authenticated" }, { status: 401 }) };
-  }
-
-  const db = supabaseServer();
-
-  const { data: profile } = await db
-    .from("profiles")
-    .select("organisation_id")
-    .eq("id", user.id)
-    .single();
-
+async function verifyActionOwnership(db: any, orgId: string, actionId: string) {
   const { data: action, error: fetchErr } = await db
     .from("actions")
     .select("*")
@@ -34,14 +16,14 @@ async function authenticateAndAuthorise(actionId: string) {
     .single();
 
   if (fetchErr || !action) {
-    return { error: NextResponse.json({ error: "Action not found" }, { status: 404 }) };
+    return { error: apiError("Action not found", 404) };
   }
 
-  if (profile?.organisation_id && action.organisation_id !== profile.organisation_id) {
-    return { error: NextResponse.json({ error: "Not authorised" }, { status: 403 }) };
+  if (action.organisation_id !== orgId) {
+    return { error: apiError("Not authorised", 403) };
   }
 
-  return { user, action };
+  return { action };
 }
 
 // ---------------------------------------------------------------------------
@@ -49,13 +31,16 @@ async function authenticateAndAuthorise(actionId: string) {
 // ---------------------------------------------------------------------------
 
 export async function GET(_req: NextRequest, context: RouteContext) {
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
+  const { orgId, db } = auth;
+
   try {
     const { actionId } = await context.params;
-    const result = await authenticateAndAuthorise(actionId);
-    if ("error" in result) return result.error;
+    const authResult = await verifyActionOwnership(db, orgId, actionId);
+    if ("error" in authResult) return authResult.error;
 
-    const { action } = result;
-    const db = supabaseServer();
+    const { action } = authResult;
 
     const { data: updates } = await db
       .from("action_updates")
@@ -63,10 +48,10 @@ export async function GET(_req: NextRequest, context: RouteContext) {
       .eq("action_id", actionId)
       .order("updated_at", { ascending: false });
 
-    return NextResponse.json({ action, updates: updates || [] });
+    return apiOk({ action, updates: updates || [] });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return apiError(message, 500);
   }
 }
 
@@ -77,13 +62,16 @@ export async function GET(_req: NextRequest, context: RouteContext) {
 //         evidence_url?, evidence? }
 
 export async function PATCH(req: NextRequest, context: RouteContext) {
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
+  const { user, orgId, db } = auth;
+
   try {
     const { actionId } = await context.params;
-    const result = await authenticateAndAuthorise(actionId);
-    if ("error" in result) return result.error;
+    const authResult = await verifyActionOwnership(db, orgId, actionId);
+    if ("error" in authResult) return authResult.error;
 
-    const { user, action } = result;
-    const db = supabaseServer();
+    const { action } = authResult;
     const body = await req.json();
 
     // Build update object + track changes for audit
@@ -94,7 +82,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     if (body.status && body.status !== action.status) {
       const validStatuses = ["open", "in_progress", "blocked", "done"];
       if (!validStatuses.includes(body.status)) {
-        return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+        return apiError("Invalid status", 400);
       }
       changes.push({ field: "status", from: action.status, to: body.status });
       updates.status = body.status;
@@ -104,7 +92,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     if (body.severity && body.severity !== action.severity) {
       const validSeverities = ["low", "medium", "high", "critical"];
       if (!validSeverities.includes(body.severity)) {
-        return NextResponse.json({ error: "Invalid severity" }, { status: 400 });
+        return apiError("Invalid severity", 400);
       }
       changes.push({ field: "severity", from: action.severity, to: body.severity });
       updates.severity = body.severity;
@@ -148,7 +136,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     }
 
     if (Object.keys(updates).length === 0) {
-      return NextResponse.json({ action }); // no changes
+      return apiOk({ action }); // no changes
     }
 
     const { data: updated, error: updateErr } = await db
@@ -159,7 +147,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       .single();
 
     if (updateErr) {
-      return NextResponse.json({ error: updateErr.message }, { status: 500 });
+      return apiError(updateErr.message, 500);
     }
 
     // Record each change as an immutable audit entry
@@ -182,10 +170,10 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       metadata: { changes: changes.map(c => ({ field: c.field, from: c.from, to: c.to })) },
     });
 
-    return NextResponse.json({ action: updated });
+    return apiOk({ action: updated });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return apiError(message, 500);
   }
 }
 
@@ -194,13 +182,14 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 // ---------------------------------------------------------------------------
 
 export async function DELETE(_req: NextRequest, context: RouteContext) {
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
+  const { user, orgId, db } = auth;
+
   try {
     const { actionId } = await context.params;
-    const result = await authenticateAndAuthorise(actionId);
-    if ("error" in result) return result.error;
-
-    const { user } = result;
-    const db = supabaseServer();
+    const authResult = await verifyActionOwnership(db, orgId, actionId);
+    if ("error" in authResult) return authResult.error;
 
     const { error: deleteErr } = await db
       .from("actions")
@@ -208,7 +197,7 @@ export async function DELETE(_req: NextRequest, context: RouteContext) {
       .eq("id", actionId);
 
     if (deleteErr) {
-      return NextResponse.json({ error: deleteErr.message }, { status: 500 });
+      return apiError(deleteErr.message, 500);
     }
 
     // Record audit entry before deletion data is lost
@@ -220,9 +209,9 @@ export async function DELETE(_req: NextRequest, context: RouteContext) {
       updated_by: user.id,
     });
 
-    return NextResponse.json({ deleted: true });
+    return apiOk({ deleted: true });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return apiError(message, 500);
   }
 }

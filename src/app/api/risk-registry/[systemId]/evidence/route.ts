@@ -1,27 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ systemId: string }> }
 ) {
   const { systemId } = await params;
-  const authClient = await createSupabaseServerClient();
-  const { data: { user } } = await authClient.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-
-  const db = supabaseServer();
-
-  const { data: profile } = await db
-    .from("profiles")
-    .select("organisation_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile?.organisation_id) {
-    return NextResponse.json({ error: "No organisation linked" }, { status: 400 });
-  }
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
 
   const { searchParams } = new URL(req.url);
   const rawDays = parseInt(searchParams.get("days") ?? "30", 10);
@@ -29,19 +15,19 @@ export async function GET(
   const since = new Date(Date.now() - days * 86400000).toISOString();
 
   // Get system name for signal matching
-  const { data: system } = await db
+  const { data: system } = await auth.db
     .from("systems")
     .select("name")
     .eq("id", systemId)
     .single();
 
-  if (!system) return NextResponse.json({ error: "System not found" }, { status: 404 });
+  if (!system) return apiError("System not found", 404);
 
   // Get signals from both system-specific and github sources
-  const { data: signals } = await db
+  const { data: signals } = await auth.db
     .from("runtime_signals")
     .select("*")
-    .eq("organisation_id", profile.organisation_id)
+    .eq("organisation_id", auth.orgId)
     .gte("created_at", since)
     .in("system_name", [system.name, "github"])
     .order("created_at", { ascending: false });
@@ -81,7 +67,7 @@ export async function GET(
   const passedChecks = Object.values(categories).reduce((a, c) => a + c.pass, 0);
   const completeness = totalChecks > 0 ? Math.round((passedChecks / totalChecks) * 100) : 0;
 
-  return NextResponse.json({
+  return apiOk({
     data: {
       system_id: systemId,
       system_name: system.name,

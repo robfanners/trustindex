@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 import { z } from "zod";
 
 export async function GET(
@@ -8,49 +7,35 @@ export async function GET(
   { params }: { params: Promise<{ systemId: string }> }
 ) {
   const { systemId } = await params;
-  const authClient = await createSupabaseServerClient();
-  const { data: { user } } = await authClient.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-
-  const db = supabaseServer();
-
-  // Get user's org to scope system lookup
-  const { data: profile } = await db
-    .from("profiles")
-    .select("organisation_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile?.organisation_id) {
-    return NextResponse.json({ error: "No organisation linked" }, { status: 400 });
-  }
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
 
   // Get org user IDs for ownership check
-  const { data: orgUsers } = await db
+  const { data: orgUsers } = await auth.db
     .from("profiles")
     .select("id")
-    .eq("organisation_id", profile.organisation_id);
+    .eq("organisation_id", auth.orgId);
 
   const userIds = (orgUsers ?? []).map((u: { id: string }) => u.id);
 
   // Get system's risk category (org-scoped)
-  const { data: system } = await db
+  const { data: system } = await auth.db
     .from("systems")
     .select("id, risk_category")
     .eq("id", systemId)
     .in("owner_id", userIds)
     .single();
 
-  if (!system) return NextResponse.json({ error: "System not found" }, { status: 404 });
+  if (!system) return apiError("System not found", 404);
 
   // Get all requirements relevant to this risk category
-  const { data: requirements } = await db
+  const { data: requirements } = await auth.db
     .from("compliance_requirements")
     .select("*")
     .contains("risk_categories", [system.risk_category]);
 
   // Get existing compliance mappings
-  const { data: mappings } = await db
+  const { data: mappings } = await auth.db
     .from("system_compliance_map")
     .select("*")
     .eq("system_id", systemId);
@@ -65,7 +50,7 @@ export async function GET(
       ?? { status: "not_assessed", notes: null, assessed_at: null },
   }));
 
-  return NextResponse.json({ data: compliance });
+  return apiOk({ data: compliance });
 }
 
 const updateComplianceSchema = z.object({
@@ -79,46 +64,33 @@ export async function POST(
   { params }: { params: Promise<{ systemId: string }> }
 ) {
   const { systemId } = await params;
-  const authClient = await createSupabaseServerClient();
-  const { data: { user } } = await authClient.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
 
   const parsed = updateComplianceSchema.safeParse(await req.json());
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid input" }, { status: 400 });
+    return apiError(parsed.error.issues[0]?.message ?? "Invalid input", 400);
   }
   const body = parsed.data;
 
-  const db = supabaseServer();
-
-  // Verify system belongs to user's org
-  const { data: postProfile } = await db
-    .from("profiles")
-    .select("organisation_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!postProfile?.organisation_id) {
-    return NextResponse.json({ error: "No organisation linked" }, { status: 400 });
-  }
-
-  const { data: orgUsersPost } = await db
+  // Get org user IDs for ownership check
+  const { data: orgUsersPost } = await auth.db
     .from("profiles")
     .select("id")
-    .eq("organisation_id", postProfile.organisation_id);
+    .eq("organisation_id", auth.orgId);
 
   const postUserIds = (orgUsersPost ?? []).map((u: { id: string }) => u.id);
 
-  const { data: systemCheck } = await db
+  const { data: systemCheck } = await auth.db
     .from("systems")
     .select("id")
     .eq("id", systemId)
     .in("owner_id", postUserIds)
     .single();
 
-  if (!systemCheck) return NextResponse.json({ error: "System not found" }, { status: 404 });
+  if (!systemCheck) return apiError("System not found", 404);
 
-  const { data, error } = await db
+  const { data, error } = await auth.db
     .from("system_compliance_map")
     .upsert({
       system_id: systemId,
@@ -126,12 +98,12 @@ export async function POST(
       status: body.status,
       notes: body.notes ?? null,
       assessed_at: new Date().toISOString(),
-      assessed_by: user.id,
+      assessed_by: auth.user.id,
     }, { onConflict: "system_id,requirement_id" })
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error.message, 500);
 
-  return NextResponse.json({ data });
+  return apiOk({ data });
 }

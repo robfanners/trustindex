@@ -1,35 +1,21 @@
 import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 
 export async function GET() {
-  const authClient = await createSupabaseServerClient();
-  const { data: { user } } = await authClient.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-
-  const db = supabaseServer();
-
-  const { data: profile } = await db
-    .from("profiles")
-    .select("organisation_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile?.organisation_id) {
-    return NextResponse.json({ error: "No organisation linked" }, { status: 400 });
-  }
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
 
   // Get org users
-  const { data: orgUsers } = await db
+  const { data: orgUsers } = await auth.db
     .from("profiles")
     .select("id")
-    .eq("organisation_id", profile.organisation_id);
+    .eq("organisation_id", auth.orgId);
 
   const userIds = (orgUsers ?? []).map((u: { id: string }) => u.id);
-  if (userIds.length === 0) return NextResponse.json({ data: [] });
+  if (userIds.length === 0) return apiOk({ data: [] });
 
   // Fetch all systems with vendor info
-  const { data: systems, error: sysErr } = await db
+  const { data: systems, error: sysErr } = await auth.db
     .from("systems")
     .select(`
       id, name, version_label, type, environment,
@@ -41,13 +27,13 @@ export async function GET() {
     .eq("archived", false)
     .order("created_at", { ascending: false });
 
-  if (sysErr) return NextResponse.json({ error: sysErr.message }, { status: 500 });
-  if (!systems || systems.length === 0) return NextResponse.json({ data: [] });
+  if (sysErr) return apiError(sysErr.message, 500);
+  if (!systems || systems.length === 0) return apiOk({ data: [] });
 
   const systemIds = systems.map((s: { id: string }) => s.id);
 
   // Get latest submitted run scores
-  const { data: runs } = await db
+  const { data: runs } = await auth.db
     .from("system_runs")
     .select("system_id, overall_score, risk_flags, submitted_at")
     .in("system_id", systemIds)
@@ -67,10 +53,10 @@ export async function GET() {
   }
 
   // Get open incident counts per system
-  const { data: incidents } = await db
+  const { data: incidents } = await auth.db
     .from("incidents")
     .select("system_id")
-    .eq("organisation_id", profile.organisation_id)
+    .eq("organisation_id", auth.orgId)
     .in("status", ["open", "investigating"])
     .not("system_id", "is", null);
 
@@ -92,5 +78,5 @@ export async function GET() {
     };
   });
 
-  return NextResponse.json({ data: registry });
+  return apiOk({ data: registry });
 }
