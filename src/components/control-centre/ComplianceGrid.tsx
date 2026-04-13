@@ -97,7 +97,7 @@ export default function ComplianceGrid({
           </div>
           <Link
             href="/govern/registry"
-            className="text-xs font-medium text-[var(--brand,#0066FF)] hover:underline"
+            className="text-xs font-medium text-[var(--brand,#673DE6)] hover:underline"
           >
             Manage
           </Link>
@@ -108,7 +108,7 @@ export default function ComplianceGrid({
           </p>
           <Link
             href="/govern/registry"
-            className="text-xs font-medium text-[var(--brand,#0066FF)] hover:underline"
+            className="text-xs font-medium text-[var(--brand,#673DE6)] hover:underline"
           >
             Go to settings
           </Link>
@@ -129,7 +129,7 @@ export default function ComplianceGrid({
         </div>
         <Link
           href="/govern/registry"
-          className="text-xs font-medium text-[var(--brand,#0066FF)] hover:underline"
+          className="text-xs font-medium text-[var(--brand,#673DE6)] hover:underline"
         >
           Manage
         </Link>

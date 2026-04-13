@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseServer } from "@/lib/supabase/admin";
 
 type RouteContext = { params: Promise<{ assessmentId: string }> };
 

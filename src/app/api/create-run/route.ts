@@ -1,5 +1,5 @@
 import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseServer } from "@/lib/supabase/admin";
 import { getUserPlan, getUserSurveyCount, canCreateSurvey, getPlanLimits } from "@/lib/entitlements";
 
 function randomToken(length = 28) {

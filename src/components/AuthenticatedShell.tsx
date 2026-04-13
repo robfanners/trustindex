@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import ModuleSwitcher from "@/components/header/ModuleSwitcher";
@@ -165,6 +165,18 @@ function NavIcon({ icon }: { icon: string }) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.59 13.51l6.83 3.98m-.01-10.98l-6.82 3.98" />
         </svg>
       );
+    case "git-branch":
+      return (
+        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 3v12m0 0a3 3 0 103 3m-3-3a3 3 0 01-3 3m12-6a3 3 0 100-6 3 3 0 000 6zm0 0v3a3 3 0 01-3 3H9" />
+        </svg>
+      );
+    case "key":
+      return (
+        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+        </svg>
+      );
     default:
       return null;
   }
@@ -172,6 +184,7 @@ function NavIcon({ icon }: { icon: string }) {
 
 function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { profile } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -349,7 +362,12 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
                     isCollapsible ? (
                       <button
                         type="button"
-                        onClick={() => toggleSection(section.id)}
+                        onClick={() => {
+                          toggleSection(section.id);
+                          if (section.href && !isLocked) {
+                            router.push(section.href);
+                          }
+                        }}
                         className="w-full flex items-center justify-between px-3 mb-1 group"
                       >
                         <div className="flex items-center gap-1.5">

@@ -1,36 +1,55 @@
-import { NextRequest, NextResponse } from "next/server";
-import { resolveAuth } from "@/lib/resolveAuth";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { NextRequest } from "next/server";
+import { requireAuth, apiError } from "@/lib/apiHelpers";
+import { authenticateApiKey } from "@/lib/apiKeyAuth";
 import { hashPayload, anchorOnChain } from "@/lib/prove/chain";
 import { writeAuditLog } from "@/lib/audit";
 
 type Ctx = { params: Promise<{ decisionId: string }> };
 
 export async function POST(req: NextRequest, ctx: Ctx) {
-  const auth = await resolveAuth(req, "Verify", "decisions:write");
-  if (!auth.authorized) return auth.response;
+  // Try session auth first, then API key
+  const sessionAuth = await requireAuth({ orgOptional: false });
+  let organisationId: string;
+  let userId: string | null;
+  let apiKeyId: string | null;
 
+  if (!sessionAuth.error) {
+    organisationId = sessionAuth.orgId;
+    userId = sessionAuth.user.id;
+    apiKeyId = null;
+  } else {
+    // Try API key
+    const apiKeyAuth = await authenticateApiKey(req, "Verify", "decisions:write");
+    if (!apiKeyAuth) {
+      return apiError("Not authenticated", 401);
+    }
+    organisationId = apiKeyAuth.organisationId;
+    userId = null;
+    apiKeyId = apiKeyAuth.apiKeyId;
+  }
+
+  const { supabaseServer } = await import("@/lib/supabase/admin");
+  const db = sessionAuth.error ? supabaseServer() : sessionAuth.db;
   const { decisionId } = await ctx.params;
-  const db = supabaseServer();
 
   // Fetch decision record
   const { data: decision, error: decErr } = await db
     .from("decision_records")
     .select("*")
     .eq("id", decisionId)
-    .eq("organisation_id", auth.organisationId)
+    .eq("organisation_id", organisationId)
     .single();
 
-  if (decErr || !decision) return NextResponse.json({ error: "Decision not found" }, { status: 404 });
+  if (decErr || !decision) return apiError("Decision not found", 404);
 
   // Idempotent: if already anchored, return existing details
   if (decision.chain_status === "anchored") {
-    return NextResponse.json({
+    return new Response(JSON.stringify({
       event_hash: decision.event_hash,
       chain_tx_hash: decision.chain_tx_hash,
       chain_status: decision.chain_status,
       anchored_at: decision.anchored_at,
-    });
+    }), { status: 200, headers: { "content-type": "application/json" } });
   }
 
   // Fetch linked output and policy version for hashing
@@ -47,7 +66,7 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     .single();
 
   if (!output || !policyVersion) {
-    return NextResponse.json({ error: "Cannot resolve linked output or policy version" }, { status: 500 });
+    return apiError("Cannot resolve linked output or policy version", 500);
   }
 
   // Build canonical hash payload
@@ -91,21 +110,21 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     .update(update)
     .eq("id", decisionId);
 
-  if (updateErr) return NextResponse.json({ error: updateErr.message }, { status: 500 });
+  if (updateErr) return apiError(updateErr.message, 500);
 
   await writeAuditLog({
-    organisationId: auth.organisationId,
+    organisationId,
     entityType: "decision",
     entityId: decisionId,
     actionType: "anchored",
-    performedBy: auth.userId || auth.apiKeyId!,
+    performedBy: userId || apiKeyId!,
     metadata: { event_hash: eventHash, chain_status: chainResult.status },
   });
 
-  return NextResponse.json({
+  return new Response(JSON.stringify({
     event_hash: eventHash,
     chain_tx_hash: chainResult.txHash,
     chain_status: chainResult.status,
     anchored_at: chainResult.status === "anchored" ? now : null,
-  });
+  }), { status: 200, headers: { "content-type": "application/json" } });
 }

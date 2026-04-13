@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseServer } from "@/lib/supabase/admin";
+import { apiError, apiOk } from "@/lib/apiHelpers";
 import type Stripe from "stripe";
 
 // Disable Next.js body parsing — we need the raw body for signature verification
@@ -11,10 +11,7 @@ export async function POST(req: Request) {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   if (!sig || !webhookSecret) {
-    return NextResponse.json(
-      { error: "Missing signature or webhook secret" },
-      { status: 400 }
-    );
+    return apiError("Missing signature or webhook secret", 400);
   }
 
   let event: Stripe.Event;
@@ -25,10 +22,7 @@ export async function POST(req: Request) {
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error("Webhook signature verification failed:", message);
-    return NextResponse.json(
-      { error: `Webhook Error: ${message}` },
-      { status: 400 }
-    );
+    return apiError(`Webhook Error: ${message}`, 400);
   }
 
   const sb = supabaseServer();
@@ -128,5 +122,5 @@ export async function POST(req: Request) {
     // Still return 200 so Stripe doesn't retry
   }
 
-  return NextResponse.json({ received: true });
+  return apiOk({ received: true });
 }

@@ -1,23 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireTier } from "@/lib/requireTier";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { requireAuth, checkTierAccess } from "@/lib/apiHelpers";
 
 type Ctx = { params: Promise<{ systemId: string }> };
 
 export async function GET(req: NextRequest, ctx: Ctx) {
-  const check = await requireTier("Verify");
-  if (!check.authorized) return check.response;
-  if (!check.orgId) return NextResponse.json({ error: "No organisation linked" }, { status: 400 });
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
+
+  const tierCheck = checkTierAccess(auth.plan, "Verify");
+  if (tierCheck) return tierCheck;
 
   const { systemId } = await ctx.params;
-  const db = supabaseServer();
+  const db = auth.db;
 
   // Validate system belongs to org
   const { data: system, error: sysErr } = await db
     .from("systems")
     .select("id")
     .eq("id", systemId)
-    .eq("organisation_id", check.orgId)
+    .eq("organisation_id", auth.orgId)
     .single();
   if (sysErr || !system) {
     return NextResponse.json({ error: "System not found in your organisation" }, { status: 404 });
@@ -40,7 +41,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
       { count: "exact" }
     )
     .eq("system_id", systemId)
-    .eq("organisation_id", check.orgId)
+    .eq("organisation_id", auth.orgId)
     .order("created_at", { ascending: false })
     .range(offset, offset + perPage - 1);
 

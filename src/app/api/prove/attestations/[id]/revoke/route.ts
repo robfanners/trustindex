@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireTier } from "@/lib/requireTier";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 import { writeAuditLog } from "@/lib/audit";
 import { z } from "zod";
+import { hasTierAccess } from "@/lib/tiers";
 
 const revokeSchema = z.object({
   reason: z.string().min(1, "reason is required").max(2000),
@@ -13,50 +13,52 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const check = await requireTier("Verify");
-  if (!check.authorized) return check.response;
-  if (!check.orgId) return NextResponse.json({ error: "No organisation linked" }, { status: 400 });
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
+  if (!hasTierAccess(auth.plan, "Verify")) {
+    return apiError("Plan upgrade required", 403);
+  }
 
   const body = await req.json();
   const parsed = revokeSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid input" }, { status: 400 });
+    return apiError(parsed.error.issues[0]?.message ?? "Invalid input", 400);
   }
 
-  const db = supabaseServer();
+  const db = auth.db;
 
   // Verify attestation belongs to this org and isn't already revoked
   const { data: existing } = await db
     .from("prove_attestations")
     .select("id, revoked_at, verification_id")
     .eq("id", id)
-    .eq("organisation_id", check.orgId)
+    .eq("organisation_id", auth.orgId)
     .single();
 
-  if (!existing) return NextResponse.json({ error: "Attestation not found" }, { status: 404 });
-  if (existing.revoked_at) return NextResponse.json({ error: "Already revoked" }, { status: 409 });
+  if (!existing) return apiError("Attestation not found", 404);
+  if (existing.revoked_at) return apiError("Already revoked", 409);
 
   const { data, error } = await db
     .from("prove_attestations")
     .update({
       revoked_at: new Date().toISOString(),
-      revoked_by: check.userId,
+      revoked_by: auth.user.id,
       revocation_reason: parsed.data.reason,
     })
     .eq("id", id)
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error.message, 500);
 
   await writeAuditLog({
-    organisationId: check.orgId,
+    organisationId: auth.orgId,
     entityType: "attestation",
     entityId: id,
     actionType: "revoked",
-    performedBy: check.userId,
+    performedBy: auth.user.id,
     metadata: { verification_id: existing.verification_id, reason: parsed.data.reason },
   });
 
-  return NextResponse.json(data);
+  return apiOk(data);
 }

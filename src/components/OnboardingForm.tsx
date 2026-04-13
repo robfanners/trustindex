@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createSupabaseBrowserClient } from "@/lib/supabase-auth-browser";
+import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { getClientOrigin } from "@/lib/url";
 
 // ---------------------------------------------------------------------------

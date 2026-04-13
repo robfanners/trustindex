@@ -75,14 +75,14 @@ function severityRank(s: string): number {
 const SEVERITY_DOT: Record<string, string> = {
   critical: "bg-[var(--destructive,#d4183d)]",
   high: "bg-[var(--warning,#FF8C00)]",
-  medium: "bg-[var(--brand,#0066FF)]",
+  medium: "bg-[var(--brand,#673DE6)]",
   low: "bg-[var(--muted-foreground,#6B7280)]",
 };
 
 const SEVERITY_TAG_BG: Record<string, string> = {
   critical: "bg-[var(--destructive,#d4183d)]/10 text-[var(--destructive,#d4183d)]",
   high: "bg-[var(--warning,#FF8C00)]/10 text-[var(--warning,#FF8C00)]",
-  medium: "bg-[var(--brand,#0066FF)]/10 text-[var(--brand,#0066FF)]",
+  medium: "bg-[var(--brand,#673DE6)]/10 text-[var(--brand,#673DE6)]",
   low: "bg-gray-100 text-[var(--muted-foreground,#6B7280)]",
 };
 
@@ -131,7 +131,7 @@ export default function IncidentsList({ escalations, incidents }: Props) {
         </h3>
         <Link
           href="/monitor/incidents"
-          className="text-xs font-medium text-[var(--brand,#0066FF)] hover:underline"
+          className="text-xs font-medium text-[var(--brand,#673DE6)] hover:underline"
         >
           View all &rarr;
         </Link>

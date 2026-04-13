@@ -248,6 +248,12 @@ export const updateIncidentSchema = z.object({
   title: z.string().min(1).max(500).optional(),
   description: z.string().max(5000).optional(),
   aiVendorId: z.string().uuid().optional().nullable(),
+  severity: z.enum(["sev1", "sev2", "sev3", "sev4"]).optional(),
+  acknowledged_at: z.string().max(50).optional().nullable(),
+});
+
+export const acknowledgeIncidentSchema = z.object({
+  id: z.string().uuid("Invalid incident ID"),
 });
 
 // --- Action schemas ---

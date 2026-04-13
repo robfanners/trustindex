@@ -36,14 +36,14 @@
   --switch-background: #cbced4;
   --ring: oklch(0.708 0 0);
 
-  /* Brand — Verisum primary blue */
-  --brand: #0066FF;
-  --brand-hover: #0052CC;
+  /* Brand — Verisum purple (matches marketing site) */
+  --brand: #673DE6;
+  --brand-hover: #5530C1;
   --brand-foreground: #ffffff;
 
   /* Extended brand tokens */
-  --brand-light: #EBF5FF;
-  --brand-subtle: rgba(0, 102, 255, 0.06);
+  --brand-light: #F0EBFD;
+  --brand-subtle: rgba(103, 61, 230, 0.06);
   --border-strong: rgba(0, 0, 0, 0.12);
 
   /* Teal (governance, verification) */
@@ -136,8 +136,8 @@
   --font-weight-normal: 400;
 
   /* Brand (dark) */
-  --brand: #4D94FF;
-  --brand-hover: #0066FF;
+  --brand: #8B6CEF;
+  --brand-hover: #673DE6;
   --brand-foreground: #000000;
 
   /* Status (dark) */

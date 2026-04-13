@@ -20,7 +20,7 @@ vi.mock("@/lib/supabaseServer", () => ({
 
 import { GET, POST } from "@/app/api/monitor/signals/route";
 import { requireTier } from "@/lib/requireTier";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseServer } from "@/lib/supabase/admin";
 
 // ---------------------------------------------------------------------------
 // Helpers

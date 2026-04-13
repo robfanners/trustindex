@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { createSupabaseBrowserClient } from "@/lib/supabase-auth-browser";
+import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import AppShell from "@/components/AppShell";
 import {
   Radar,

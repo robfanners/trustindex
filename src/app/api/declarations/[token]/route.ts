@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseServer } from "@/lib/supabase/admin";
 import { maxStaffDeclarations } from "@/lib/entitlements";
 
 // GET — validate token, return org name + token status (public, no auth)

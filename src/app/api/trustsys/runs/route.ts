@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 import { SYSTEM_QUESTIONS } from "@/lib/systemQuestionBank";
 import type { QuestionAnswer } from "@/lib/systemQuestionBank";

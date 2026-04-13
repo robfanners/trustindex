@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabaseServer";
-import { requireTier } from "@/lib/requireTier";
+import { requireAuth, checkTierAccess, parseBody } from "@/lib/apiHelpers";
 import { writeAuditLog } from "@/lib/audit";
-import { parseBody } from "@/lib/apiHelpers";
 import { createEscalationSchema } from "@/lib/validations";
 
 // ---------------------------------------------------------------------------
@@ -10,16 +8,17 @@ import { createEscalationSchema } from "@/lib/validations";
 // ---------------------------------------------------------------------------
 
 async function getAuthenticatedOrg() {
-  const check = await requireTier("Assure");
-  if (!check.authorized) {
-    return { error: check.response };
+  const auth = await requireAuth();
+  if (auth.error) {
+    return { error: auth.error };
   }
 
-  if (!check.orgId) {
-    return { error: NextResponse.json({ error: "No organisation linked" }, { status: 400 }) };
+  const tierCheck = checkTierAccess(auth.plan, "Assure");
+  if (tierCheck) {
+    return { error: tierCheck };
   }
 
-  return { user: { id: check.userId }, orgId: check.orgId };
+  return { user: auth.user, orgId: auth.orgId, db: auth.db };
 }
 
 // ---------------------------------------------------------------------------
@@ -33,8 +32,7 @@ export async function GET(req: NextRequest) {
     const result = await getAuthenticatedOrg();
     if ("error" in result) return result.error;
 
-    const { orgId } = result;
-    const db = supabaseServer();
+    const { orgId, db } = result;
     const url = req.nextUrl;
 
     // Single escalation detail
@@ -165,8 +163,7 @@ export async function POST(req: NextRequest) {
     const result = await getAuthenticatedOrg();
     if ("error" in result) return result.error;
 
-    const { user, orgId } = result;
-    const db = supabaseServer();
+    const { user, orgId, db } = result;
 
     // Parse and validate body
     const parsed = await parseBody(req, createEscalationSchema);

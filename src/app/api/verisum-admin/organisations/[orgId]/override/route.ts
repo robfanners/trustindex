@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/vcc/adminAuth";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseServer } from "@/lib/supabase/admin";
 import { auditLog } from "@/lib/vcc/audit";
 
 // ---------------------------------------------------------------------------

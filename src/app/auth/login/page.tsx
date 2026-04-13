@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createSupabaseBrowserClient } from "@/lib/supabase-auth-browser";
+import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { useAuth } from "@/context/AuthContext";
 import { getClientOrigin, safeRedirectPath } from "@/lib/url";
 import AppShell from "@/components/AppShell";

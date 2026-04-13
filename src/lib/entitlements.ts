@@ -214,7 +214,7 @@ export function canManageIBG(plan: string | null | undefined): boolean {
 // Server-only helpers (use supabaseServer — service role, bypasses RLS)
 // ---------------------------------------------------------------------------
 
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseServer } from "@/lib/supabase/admin";
 
 /** Fetch the user's plan from the profiles table. Returns "explorer" if missing. */
 export async function getUserPlan(userId: string): Promise<PlanName> {

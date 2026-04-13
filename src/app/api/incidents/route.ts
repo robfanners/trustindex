@@ -78,6 +78,15 @@ export async function POST(req: Request) {
     if (parsed.error) return parsed.error;
     const { title, description, aiVendorId, impactLevel, sourceEscalationId, sourceSignalId, systemId } = parsed.data;
 
+    // Map impactLevel to severity if needed
+    const severityMap: Record<string, string> = {
+      critical: "sev1",
+      high: "sev2",
+      medium: "sev3",
+      low: "sev4",
+    };
+    const severity = severityMap[impactLevel || "medium"] || "sev3";
+
     const { data: incident, error } = await db
       .from("incidents")
       .insert({
@@ -86,6 +95,9 @@ export async function POST(req: Request) {
         description: description || null,
         ai_vendor_id: aiVendorId || null,
         impact_level: impactLevel || "low",
+        severity,
+        sla_acknowledge_minutes: severity === "sev1" ? 15 : severity === "sev2" ? 60 : severity === "sev3" ? 240 : 1440,
+        sla_resolve_minutes: severity === "sev1" ? 240 : severity === "sev2" ? 1440 : severity === "sev3" ? 4320 : 10080,
         reported_by: user.id,
         source_escalation_id: sourceEscalationId || null,
         source_signal_id: sourceSignalId || null,
@@ -121,7 +133,7 @@ export async function PATCH(req: Request) {
 
     const parsed = await parseBody(req, updateIncidentSchema);
     if (parsed.error) return parsed.error;
-    const { id, status: newStatus, resolution, impactLevel, title: newTitle, description: newDesc, aiVendorId } = parsed.data;
+    const { id, status: newStatus, resolution, impactLevel, title: newTitle, description: newDesc, aiVendorId, severity, acknowledged_at } = parsed.data;
 
     const updates: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
@@ -134,6 +146,8 @@ export async function PATCH(req: Request) {
     if (newTitle !== undefined) updates.title = newTitle;
     if (newDesc !== undefined) updates.description = newDesc;
     if (aiVendorId !== undefined) updates.ai_vendor_id = aiVendorId || null;
+    if (severity) updates.severity = severity;
+    if (acknowledged_at !== undefined) updates.acknowledged_at = acknowledged_at;
     if (newStatus === "resolved" || newStatus === "closed") {
       updates.resolved_at = new Date().toISOString();
     }

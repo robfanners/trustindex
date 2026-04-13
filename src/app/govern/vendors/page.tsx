@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, useMemo } from "react";
+import EmptyState from "@/components/ui/EmptyState";
 
 type Vendor = {
   id: string;
@@ -356,12 +357,13 @@ export default function VendorsPage() {
           </button>
         </div>
       ) : filtered.length === 0 && !riskFilter && !sourceFilter ? (
-        <div className="border border-dashed border-border rounded-xl p-12 text-center">
-          <p className="text-sm text-muted-foreground">
-            No vendors registered yet. Add vendors manually or they will appear automatically from
-            staff declarations.
-          </p>
-        </div>
+        <EmptyState
+          icon="🏢"
+          title="No AI vendors registered"
+          description="Track your third-party AI vendors, their risk levels, and compliance status."
+          ctaLabel="Register your first vendor"
+          ctaAction={() => setShowForm(true)}
+        />
       ) : filtered.length === 0 ? (
         <div className="border border-dashed border-border rounded-xl p-12 text-center">
           <p className="text-sm text-muted-foreground">

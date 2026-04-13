@@ -1,26 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireTier } from "@/lib/requireTier";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 import { hashPayload, anchorOnChain } from "@/lib/prove/chain";
 import { createApprovalSchema, approvalDecisionSchema, firstZodError } from "@/lib/validations";
 import { writeAuditLog } from "@/lib/audit";
-
-// ---------------------------------------------------------------------------
-// Helper: authenticate + check Verify tier + get org_id
-// ---------------------------------------------------------------------------
-
-async function getAuthenticatedOrg() {
-  const check = await requireTier("Verify");
-  if (!check.authorized) {
-    return { error: check.response };
-  }
-
-  if (!check.orgId) {
-    return { error: NextResponse.json({ error: "No organisation linked" }, { status: 400 }) };
-  }
-
-  return { user: { id: check.userId }, orgId: check.orgId };
-}
+import { hasTierAccess } from "@/lib/tiers";
 
 // ---------------------------------------------------------------------------
 // GET /api/prove/approvals — list approvals for the user's org
@@ -29,11 +12,13 @@ async function getAuthenticatedOrg() {
 
 export async function GET(req: NextRequest) {
   try {
-    const result = await getAuthenticatedOrg();
-    if ("error" in result) return result.error;
+    const auth = await requireAuth();
+    if (auth.error) return auth.error;
+    if (!hasTierAccess(auth.plan, "Verify")) {
+      return apiError("Plan upgrade required", 403);
+    }
 
-    const { orgId } = result;
-    const db = supabaseServer();
+    const db = auth.db;
     const params = req.nextUrl.searchParams;
 
     const status = params.get("status") || "";
@@ -45,7 +30,7 @@ export async function GET(req: NextRequest) {
     let query = db
       .from("prove_approvals")
       .select("*", { count: "exact" })
-      .eq("organisation_id", orgId)
+      .eq("organisation_id", auth.orgId)
       .order("created_at", { ascending: false })
       .range(offset, offset + perPage - 1);
 
@@ -53,12 +38,12 @@ export async function GET(req: NextRequest) {
     if (riskLevel) query = query.eq("risk_level", riskLevel);
 
     const { data, count, error } = await query;
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return apiError(error.message, 500);
 
-    return NextResponse.json({ approvals: data ?? [], total: count ?? 0 });
+    return apiOk({ approvals: data ?? [], total: count ?? 0 });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return apiError(message, 500);
   }
 }
 
@@ -69,46 +54,48 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const result = await getAuthenticatedOrg();
-    if ("error" in result) return result.error;
+    const auth = await requireAuth();
+    if (auth.error) return auth.error;
+    if (!hasTierAccess(auth.plan, "Verify")) {
+      return apiError("Plan upgrade required", 403);
+    }
 
-    const { user, orgId } = result;
-    const db = supabaseServer();
+    const db = auth.db;
     const body = await req.json();
     const parsed = createApprovalSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: firstZodError(parsed.error) }, { status: 400 });
+      return apiError(firstZodError(parsed.error), 400);
     }
     const { title, description, risk_level, assigned_to } = parsed.data;
 
     const { data, error } = await db
       .from("prove_approvals")
       .insert({
-        organisation_id: orgId,
+        organisation_id: auth.orgId,
         title,
         description: description || null,
         risk_level: risk_level || "medium",
-        requested_by: user.id,
+        requested_by: auth.user.id,
         assigned_to: assigned_to || null,
       })
       .select()
       .single();
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return apiError(error.message, 500);
 
     await writeAuditLog({
-      organisationId: orgId,
+      organisationId: auth.orgId,
       entityType: "approval",
       entityId: data.id,
       actionType: "created",
-      performedBy: user.id,
+      performedBy: auth.user.id,
       metadata: { title, risk_level: risk_level || "medium" },
     });
 
-    return NextResponse.json(data, { status: 201 });
+    return apiOk(data, 201);
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return apiError(message, 500);
   }
 }
 
@@ -119,16 +106,18 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const result = await getAuthenticatedOrg();
-    if ("error" in result) return result.error;
+    const auth = await requireAuth();
+    if (auth.error) return auth.error;
+    if (!hasTierAccess(auth.plan, "Verify")) {
+      return apiError("Plan upgrade required", 403);
+    }
 
-    const { user, orgId } = result;
-    const db = supabaseServer();
+    const db = auth.db;
     const body = await req.json();
 
     const parsed = approvalDecisionSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: firstZodError(parsed.error) }, { status: 400 });
+      return apiError(firstZodError(parsed.error), 400);
     }
     const { approval_id, decision, decision_note } = parsed.data;
 
@@ -137,12 +126,12 @@ export async function PATCH(req: NextRequest) {
       .from("prove_approvals")
       .select("id, status, title, risk_level")
       .eq("id", approval_id)
-      .eq("organisation_id", orgId)
+      .eq("organisation_id", auth.orgId)
       .single();
 
-    if (!existing) return NextResponse.json({ error: "Approval not found" }, { status: 404 });
+    if (!existing) return apiError("Approval not found", 404);
     if (existing.status !== "pending") {
-      return NextResponse.json({ error: "Approval is not pending" }, { status: 400 });
+      return apiError("Approval is not pending", 400);
     }
 
     // Compute event hash for the decision
@@ -150,7 +139,7 @@ export async function PATCH(req: NextRequest) {
       type: "approval_decision",
       approval_id,
       decision,
-      decided_by: user.id,
+      decided_by: auth.user.id,
       decided_at: new Date().toISOString(),
       title: existing.title,
       risk_level: existing.risk_level,
@@ -165,7 +154,7 @@ export async function PATCH(req: NextRequest) {
         status: decision,
         decision_note: decision_note || null,
         decided_at: new Date().toISOString(),
-        decided_by: user.id,
+        decided_by: auth.user.id,
         event_hash: eventHash,
         chain_tx_hash: chainResult.txHash,
         chain_status: chainResult.status,
@@ -174,20 +163,20 @@ export async function PATCH(req: NextRequest) {
       .select()
       .single();
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return apiError(error.message, 500);
 
     await writeAuditLog({
-      organisationId: orgId,
+      organisationId: auth.orgId,
       entityType: "approval",
       entityId: approval_id,
       actionType: "decided",
-      performedBy: user.id,
+      performedBy: auth.user.id,
       metadata: { decision, decision_note: decision_note || null },
     });
 
-    return NextResponse.json(data);
+    return apiOk(data);
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return apiError(message, 500);
   }
 }

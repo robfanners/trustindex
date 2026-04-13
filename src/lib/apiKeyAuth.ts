@@ -3,7 +3,7 @@
 // Used alongside requireTier() for dual-auth on HAPP routes.
 
 import { createHash, randomBytes } from "crypto";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseServer } from "@/lib/supabase/admin";
 import { hasTierAccess, planToTier, type VersiumTier } from "@/lib/tiers";
 
 export type ApiKeyAuthResult = {

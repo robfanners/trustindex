@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import EmptyState from "@/components/ui/EmptyState";
 
 type Incident = {
   id: string;
@@ -314,9 +315,13 @@ export default function IncidentLog() {
 
       {/* Incident list */}
       {incidents.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-4 text-center">
-          No incidents logged{filter ? ` with status "${filter}"` : ""}.
-        </p>
+        <EmptyState
+          icon="🛡️"
+          title="No incidents recorded"
+          description="Log and track AI-related incidents to build your governance record."
+          ctaLabel="Log an incident"
+          ctaAction={() => setShowAdd(true)}
+        />
       ) : (
         <div className="space-y-3">
           {incidents.map((inc) => (

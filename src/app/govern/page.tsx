@@ -67,7 +67,7 @@ function ModuleCard({
         )}
       </div>
       <div>
-        <h3 className="text-sm font-semibold text-[var(--foreground,#111)] group-hover:text-[var(--brand,#0066FF)] transition-colors">
+        <h3 className="text-sm font-semibold text-[var(--foreground,#111)] group-hover:text-[var(--brand,#673DE6)] transition-colors">
           {title}
         </h3>
         <p className="text-xs text-[var(--muted-foreground,#6B7280)] mt-1 leading-relaxed">

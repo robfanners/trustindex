@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireTier } from "@/lib/requireTier";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { requireAuth, checkTierAccess } from "@/lib/apiHelpers";
 import { hashPayload, generateVerificationId, anchorOnChain } from "@/lib/prove/chain";
 import { createIncidentLockSchema, firstZodError } from "@/lib/validations";
 import { writeAuditLog } from "@/lib/audit";
@@ -12,11 +11,11 @@ import { writeAuditLog } from "@/lib/audit";
 
 export async function GET(req: NextRequest) {
   try {
-    const check = await requireTier("Verify");
-    if (!check.authorized) return check.response;
-    if (!check.orgId) {
-      return NextResponse.json({ error: "No organisation linked" }, { status: 400 });
-    }
+    const auth = await requireAuth();
+    if (auth.error) return auth.error;
+
+    const tierCheck = checkTierAccess(auth.plan, "Verify");
+    if (tierCheck) return tierCheck;
 
     const params = req.nextUrl.searchParams;
     const incidentId = params.get("incident_id") || "";
@@ -24,12 +23,12 @@ export async function GET(req: NextRequest) {
     const perPage = Math.min(100, Math.max(1, Number(params.get("per_page") || 20)));
     const offset = (page - 1) * perPage;
 
-    const db = supabaseServer();
+    const db = auth.db;
 
     let query = db
       .from("prove_incident_locks")
       .select("*", { count: "exact" })
-      .eq("organisation_id", check.orgId)
+      .eq("organisation_id", auth.orgId)
       .order("created_at", { ascending: false })
       .range(offset, offset + perPage - 1);
 
@@ -52,11 +51,11 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const check = await requireTier("Verify");
-    if (!check.authorized) return check.response;
-    if (!check.orgId) {
-      return NextResponse.json({ error: "No organisation linked" }, { status: 400 });
-    }
+    const auth = await requireAuth();
+    if (auth.error) return auth.error;
+
+    const tierCheck = checkTierAccess(auth.plan, "Verify");
+    if (tierCheck) return tierCheck;
 
     const body = await req.json();
     const parsed = createIncidentLockSchema.safeParse(body);
@@ -65,7 +64,7 @@ export async function POST(req: NextRequest) {
     }
     const { incident_id, lock_reason } = parsed.data;
 
-    const db = supabaseServer();
+    const db = auth.db;
 
     // Fetch the full incident and verify org ownership
     const { data: incident, error: incidentError } = await db
@@ -74,7 +73,7 @@ export async function POST(req: NextRequest) {
         "title, description, impact_level, status, resolution, reported_by, created_at, resolved_at"
       )
       .eq("id", incident_id)
-      .eq("organisation_id", check.orgId)
+      .eq("organisation_id", auth.orgId)
       .single();
 
     if (incidentError || !incident) {
@@ -104,7 +103,7 @@ export async function POST(req: NextRequest) {
       incident_id,
       snapshot,
       locked_at: now,
-      locked_by: check.userId,
+      locked_by: auth.user.id,
     });
 
     const verificationId = generateVerificationId({
@@ -112,7 +111,7 @@ export async function POST(req: NextRequest) {
       incident_id,
       snapshot,
       locked_at: now,
-      locked_by: check.userId,
+      locked_by: auth.user.id,
     });
 
     // Attempt chain anchoring
@@ -122,11 +121,11 @@ export async function POST(req: NextRequest) {
     const { data, error } = await db
       .from("prove_incident_locks")
       .insert({
-        organisation_id: check.orgId,
+        organisation_id: auth.orgId,
         incident_id,
         lock_reason,
         snapshot,
-        locked_by: check.userId,
+        locked_by: auth.user.id,
         locked_at: now,
         verification_id: verificationId,
         event_hash: eventHash,
@@ -139,11 +138,11 @@ export async function POST(req: NextRequest) {
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
     await writeAuditLog({
-      organisationId: check.orgId,
+      organisationId: auth.orgId,
       entityType: "incident_lock",
       entityId: data.id,
       actionType: "created",
-      performedBy: check.userId,
+      performedBy: auth.user.id,
       metadata: { incident_id, lock_reason, verification_id: verificationId },
     });
 

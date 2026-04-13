@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 import { SYSTEM_QUESTIONS } from "@/lib/systemQuestionBank";
 

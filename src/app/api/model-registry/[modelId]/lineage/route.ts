@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireTier } from "@/lib/requireTier";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
+import { hasTierAccess } from "@/lib/tiers";
 
 type RouteContext = { params: Promise<{ modelId: string }> };
 
@@ -18,23 +18,25 @@ type LineageNode = {
 // ---------------------------------------------------------------------------
 
 export async function GET(_req: NextRequest, context: RouteContext) {
-  const check = await requireTier("Assure");
-  if (!check.authorized) return check.response;
-  if (!check.orgId) return NextResponse.json({ error: "No organisation linked" }, { status: 400 });
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
+  if (!hasTierAccess(auth.plan, "Assure")) {
+    return apiError("Plan upgrade required", 403);
+  }
 
   const { modelId } = await context.params;
-  const db = supabaseServer();
+  const db = auth.db;
 
   // Fetch the model itself
   const { data: model, error } = await db
     .from("model_registry")
     .select("id, model_name, model_version, provider, model_type, status, parent_model_id")
     .eq("id", modelId)
-    .eq("organisation_id", check.orgId)
+    .eq("organisation_id", auth.orgId)
     .single();
 
   if (error || !model) {
-    return NextResponse.json({ error: "Model not found" }, { status: 404 });
+    return apiError("Model not found", 404);
   }
 
   // Walk ancestors (parent chain upward, max 10 levels)
@@ -50,7 +52,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
       .from("model_registry")
       .select("id, model_name, model_version, provider, model_type, status, parent_model_id")
       .eq("id", currentParentId)
-      .eq("organisation_id", check.orgId)
+      .eq("organisation_id", auth.orgId)
       .single();
 
     if (!parent) break;
@@ -70,7 +72,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
     .from("model_registry")
     .select("id, model_name, model_version, provider, model_type, status")
     .eq("parent_model_id", modelId)
-    .eq("organisation_id", check.orgId)
+    .eq("organisation_id", auth.orgId)
     .order("created_at", { ascending: true });
 
   const current: LineageNode = {
@@ -82,7 +84,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
     status: model.status,
   };
 
-  return NextResponse.json({
+  return apiOk({
     data: {
       ancestors,
       current,

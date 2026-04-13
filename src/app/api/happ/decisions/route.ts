@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
-import { resolveAuth } from "@/lib/resolveAuth";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { NextRequest } from "next/server";
+import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
+import { authenticateApiKey } from "@/lib/apiKeyAuth";
 import { hashPayload, generateVerificationId } from "@/lib/prove/chain";
 import {
   createDecisionRecordSchema,
@@ -12,8 +12,32 @@ import { writeAuditLog } from "@/lib/audit";
 import { computeAssuranceGrade } from "@/lib/assuranceGrade";
 
 export async function GET(req: NextRequest) {
-  const auth = await resolveAuth(req, "Verify", "decisions:read");
-  if (!auth.authorized) return auth.response;
+  // Try session auth first, then API key
+  const sessionAuth = await requireAuth({ orgOptional: false });
+  let authSource: "session" | "api_key";
+  let organisationId: string;
+  let userId: string | null;
+  let apiKeyId: string | null;
+
+  if (!sessionAuth.error) {
+    authSource = "session";
+    organisationId = sessionAuth.orgId;
+    userId = sessionAuth.user.id;
+    apiKeyId = null;
+  } else {
+    // Try API key
+    const apiKeyAuth = await authenticateApiKey(req, "Verify", "decisions:read");
+    if (!apiKeyAuth) {
+      return apiError("Not authenticated", 401);
+    }
+    authSource = "api_key";
+    organisationId = apiKeyAuth.organisationId;
+    userId = null;
+    apiKeyId = apiKeyAuth.apiKeyId;
+  }
+
+  const { supabaseServer } = await import("@/lib/supabase/admin");
+  const db = sessionAuth.error ? supabaseServer() : sessionAuth.db;
 
   const params = req.nextUrl.searchParams;
   const page = Math.max(1, Number(params.get("page") || 1));
@@ -31,14 +55,13 @@ export async function GET(req: NextRequest) {
   const assuranceGrade = params.get("assurance_grade");
   const oversightMode = params.get("oversight_mode");
 
-  const db = supabaseServer();
   let query = db
     .from("decision_records")
     .select(
       "*, systems(name), profiles!decision_records_human_reviewer_id_fkey(full_name), policy_versions(title, version), ai_outputs(output_summary, output_type)",
       { count: "exact" }
     )
-    .eq("organisation_id", auth.organisationId)
+    .eq("organisation_id", organisationId)
     .order("created_at", { ascending: false })
     .range(offset, offset + perPage - 1);
 
@@ -54,23 +77,45 @@ export async function GET(req: NextRequest) {
   if (oversightMode) query = query.eq("oversight_mode", oversightMode);
 
   const { data, count, error } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ records: data ?? [], total: count ?? 0 });
+  if (error) return apiError(error.message, 500);
+  return apiOk({ records: data ?? [], total: count ?? 0 });
 }
 
 export async function POST(req: NextRequest) {
-  const auth = await resolveAuth(req, "Verify", "decisions:write");
-  if (!auth.authorized) return auth.response;
+  // Try session auth first, then API key
+  const sessionAuth = await requireAuth({ orgOptional: false });
+  let authSource: "session" | "api_key";
+  let organisationId: string;
+  let userId: string | null;
+  let apiKeyId: string | null;
 
+  if (!sessionAuth.error) {
+    authSource = "session";
+    organisationId = sessionAuth.orgId;
+    userId = sessionAuth.user.id;
+    apiKeyId = null;
+  } else {
+    // Try API key
+    const apiKeyAuth = await authenticateApiKey(req, "Verify", "decisions:write");
+    if (!apiKeyAuth) {
+      return apiError("Not authenticated", 401);
+    }
+    authSource = "api_key";
+    organisationId = apiKeyAuth.organisationId;
+    userId = null;
+    apiKeyId = apiKeyAuth.apiKeyId;
+  }
+
+  const { supabaseServer } = await import("@/lib/supabase/admin");
   const body = await req.json();
-  const db = supabaseServer();
+  const db = sessionAuth.error ? supabaseServer() : sessionAuth.db;
   const now = new Date().toISOString();
 
   // ── API Key auth path ──────────────────────────────────────────────
-  if (auth.source === "api_key") {
+  if (authSource === "api_key") {
     const parsed = apiIngestDecisionSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: firstZodError(parsed.error) }, { status: 400 });
+      return apiError(firstZodError(parsed.error), 400);
     }
     const d = parsed.data;
 
@@ -79,10 +124,10 @@ export async function POST(req: NextRequest) {
       .from("systems")
       .select("id")
       .eq("id", d.system_id)
-      .eq("organisation_id", auth.organisationId)
+      .eq("organisation_id", organisationId)
       .single();
     if (sysErr || !system) {
-      return NextResponse.json({ error: "System not found in your organisation" }, { status: 404 });
+      return apiError("System not found in your organisation", 404);
     }
 
     // Validate model if provided
@@ -91,10 +136,10 @@ export async function POST(req: NextRequest) {
         .from("model_registry")
         .select("id")
         .eq("id", d.model_id)
-        .eq("organisation_id", auth.organisationId)
+        .eq("organisation_id", organisationId)
         .single();
       if (modErr || !model) {
-        return NextResponse.json({ error: "Model not found in your organisation" }, { status: 404 });
+        return apiError("Model not found in your organisation", 404);
       }
     }
 
@@ -103,13 +148,13 @@ export async function POST(req: NextRequest) {
       .from("policy_versions")
       .select("id, status")
       .eq("id", d.policy_version_id)
-      .eq("organisation_id", auth.organisationId)
+      .eq("organisation_id", organisationId)
       .single();
     if (pvErr || !pv) {
-      return NextResponse.json({ error: "Policy version not found in your organisation" }, { status: 404 });
+      return apiError("Policy version not found in your organisation", 404);
     }
     if (pv.status !== "active") {
-      return NextResponse.json({ error: "Policy version must be active" }, { status: 400 });
+      return apiError("Policy version must be active", 400);
     }
 
     // Create AI output
@@ -118,7 +163,7 @@ export async function POST(req: NextRequest) {
     const { data: output, error: outErr } = await db
       .from("ai_outputs")
       .insert({
-        organisation_id: auth.organisationId,
+        organisation_id: organisationId,
         system_id: d.system_id,
         model_id: d.model_id || null,
         source_type: "api",
@@ -130,14 +175,14 @@ export async function POST(req: NextRequest) {
         risk_signal: d.risk_signal || null,
         occurred_at: d.occurred_at,
         created_by: null,
-        api_key_id: auth.apiKeyId,
+        api_key_id: apiKeyId,
         context: d.context || null,
       })
       .select()
       .single();
 
     if (outErr || !output) {
-      return NextResponse.json({ error: outErr?.message || "Failed to create output" }, { status: 500 });
+      return apiError(outErr?.message || "Failed to create output", 500);
     }
 
     // Compute assurance grade
@@ -159,7 +204,7 @@ export async function POST(req: NextRequest) {
 
     const verificationId = generateVerificationId({
       type: "decision",
-      org: auth.organisationId,
+      org: organisationId,
       system_id: d.system_id,
       output_id: output.id,
       policy_version_id: d.policy_version_id,
@@ -170,7 +215,7 @@ export async function POST(req: NextRequest) {
     const { data: decision, error: decErr } = await db
       .from("decision_records")
       .insert({
-        organisation_id: auth.organisationId,
+        organisation_id: organisationId,
         system_id: d.system_id,
         ai_output_id: output.id,
         policy_version_id: d.policy_version_id,
@@ -186,7 +231,7 @@ export async function POST(req: NextRequest) {
         chain_status: "pending",
         oversight_mode: d.oversight_mode,
         assurance_grade: grade,
-        api_key_id: auth.apiKeyId,
+        api_key_id: apiKeyId,
         external_reviewer_email: d.identity_assurance?.reviewer_email || null,
         external_reviewer_name: d.identity_assurance?.reviewer_name || null,
         external_reviewed_at: d.action_binding?.reviewed_at || null,
@@ -198,14 +243,14 @@ export async function POST(req: NextRequest) {
       .select()
       .single();
 
-    if (decErr) return NextResponse.json({ error: decErr.message }, { status: 500 });
+    if (decErr) return apiError(decErr.message, 500);
 
     await writeAuditLog({
-      organisationId: auth.organisationId,
+      organisationId,
       entityType: "decision",
       entityId: decision.id,
       actionType: "created",
-      performedBy: auth.apiKeyId!,
+      performedBy: apiKeyId!,
       metadata: {
         source: "api",
         system_id: d.system_id,
@@ -216,7 +261,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({
+    return apiOk({
       id: decision.id,
       verification_id: verificationId,
       assurance_grade: grade,
@@ -224,7 +269,7 @@ export async function POST(req: NextRequest) {
       chain_status: "pending",
       oversight_mode: d.oversight_mode,
       created_at: decision.created_at,
-    }, { status: 201 });
+    }, 201);
   }
 
   // ── Session auth path (existing behaviour, extended) ───────────────
@@ -234,7 +279,7 @@ export async function POST(req: NextRequest) {
   if (body.ai_output_id) {
     const parsed = createDecisionRecordSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: firstZodError(parsed.error) }, { status: 400 });
+      return apiError(firstZodError(parsed.error), 400);
     }
     aiOutputId = parsed.data.ai_output_id;
 
@@ -244,16 +289,16 @@ export async function POST(req: NextRequest) {
       .eq("id", aiOutputId)
       .single();
     if (outErr || !output) {
-      return NextResponse.json({ error: "AI output not found" }, { status: 404 });
+      return apiError("AI output not found", 404);
     }
-    if (output.organisation_id !== auth.organisationId) {
-      return NextResponse.json({ error: "AI output does not belong to your organisation" }, { status: 403 });
+    if (output.organisation_id !== organisationId) {
+      return apiError("AI output does not belong to your organisation", 403);
     }
     systemId = output.system_id;
   } else {
     const parsed = createDecisionWithOutputSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: firstZodError(parsed.error) }, { status: 400 });
+      return apiError(firstZodError(parsed.error), 400);
     }
     const d = parsed.data;
 
@@ -261,10 +306,10 @@ export async function POST(req: NextRequest) {
       .from("systems")
       .select("id")
       .eq("id", d.system_id)
-      .eq("organisation_id", auth.organisationId)
+      .eq("organisation_id", organisationId)
       .single();
     if (sysErr || !system) {
-      return NextResponse.json({ error: "System not found in your organisation" }, { status: 404 });
+      return apiError("System not found in your organisation", 404);
     }
 
     if (d.model_id) {
@@ -272,10 +317,10 @@ export async function POST(req: NextRequest) {
         .from("model_registry")
         .select("id")
         .eq("id", d.model_id)
-        .eq("organisation_id", auth.organisationId)
+        .eq("organisation_id", organisationId)
         .single();
       if (modErr || !model) {
-        return NextResponse.json({ error: "Model not found in your organisation" }, { status: 404 });
+        return apiError("Model not found in your organisation", 404);
       }
     }
 
@@ -284,7 +329,7 @@ export async function POST(req: NextRequest) {
     const { data: output, error: outErr } = await db
       .from("ai_outputs")
       .insert({
-        organisation_id: auth.organisationId,
+        organisation_id: organisationId,
         system_id: d.system_id,
         model_id: d.model_id || null,
         source_type: "manual",
@@ -294,13 +339,13 @@ export async function POST(req: NextRequest) {
         confidence_score: d.confidence_score ?? null,
         risk_signal: d.risk_signal || null,
         occurred_at: d.occurred_at,
-        created_by: auth.userId,
+        created_by: userId,
       })
       .select()
       .single();
 
     if (outErr || !output) {
-      return NextResponse.json({ error: outErr?.message || "Failed to create output" }, { status: 500 });
+      return apiError(outErr?.message || "Failed to create output", 500);
     }
     aiOutputId = output.id;
     systemId = d.system_id;
@@ -311,34 +356,34 @@ export async function POST(req: NextRequest) {
     .from("policy_versions")
     .select("id, status")
     .eq("id", policyVersionId)
-    .eq("organisation_id", auth.organisationId)
+    .eq("organisation_id", organisationId)
     .single();
   if (pvErr || !pv) {
-    return NextResponse.json({ error: "Policy version not found in your organisation" }, { status: 404 });
+    return apiError("Policy version not found in your organisation", 404);
   }
   if (pv.status !== "active") {
-    return NextResponse.json({ error: "Policy version must be active" }, { status: 400 });
+    return apiError("Policy version must be active", 400);
   }
 
   const verificationId = generateVerificationId({
     type: "decision",
-    org: auth.organisationId,
+    org: organisationId,
     system_id: systemId,
     output_id: aiOutputId,
     policy_version_id: policyVersionId,
-    reviewer: auth.userId,
+    reviewer: userId,
     reviewed_at: now,
   });
 
   const { data: decision, error: decErr } = await db
     .from("decision_records")
     .insert({
-      organisation_id: auth.organisationId,
+      organisation_id: organisationId,
       system_id: systemId,
       ai_output_id: aiOutputId,
       policy_version_id: policyVersionId,
-      human_reviewer_id: auth.userId,
-      created_by: auth.userId,
+      human_reviewer_id: userId,
+      created_by: userId,
       source_type: "manual",
       review_mode: body.review_mode,
       decision_status: "review_completed",
@@ -353,16 +398,16 @@ export async function POST(req: NextRequest) {
     .select()
     .single();
 
-  if (decErr) return NextResponse.json({ error: decErr.message }, { status: 500 });
+  if (decErr) return apiError(decErr.message, 500);
 
   await writeAuditLog({
-    organisationId: auth.organisationId,
+    organisationId,
     entityType: "decision",
     entityId: decision.id,
     actionType: "created",
-    performedBy: auth.userId!,
+    performedBy: userId!,
     metadata: { source: "manual", system_id: systemId, human_decision: body.human_decision, verification_id: verificationId },
   });
 
-  return NextResponse.json(decision, { status: 201 });
+  return apiOk(decision, 201);
 }

@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireTier } from "@/lib/requireTier";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { requireAuth, checkTierAccess, apiError } from "@/lib/apiHelpers";
 import { hashPayload } from "@/lib/prove/chain";
 import { createPolicyVersionSchema, firstZodError } from "@/lib/validations";
 import { writeAuditLog } from "@/lib/audit";
 
 export async function GET(req: NextRequest) {
-  const check = await requireTier("Verify");
-  if (!check.authorized) return check.response;
-  if (!check.orgId) return NextResponse.json({ error: "No organisation linked" }, { status: 400 });
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
+
+  const tierCheck = checkTierAccess(auth.plan, "Verify");
+  if (tierCheck) return tierCheck;
 
   const params = req.nextUrl.searchParams;
   const page = Math.max(1, Number(params.get("page") || 1));
@@ -17,11 +18,11 @@ export async function GET(req: NextRequest) {
   const policyId = params.get("policy_id");
   const status = params.get("status");
 
-  const db = supabaseServer();
+  const db = auth.db;
   let query = db
     .from("policy_versions")
     .select("*, ai_policies(policy_type)", { count: "exact" })
-    .eq("organisation_id", check.orgId)
+    .eq("organisation_id", auth.orgId)
     .order("created_at", { ascending: false })
     .range(offset, offset + perPage - 1);
 
@@ -34,9 +35,11 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const check = await requireTier("Verify");
-  if (!check.authorized) return check.response;
-  if (!check.orgId) return NextResponse.json({ error: "No organisation linked" }, { status: 400 });
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
+
+  const tierCheck = checkTierAccess(auth.plan, "Verify");
+  if (tierCheck) return tierCheck;
 
   const body = await req.json();
   const parsed = createPolicyVersionSchema.safeParse(body);
@@ -45,14 +48,14 @@ export async function POST(req: NextRequest) {
   }
   const { policy_id, title, content_snapshot, effective_from, effective_until } = parsed.data;
 
-  const db = supabaseServer();
+  const db = auth.db;
 
   // Validate policy belongs to org
   const { data: policy, error: policyErr } = await db
     .from("ai_policies")
     .select("id")
     .eq("id", policy_id)
-    .eq("organisation_id", check.orgId)
+    .eq("organisation_id", auth.orgId)
     .single();
   if (policyErr || !policy) {
     return NextResponse.json({ error: "Policy not found in your organisation" }, { status: 404 });
@@ -81,7 +84,7 @@ export async function POST(req: NextRequest) {
   const { data, error } = await db
     .from("policy_versions")
     .insert({
-      organisation_id: check.orgId,
+      organisation_id: auth.orgId,
       policy_id,
       version: nextVersion,
       title,
@@ -90,7 +93,7 @@ export async function POST(req: NextRequest) {
       status: "active",
       effective_from: effective_from || null,
       effective_until: effective_until || null,
-      published_by: check.userId,
+      published_by: auth.user.id,
       published_at: now,
     })
     .select()
@@ -109,11 +112,11 @@ export async function POST(req: NextRequest) {
   }
 
   await writeAuditLog({
-    organisationId: check.orgId,
+    organisationId: auth.orgId,
     entityType: "policy_version",
     entityId: data.id,
     actionType: "created",
-    performedBy: check.userId,
+    performedBy: auth.user.id,
     metadata: { title, version: nextVersion, policy_id },
   });
 

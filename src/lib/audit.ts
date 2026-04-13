@@ -6,7 +6,7 @@
 // Logs but does not throw on failure (audit failure shouldn't block ops).
 // ---------------------------------------------------------------------------
 
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseServer } from "@/lib/supabase/admin";
 
 export type AuditLogEntry = {
   organisationId: string;

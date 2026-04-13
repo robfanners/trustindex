@@ -3,7 +3,7 @@ import { getAuthenticatedOrgWithRole } from "@/lib/reportAuth.server";
 import { canAccessReport } from "@/lib/reportAuth";
 import type { VersiumRole } from "@/lib/roles";
 import { apiError, apiOk, withErrorHandling } from "@/lib/apiHelpers";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseServer } from "@/lib/supabase/admin";
 
 // ---------------------------------------------------------------------------
 // GET /api/reports/action-analytics — action stats + time-series

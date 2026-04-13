@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import EmptyState from "@/components/ui/EmptyState";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -300,11 +301,13 @@ export default function DeclarationManager() {
           </div>
         </div>
       ) : (
-        <div className="border border-dashed border-border rounded-xl p-12 text-center">
-          <p className="text-sm text-muted-foreground">
-            No declaration campaigns yet. Create your first link below to start collecting staff AI usage declarations.
-          </p>
-        </div>
+        <EmptyState
+          icon="📋"
+          title="No staff declarations yet"
+          description="Collect staff AI usage declarations to understand your organisation's AI footprint."
+          ctaLabel="Create declaration run"
+          ctaAction={() => setShowCreate(true)}
+        />
       )}
 
       {/* Copy confirmation */}

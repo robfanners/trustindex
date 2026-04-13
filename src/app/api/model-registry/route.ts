@@ -1,17 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireTier } from "@/lib/requireTier";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 import { createModelSchema, firstZodError } from "@/lib/validations";
 import { writeAuditLog } from "@/lib/audit";
+import { hasTierAccess } from "@/lib/tiers";
 
 // ---------------------------------------------------------------------------
 // GET /api/model-registry — list models for the organisation
 // ---------------------------------------------------------------------------
 
 export async function GET(req: NextRequest) {
-  const check = await requireTier("Assure");
-  if (!check.authorized) return check.response;
-  if (!check.orgId) return NextResponse.json({ error: "No organisation linked" }, { status: 400 });
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
+  if (!hasTierAccess(auth.plan, "Assure")) {
+    return apiError("Plan upgrade required", 403);
+  }
 
   const params = req.nextUrl.searchParams;
   const page = Math.max(1, Number(params.get("page") || 1));
@@ -20,7 +22,7 @@ export async function GET(req: NextRequest) {
   const statusFilter = params.get("status");
   const systemId = params.get("system_id");
 
-  const db = supabaseServer();
+  const db = auth.db;
 
   // If filtering by system_id, get model IDs linked to that system first
   let modelIds: string[] | null = null;
@@ -31,14 +33,14 @@ export async function GET(req: NextRequest) {
       .eq("system_id", systemId);
     modelIds = (links ?? []).map((l) => l.model_id);
     if (modelIds.length === 0) {
-      return NextResponse.json({ models: [], total: 0 });
+      return apiOk({ models: [], total: 0 });
     }
   }
 
   let query = db
     .from("model_registry")
     .select("*, linked_systems:system_model_links(count)", { count: "exact" })
-    .eq("organisation_id", check.orgId)
+    .eq("organisation_id", auth.orgId)
     .order("created_at", { ascending: false })
     .range(offset, offset + perPage - 1);
 
@@ -51,7 +53,7 @@ export async function GET(req: NextRequest) {
 
   const { data, count, error } = await query;
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error.message, 500);
 
   const models = (data ?? []).map((m) => ({
     ...m,
@@ -59,7 +61,7 @@ export async function GET(req: NextRequest) {
     linked_systems: undefined,
   }));
 
-  return NextResponse.json({ models, total: count ?? 0 });
+  return apiOk({ models, total: count ?? 0 });
 }
 
 // ---------------------------------------------------------------------------
@@ -67,14 +69,16 @@ export async function GET(req: NextRequest) {
 // ---------------------------------------------------------------------------
 
 export async function POST(req: NextRequest) {
-  const check = await requireTier("Assure");
-  if (!check.authorized) return check.response;
-  if (!check.orgId) return NextResponse.json({ error: "No organisation linked" }, { status: 400 });
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
+  if (!hasTierAccess(auth.plan, "Assure")) {
+    return apiError("Plan upgrade required", 403);
+  }
 
   const body = await req.json();
   const parsed = createModelSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: firstZodError(parsed.error) }, { status: 400 });
+    return apiError(firstZodError(parsed.error), 400);
   }
 
   const {
@@ -83,25 +87,25 @@ export async function POST(req: NextRequest) {
     model_card_url, notes,
   } = parsed.data;
 
+  const db = auth.db;
+
   // Validate parent_model_id belongs to same org
   if (parent_model_id) {
-    const db = supabaseServer();
     const { data: parent } = await db
       .from("model_registry")
       .select("id")
       .eq("id", parent_model_id)
-      .eq("organisation_id", check.orgId)
+      .eq("organisation_id", auth.orgId)
       .single();
     if (!parent) {
-      return NextResponse.json({ error: "Parent model not found in your organisation" }, { status: 400 });
+      return apiError("Parent model not found in your organisation", 400);
     }
   }
 
-  const db = supabaseServer();
   const { data, error } = await db
     .from("model_registry")
     .insert({
-      organisation_id: check.orgId,
+      organisation_id: auth.orgId,
       model_name,
       model_version,
       provider: provider || null,
@@ -113,26 +117,26 @@ export async function POST(req: NextRequest) {
       parent_model_id: parent_model_id || null,
       model_card_url: model_card_url || null,
       notes: notes || null,
-      created_by: check.userId,
+      created_by: auth.user.id,
     })
     .select()
     .single();
 
   if (error) {
     if (error.code === "23505") {
-      return NextResponse.json({ error: "A model with this name and version already exists" }, { status: 409 });
+      return apiError("A model with this name and version already exists", 409);
     }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return apiError(error.message, 500);
   }
 
   await writeAuditLog({
-    organisationId: check.orgId,
+    organisationId: auth.orgId,
     entityType: "model",
     entityId: data.id,
     actionType: "created",
-    performedBy: check.userId,
+    performedBy: auth.user.id,
     metadata: { model_name, model_version, provider: provider || null },
   });
 
-  return NextResponse.json({ data }, { status: 201 });
+  return apiOk({ data }, 201);
 }

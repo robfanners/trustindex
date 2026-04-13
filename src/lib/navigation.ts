@@ -17,6 +17,8 @@ export type NavSection = {
   minTier: PlanName | null;
   /** Tier badge text shown when locked (e.g., "Assure", "Verify") */
   tierBadge?: string;
+  /** Dashboard page for this section (clicking the header navigates here) */
+  href?: string;
   items: NavItem[];
 };
 
@@ -57,6 +59,7 @@ export const navSections: NavSection[] = [
     id: "govern",
     label: "GOVERN",
     minTier: null,
+    href: "/govern",
     items: [
       { label: "TrustGraph", href: "/govern/trustgraph", icon: "git-branch", exists: true },
       { label: "Policies", href: "/govern/policies", icon: "scroll", exists: true },
@@ -71,6 +74,7 @@ export const navSections: NavSection[] = [
     label: "MONITOR",
     minTier: "pro",
     tierBadge: "Assure",
+    href: "/monitor",
     items: [
       { label: "Drift & Alerts", href: "/monitor/drift", icon: "activity", exists: true },
       { label: "Escalations", href: "/monitor/escalations", icon: "alert-triangle", exists: true },
@@ -84,6 +88,7 @@ export const navSections: NavSection[] = [
     label: "PROVE",
     minTier: "enterprise",
     tierBadge: "Verify",
+    href: "/prove",
     items: [
       { label: "Approvals", href: "/prove/approvals", icon: "shield-check", exists: true },
       { label: "Attestations", href: "/prove/attestations", icon: "stamp", exists: true },
