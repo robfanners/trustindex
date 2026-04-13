@@ -44,3 +44,5 @@ next-env.d.ts
 # worktrees
 .worktrees/
 .claude/worktrees/
+.claude/settings.local.json
+.claude/ # belt + braces
