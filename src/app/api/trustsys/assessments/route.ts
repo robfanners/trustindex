@@ -1,6 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { NextRequest } from "next/server";
+import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 
 // ---------------------------------------------------------------------------
 // GET /api/trustsys/assessments — list org's TrustSys assessments with latest run
@@ -9,39 +8,21 @@ import { supabaseServer } from "@/lib/supabaseServer";
 
 export async function GET() {
   try {
-    const authClient = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await authClient.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    const db = supabaseServer();
-
-    // Get user's org_id from profile
-    const { data: profile } = await db
-      .from("profiles")
-      .select("organisation_id")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile?.organisation_id) {
-      return NextResponse.json({ assessments: [] });
-    }
+    const auth = await requireAuth();
+    if (auth.error) return auth.error;
+    const { orgId, db } = auth;
 
     // Fetch systems (assessments) owned by users in the same org
     // The `systems` table uses `owner_id` (user) — join through profiles to match org
     const { data: orgUsers } = await db
       .from("profiles")
       .select("id")
-      .eq("organisation_id", profile.organisation_id);
+      .eq("organisation_id", orgId);
 
     const userIds = (orgUsers || []).map((u) => u.id);
 
     if (userIds.length === 0) {
-      return NextResponse.json({ assessments: [] });
+      return apiOk({ assessments: [] });
     }
 
     const { data: systems, error: sysErr } = await db
@@ -52,11 +33,11 @@ export async function GET() {
       .order("created_at", { ascending: false });
 
     if (sysErr) {
-      return NextResponse.json({ error: sysErr.message }, { status: 500 });
+      return apiError(sysErr.message, 500);
     }
 
     if (!systems || systems.length === 0) {
-      return NextResponse.json({ assessments: [] });
+      return apiOk({ assessments: [] });
     }
 
     // Fetch runs for all systems to get latest score, run count, status
@@ -135,10 +116,10 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json({ assessments: result });
+    return apiOk({ assessments: result });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return apiError(message, 500);
   }
 }
 
@@ -148,30 +129,9 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const authClient = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await authClient.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    const db = supabaseServer();
-
-    // Get user's org_id from profile
-    const { data: profile } = await db
-      .from("profiles")
-      .select("organisation_id")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile?.organisation_id) {
-      return NextResponse.json(
-        { error: "No organisation linked to your account" },
-        { status: 400 }
-      );
-    }
+    const auth = await requireAuth();
+    if (auth.error) return auth.error;
+    const { user, db } = auth;
 
     const body = await req.json();
     const name = String(body.name || "").trim();
@@ -186,7 +146,7 @@ export async function POST(req: NextRequest) {
     const complianceTags = Array.isArray(body.compliance_tags) ? body.compliance_tags : [];
 
     if (!name) {
-      return NextResponse.json({ error: "name is required" }, { status: 400 });
+      return apiError("name is required", 400);
     }
 
     const { data: system, error: insertErr } = await db
@@ -207,13 +167,10 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (insertErr || !system) {
-      return NextResponse.json(
-        { error: insertErr?.message || "Failed to create assessment" },
-        { status: 500 }
-      );
+      return apiError(insertErr?.message || "Failed to create assessment", 500);
     }
 
-    return NextResponse.json({
+    return apiOk({
       assessment: {
         id: system.id,
         name: system.name,
@@ -222,9 +179,9 @@ export async function POST(req: NextRequest) {
         environment: system.environment,
         created_at: system.created_at,
       },
-    }, { status: 201 });
+    });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return apiError(message, 500);
   }
 }

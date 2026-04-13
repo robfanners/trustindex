@@ -1,5 +1,5 @@
 import { requireAuth, apiOk, withErrorHandling } from "@/lib/apiHelpers";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseServer } from "@/lib/supabase/admin";
 
 // ---------------------------------------------------------------------------
 // GET /api/dashboard/control-centre

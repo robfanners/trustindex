@@ -1,22 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireTier } from "@/lib/requireTier";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { requireAuth, apiError } from "@/lib/apiHelpers";
 import { generateTrustCertificate } from "@/lib/prove/certificatePdf";
+import { hasTierAccess } from "@/lib/tiers";
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const check = await requireTier("Verify");
-  if (!check.authorized) return check.response;
-  if (!check.orgId)
-    return NextResponse.json(
-      { error: "No organisation linked" },
-      { status: 400 }
-    );
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
+  if (!hasTierAccess(auth.plan, "Verify")) {
+    return apiError("Plan upgrade required", 403);
+  }
 
-  const db = supabaseServer();
+  const db = auth.db;
 
   const { data: attestation, error } = await db
     .from("prove_attestations")
@@ -24,28 +22,22 @@ export async function GET(
       "*, organisations(name), profiles!attested_by(full_name, email)"
     )
     .eq("id", id)
-    .eq("organisation_id", check.orgId)
+    .eq("organisation_id", auth.orgId)
     .single();
 
   if (error || !attestation) {
-    return NextResponse.json(
-      { error: "Attestation not found" },
-      { status: 404 }
-    );
+    return apiError("Attestation not found", 404);
   }
 
   if (attestation.revoked_at) {
-    return NextResponse.json(
-      { error: "Cannot generate certificate for revoked attestation" },
-      { status: 409 }
-    );
+    return apiError("Cannot generate certificate for revoked attestation", 409);
   }
 
   // Get latest health score (optional enrichment)
   const { data: health } = await db
     .from("trustgraph_health_mv")
     .select("health_score")
-    .eq("organisation_id", check.orgId)
+    .eq("organisation_id", auth.orgId)
     .single();
 
   const doc = generateTrustCertificate({

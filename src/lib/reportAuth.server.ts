@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { supabaseServer } from "@/lib/supabase/admin";
 import type { VersiumRole } from "@/lib/roles";
 
 // ---------------------------------------------------------------------------

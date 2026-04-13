@@ -1,4 +1,4 @@
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseServer } from "@/lib/supabase/admin";
 
 const RUN_ADMIN_TOKENS_TABLE = "run_admin_tokens";
 

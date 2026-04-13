@@ -114,7 +114,7 @@ function TabButton({
         )}
       </span>
       {active && (
-        <div className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full bg-[var(--brand,#0066FF)]" />
+        <div className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full bg-[var(--brand,#673DE6)]" />
       )}
     </button>
   );
@@ -326,7 +326,7 @@ function TrustGraphContent() {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold text-[var(--foreground,#111)]">TrustOrg</h3>
                 <button type="button" onClick={() => setActiveTab("trustorg")}
-                  className="text-xs text-[var(--brand,#0066FF)] hover:underline font-medium">
+                  className="text-xs text-[var(--brand,#673DE6)] hover:underline font-medium">
                   View all
                 </button>
               </div>
@@ -340,7 +340,7 @@ function TrustGraphContent() {
                   <p className="text-xs text-[var(--muted-foreground,#6B7280)] mb-3">No surveys yet</p>
                   {!surveyAtCap && (
                     <Link href="/trustorg/new"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--brand,#0066FF)] text-white text-xs font-medium rounded-lg hover:opacity-90 transition-opacity no-underline">
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--brand,#673DE6)] text-white text-xs font-medium rounded-lg hover:opacity-90 transition-opacity no-underline">
                       Create survey
                     </Link>
                   )}
@@ -363,7 +363,7 @@ function TrustGraphContent() {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold text-[var(--foreground,#111)]">TrustSys</h3>
                 <button type="button" onClick={() => setActiveTab("trustsys")}
-                  className="text-xs text-[var(--brand,#0066FF)] hover:underline font-medium">
+                  className="text-xs text-[var(--brand,#673DE6)] hover:underline font-medium">
                   View all
                 </button>
               </div>
@@ -379,7 +379,7 @@ function TrustGraphContent() {
                   </p>
                   {!sysBlocked && !sysAtCap && (
                     <button type="button" onClick={() => { setActiveTab("trustsys"); setShowSysForm(true); }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--brand,#0066FF)] text-white text-xs font-medium rounded-lg hover:opacity-90 transition-opacity">
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--brand,#673DE6)] text-white text-xs font-medium rounded-lg hover:opacity-90 transition-opacity">
                       Create assessment
                     </button>
                   )}
@@ -421,7 +421,7 @@ function TrustGraphContent() {
               </div>
               {!surveyAtCap && (
                 <Link href="/trustorg/new"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--brand,#0066FF)] text-white text-xs font-medium rounded-lg hover:opacity-90 transition-opacity no-underline">
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--brand,#673DE6)] text-white text-xs font-medium rounded-lg hover:opacity-90 transition-opacity no-underline">
                   <PlusIcon /> Create survey
                 </Link>
               )}
@@ -467,7 +467,7 @@ function TrustGraphContent() {
                               Manage
                             </Link>
                             <Link href={`/dashboard/surveys/${survey.id}/results`}
-                              className="text-xs px-2 py-1 rounded bg-[var(--brand,#0066FF)] text-white hover:opacity-90 transition-opacity no-underline">
+                              className="text-xs px-2 py-1 rounded bg-[var(--brand,#673DE6)] text-white hover:opacity-90 transition-opacity no-underline">
                               Results
                             </Link>
                           </div>
@@ -492,7 +492,7 @@ function TrustGraphContent() {
               </div>
               {!sysBlocked && !sysAtCap && !showSysForm && (
                 <button type="button" onClick={() => setShowSysForm(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--brand,#0066FF)] text-white text-xs font-medium rounded-lg hover:opacity-90 transition-opacity">
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--brand,#673DE6)] text-white text-xs font-medium rounded-lg hover:opacity-90 transition-opacity">
                   <PlusIcon /> Create assessment
                 </button>
               )}
@@ -505,7 +505,7 @@ function TrustGraphContent() {
                   <label htmlFor="sys-name" className="block text-sm font-medium text-[var(--foreground,#111)] mb-1">System name</label>
                   <input id="sys-name" type="text" required value={formName} onChange={(e) => setFormName(e.target.value)}
                     placeholder="e.g. Customer AI Chatbot"
-                    className="w-full px-3 py-2 border border-[var(--border,rgba(0,0,0,0.08))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand,#0066FF)] focus:border-transparent" />
+                    className="w-full px-3 py-2 border border-[var(--border,rgba(0,0,0,0.08))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand,#673DE6)] focus:border-transparent" />
                 </div>
                 <div>
                   <label htmlFor="sys-version" className="block text-sm font-medium text-[var(--foreground,#111)] mb-1">
@@ -513,7 +513,7 @@ function TrustGraphContent() {
                   </label>
                   <input id="sys-version" type="text" value={formVersion} onChange={(e) => setFormVersion(e.target.value)}
                     placeholder="e.g. v1.0"
-                    className="w-full px-3 py-2 border border-[var(--border,rgba(0,0,0,0.08))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand,#0066FF)] focus:border-transparent" />
+                    className="w-full px-3 py-2 border border-[var(--border,rgba(0,0,0,0.08))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand,#673DE6)] focus:border-transparent" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -521,7 +521,7 @@ function TrustGraphContent() {
                       Type <span className="text-[var(--muted-foreground,#6B7280)] font-normal">(optional)</span>
                     </label>
                     <select id="sys-type" value={formType} onChange={(e) => setFormType(e.target.value)}
-                      className="w-full px-3 py-2 border border-[var(--border,rgba(0,0,0,0.08))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand,#0066FF)] focus:border-transparent bg-white">
+                      className="w-full px-3 py-2 border border-[var(--border,rgba(0,0,0,0.08))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand,#673DE6)] focus:border-transparent bg-white">
                       <option value="">Select type</option>
                       <option value="rag_app">RAG app</option>
                       <option value="agent">Agent</option>
@@ -535,7 +535,7 @@ function TrustGraphContent() {
                       Environment <span className="text-[var(--muted-foreground,#6B7280)] font-normal">(optional)</span>
                     </label>
                     <select id="sys-env" value={formEnvironment} onChange={(e) => setFormEnvironment(e.target.value)}
-                      className="w-full px-3 py-2 border border-[var(--border,rgba(0,0,0,0.08))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand,#0066FF)] focus:border-transparent bg-white">
+                      className="w-full px-3 py-2 border border-[var(--border,rgba(0,0,0,0.08))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand,#673DE6)] focus:border-transparent bg-white">
                       <option value="">Select environment</option>
                       <option value="prod">Production</option>
                       <option value="staging">Staging</option>
@@ -546,7 +546,7 @@ function TrustGraphContent() {
                 {formError && <p className="text-sm text-red-600">{formError}</p>}
                 <div className="flex items-center gap-2">
                   <button type="submit" disabled={formLoading}
-                    className="px-4 py-2 bg-[var(--brand,#0066FF)] text-white font-medium rounded-lg hover:opacity-90 transition-opacity text-sm disabled:opacity-50">
+                    className="px-4 py-2 bg-[var(--brand,#673DE6)] text-white font-medium rounded-lg hover:opacity-90 transition-opacity text-sm disabled:opacity-50">
                     {formLoading ? "Creating..." : "Create"}
                   </button>
                   <button type="button" onClick={() => { setShowSysForm(false); setFormError(null); }}
@@ -609,7 +609,7 @@ function TrustGraphContent() {
                             {a.ibg_status === "active" || a.ibg_status === "draft" ? "View IBG" : "Define IBG"}
                           </Link>
                           <Link href={`/trustsys/${a.id}/assess`}
-                            className="text-xs px-3 py-1.5 rounded-lg bg-[var(--brand,#0066FF)] text-white hover:opacity-90 transition-opacity font-medium no-underline">
+                            className="text-xs px-3 py-1.5 rounded-lg bg-[var(--brand,#673DE6)] text-white hover:opacity-90 transition-opacity font-medium no-underline">
                             {a.has_in_progress ? "Continue" : "Assess"}
                           </Link>
                         </div>
@@ -659,7 +659,7 @@ function TrustGraphContent() {
                                       <td className="py-2.5 text-right">
                                         {r.status === "completed" ? (
                                           <Link href={`/trustsys/${a.id}/results/${r.id}`}
-                                            className="text-xs text-[var(--brand,#0066FF)] hover:underline font-medium no-underline">
+                                            className="text-xs text-[var(--brand,#673DE6)] hover:underline font-medium no-underline">
                                             View results
                                           </Link>
                                         ) : <span className="text-xs text-[var(--muted-foreground,#6B7280)]">&mdash;</span>}
@@ -698,7 +698,7 @@ function PlusIcon() {
 function LoadingSpinner({ small }: { small?: boolean }) {
   return (
     <div className={`flex items-center gap-2 text-sm text-[var(--muted-foreground,#6B7280)] ${small ? "py-2" : "py-8"}`}>
-      <div className={`${small ? "w-3 h-3" : "w-4 h-4"} border-2 border-[var(--brand,#0066FF)] border-t-transparent rounded-full animate-spin`} />
+      <div className={`${small ? "w-3 h-3" : "w-4 h-4"} border-2 border-[var(--brand,#673DE6)] border-t-transparent rounded-full animate-spin`} />
       Loading...
     </div>
   );
@@ -711,12 +711,12 @@ function EmptyState({ message, action }: { message: string; action?: { label: st
       {action && (
         action.href ? (
           <Link href={action.href}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[var(--brand,#0066FF)] text-white font-medium rounded-lg hover:opacity-90 transition-opacity text-sm no-underline">
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[var(--brand,#673DE6)] text-white font-medium rounded-lg hover:opacity-90 transition-opacity text-sm no-underline">
             {action.label}
           </Link>
         ) : (
           <button type="button" onClick={action.onClick}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[var(--brand,#0066FF)] text-white font-medium rounded-lg hover:opacity-90 transition-opacity text-sm">
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[var(--brand,#673DE6)] text-white font-medium rounded-lg hover:opacity-90 transition-opacity text-sm">
             {action.label}
           </button>
         )

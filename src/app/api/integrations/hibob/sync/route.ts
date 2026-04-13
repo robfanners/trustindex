@@ -1,34 +1,20 @@
-import { NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabaseServer";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
+import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 import { fetchCompanyStructure } from "@/lib/hibob";
 
 export async function POST() {
-  // Auth check
-  const authClient = await createSupabaseServerClient();
-  const { data: { user } } = await authClient.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const db = supabaseServer();
-  const { data: profile } = await db
-    .from("profiles")
-    .select("organisation_id")
-    .eq("id", user.id)
-    .single();
-
-  const orgId = profile?.organisation_id as string | null;
-  if (!orgId) return NextResponse.json({ error: "No organisation found" }, { status: 400 });
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
 
   // Fetch HiBob credentials
-  const { data: conn } = await db
+  const { data: conn } = await auth.db
     .from("integration_connections")
     .select("access_token, refresh_token")
-    .eq("organisation_id", orgId)
+    .eq("organisation_id", auth.orgId)
     .eq("provider", "hibob")
     .single();
 
   if (!conn?.access_token || !conn?.refresh_token) {
-    return NextResponse.json({ error: "HiBob not connected" }, { status: 400 });
+    return apiError("HiBob not connected", 400);
   }
 
   const serviceId = conn.access_token as string;
@@ -42,16 +28,16 @@ export async function POST() {
   // Map divisions → subsidiaries
   if (structure.divisions?.length) {
     for (const div of structure.divisions) {
-      const { data: existing } = await db
+      const { data: existing } = await auth.db
         .from("subsidiaries")
         .select("id")
-        .eq("organisation_id", orgId)
+        .eq("organisation_id", auth.orgId)
         .eq("name", div.name)
         .single();
 
       if (!existing) {
-        await db.from("subsidiaries").insert({
-          organisation_id: orgId,
+        await auth.db.from("subsidiaries").insert({
+          organisation_id: auth.orgId,
           name: div.name,
         });
         summary.subsidiaries++;
@@ -60,19 +46,19 @@ export async function POST() {
   }
 
   // Reload subsidiaries for FK lookup
-  const { data: allSubs } = await db
+  const { data: allSubs } = await auth.db
     .from("subsidiaries")
     .select("id, name")
-    .eq("organisation_id", orgId);
+    .eq("organisation_id", auth.orgId);
   const subByName = new Map((allSubs ?? []).map((s) => [s.name, s.id]));
 
   // Map departments → functions
   if (structure.departments?.length) {
     for (const dept of structure.departments) {
-      const { data: existing } = await db
+      const { data: existing } = await auth.db
         .from("functions")
         .select("id")
-        .eq("organisation_id", orgId)
+        .eq("organisation_id", auth.orgId)
         .eq("name", dept.name)
         .single();
 
@@ -84,8 +70,8 @@ export async function POST() {
           if (parentDiv) subsidiaryId = subByName.get(parentDiv.name) ?? null;
         }
 
-        await db.from("functions").insert({
-          organisation_id: orgId,
+        await auth.db.from("functions").insert({
+          organisation_id: auth.orgId,
           name: dept.name,
           subsidiary_id: subsidiaryId,
         });
@@ -95,19 +81,19 @@ export async function POST() {
   }
 
   // Reload functions for FK lookup
-  const { data: allFns } = await db
+  const { data: allFns } = await auth.db
     .from("functions")
     .select("id, name")
-    .eq("organisation_id", orgId);
+    .eq("organisation_id", auth.orgId);
   const fnByName = new Map((allFns ?? []).map((f) => [f.name, f.id]));
 
   // Map teams → teams
   if (structure.teams?.length) {
     for (const team of structure.teams) {
-      const { data: existing } = await db
+      const { data: existing } = await auth.db
         .from("teams")
         .select("id")
-        .eq("organisation_id", orgId)
+        .eq("organisation_id", auth.orgId)
         .eq("name", team.name)
         .single();
 
@@ -121,18 +107,18 @@ export async function POST() {
 
         // If no parent function found, link to "Project" function
         if (!functionId) {
-          const { data: projectFn } = await db
+          const { data: projectFn } = await auth.db
             .from("functions")
             .select("id")
-            .eq("organisation_id", orgId)
+            .eq("organisation_id", auth.orgId)
             .eq("is_project_type", true)
             .single();
           functionId = projectFn?.id ?? null;
         }
 
         if (functionId) {
-          await db.from("teams").insert({
-            organisation_id: orgId,
+          await auth.db.from("teams").insert({
+            organisation_id: auth.orgId,
             function_id: functionId,
             name: team.name,
           });
@@ -143,13 +129,13 @@ export async function POST() {
   }
 
   // Update last_synced_at
-  await db
+  await auth.db
     .from("integration_connections")
     .update({ last_synced_at: new Date().toISOString() })
-    .eq("organisation_id", orgId)
+    .eq("organisation_id", auth.orgId)
     .eq("provider", "hibob");
 
-  return NextResponse.json({
+  return apiOk({
     ok: true,
     summary,
   });

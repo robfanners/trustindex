@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import AuthenticatedShell from "@/components/AuthenticatedShell";
 import RequireAuth from "@/components/RequireAuth";
+import EmptyState from "@/components/ui/EmptyState";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -326,7 +327,18 @@ function ActionsContent() {
 
       {/* Empty state */}
       {!loading && !error && actions.length === 0 && total === 0 && (
-        <EmptyState hasFilters={!!(filters.status || filters.severity || filters.source)} />
+        <div className="flex justify-center">
+          <div className="max-w-md">
+            <EmptyState
+              icon="✅"
+              title="No remediation actions"
+              description="Track and complete recommended actions from your assessments."
+              ctaLabel="Run an assessment first"
+              secondaryLabel="View TrustOrg Surveys"
+              secondaryHref="/trustorg"
+            />
+          </div>
+        </div>
       )}
 
       {/* Filtered empty */}
@@ -750,48 +762,6 @@ function StatCard({
   );
 }
 
-function EmptyState({ hasFilters }: { hasFilters: boolean }) {
-  return (
-    <div className="border border-border rounded-xl p-8 text-center">
-      <div className="w-12 h-12 rounded-full bg-brand/10 flex items-center justify-center mx-auto mb-4">
-        <svg
-          className="w-6 h-6 text-brand"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.5}
-            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-      </div>
-      <h2 className="text-lg font-medium text-foreground mb-2">
-        {hasFilters ? "No matching actions" : "No actions yet"}
-      </h2>
-      <p className="text-sm text-muted-foreground max-w-md mx-auto mb-4">
-        Actions are created from assessment recommendations. Complete a TrustOrg
-        survey or TrustSys assessment to generate actionable recommendations.
-      </p>
-      <div className="flex items-center justify-center gap-3">
-        <Link
-          href="/trustorg"
-          className="text-sm px-4 py-2 rounded-lg border border-border text-foreground hover:bg-muted transition-colors"
-        >
-          TrustOrg Surveys
-        </Link>
-        <Link
-          href="/trustsys"
-          className="text-sm px-4 py-2 rounded-lg bg-brand text-white hover:bg-brand/90 transition-colors"
-        >
-          TrustSys Assessments
-        </Link>
-      </div>
-    </div>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Helpers

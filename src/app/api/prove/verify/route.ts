@@ -1,21 +1,16 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { NextRequest } from "next/server";
+import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 
 export async function GET(req: NextRequest) {
   // Require authentication but not a specific tier
-  const authClient = await createSupabaseServerClient();
-  const { data: { user } } = await authClient.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-  }
+  const auth = await requireAuth({ orgOptional: true });
+  if (auth.error) return auth.error;
+  const { db } = auth;
 
   const verificationId = req.nextUrl.searchParams.get("id");
   if (!verificationId) {
-    return NextResponse.json({ error: "id parameter is required" }, { status: 400 });
+    return apiError("id parameter is required", 400);
   }
-
-  const db = supabaseServer();
 
   // Search attestations first
   const { data: attestation } = await db
@@ -32,7 +27,7 @@ export async function GET(req: NextRequest) {
       .eq("id", attestation.organisation_id)
       .single();
 
-    return NextResponse.json({
+    return apiOk({
       found: true,
       type: "attestation",
       record: {
@@ -58,7 +53,7 @@ export async function GET(req: NextRequest) {
       .eq("id", provenance.organisation_id)
       .single();
 
-    return NextResponse.json({
+    return apiOk({
       found: true,
       type: "provenance",
       record: {
@@ -82,7 +77,7 @@ export async function GET(req: NextRequest) {
       .eq("id", incidentLock.organisation_id)
       .single();
 
-    return NextResponse.json({
+    return apiOk({
       found: true,
       type: "incident_lock",
       record: {
@@ -94,5 +89,5 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  return NextResponse.json({ found: false });
+  return apiOk({ found: false });
 }

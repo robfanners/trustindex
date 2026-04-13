@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { getServerOrigin, safeRedirectPath } from "@/lib/url";
+import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 
 // ---------------------------------------------------------------------------
 // GET /auth/callback — Server-side PKCE code exchange
@@ -16,6 +17,15 @@ import { getServerOrigin, safeRedirectPath } from "@/lib/url";
 // ---------------------------------------------------------------------------
 
 export async function GET(request: NextRequest) {
+  // Rate limiting: 20 requests per minute (auth callbacks from multiple users/devices)
+  const ip = getClientIp(request.headers);
+  const limit = checkRateLimit(ip, { windowMs: 60_000, maxRequests: 20 });
+  if (!limit.allowed) {
+    const origin = getServerOrigin(request);
+    return NextResponse.redirect(
+      new URL("/auth/login?error=rate_limited", origin)
+    );
+  }
   const { searchParams } = request.nextUrl;
   const code = searchParams.get("code");
   const next = safeRedirectPath(searchParams.get("next"));

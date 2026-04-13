@@ -1,24 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireTier } from "@/lib/requireTier";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { requireAuth, checkTierAccess } from "@/lib/apiHelpers";
 import { hashPayload } from "@/lib/prove/chain";
 import { writeAuditLog } from "@/lib/audit";
 
 type Ctx = { params: Promise<{ versionId: string }> };
 
 export async function GET(_req: NextRequest, ctx: Ctx) {
-  const check = await requireTier("Verify");
-  if (!check.authorized) return check.response;
-  if (!check.orgId) return NextResponse.json({ error: "No organisation linked" }, { status: 400 });
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
+
+  const tierCheck = checkTierAccess(auth.plan, "Verify");
+  if (tierCheck) return tierCheck;
 
   const { versionId } = await ctx.params;
-  const db = supabaseServer();
+  const db = auth.db;
 
   const { data, error } = await db
     .from("policy_versions")
     .select("*, ai_policies(policy_type)")
     .eq("id", versionId)
-    .eq("organisation_id", check.orgId)
+    .eq("organisation_id", auth.orgId)
     .single();
 
   if (error || !data) return NextResponse.json({ error: "Policy version not found" }, { status: 404 });
@@ -26,20 +27,22 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
 }
 
 export async function PATCH(req: NextRequest, ctx: Ctx) {
-  const check = await requireTier("Verify");
-  if (!check.authorized) return check.response;
-  if (!check.orgId) return NextResponse.json({ error: "No organisation linked" }, { status: 400 });
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
+
+  const tierCheck = checkTierAccess(auth.plan, "Verify");
+  if (tierCheck) return tierCheck;
 
   const { versionId } = await ctx.params;
   const body = await req.json();
-  const db = supabaseServer();
+  const db = auth.db;
 
   // Fetch current version
   const { data: current, error: fetchErr } = await db
     .from("policy_versions")
     .select("*")
     .eq("id", versionId)
-    .eq("organisation_id", check.orgId)
+    .eq("organisation_id", auth.orgId)
     .single();
 
   if (fetchErr || !current) return NextResponse.json({ error: "Policy version not found" }, { status: 404 });
@@ -61,7 +64,7 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
       update.status = "active";
       update.policy_hash = hashPayload(snapshot as Record<string, unknown>);
       update.published_at = now;
-      update.published_by = check.userId;
+      update.published_by = auth.user.id;
 
       // Supersede previous active version
       await db
@@ -91,11 +94,11 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   await writeAuditLog({
-    organisationId: check.orgId,
+    organisationId: auth.orgId,
     entityType: "policy_version",
     entityId: versionId,
     actionType: "status_change",
-    performedBy: check.userId,
+    performedBy: auth.user.id,
     metadata: { from: current.status, to: data.status },
   });
 

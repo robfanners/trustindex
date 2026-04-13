@@ -382,6 +382,35 @@ function PoliciesContent() {
     }
   }
 
+  // Download handler — exports policy as a text file
+  function handleDownload(policy: Policy) {
+    const title = policy.title || POLICY_TYPES[policy.policy_type] || policy.policy_type;
+    const header = [
+      title,
+      "=".repeat(title.length),
+      "",
+      `Type: ${POLICY_TYPES[policy.policy_type] ?? policy.policy_type}`,
+      `Status: ${STATUS_LABELS[policy.status] ?? policy.status}`,
+      `Version: v${policy.version}`,
+      `Created: ${formatDate(policy.created_at)}`,
+      `Last Updated: ${formatDate(policy.updated_at || policy.created_at)}`,
+      policy.approved_at ? `Approved: ${formatDate(policy.approved_at)}` : null,
+      "",
+      "---",
+      "",
+    ].filter(Boolean).join("\n");
+
+    const content = header + (policy.content || "(No content)");
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${title.replace(/[^a-zA-Z0-9 ]/g, "").replace(/\s+/g, "-").toLowerCase()}-v${policy.version}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showActionToast("Policy downloaded");
+  }
+
   // Archive handler
   async function handleArchive(policy: Policy) {
     try {
@@ -420,7 +449,7 @@ function PoliciesContent() {
           </Link>
           <button
             onClick={() => setShowCreate(true)}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--brand,#0066FF)] px-3 py-1.5 text-sm font-medium text-white hover:bg-[var(--brand,#0066FF)]/90 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--brand,#673DE6)] px-3 py-1.5 text-sm font-medium text-white hover:bg-[var(--brand,#673DE6)]/90 transition-colors"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v6m0 0v6m0-6h6m-6 0H6" /></svg>
             New Policy
@@ -443,7 +472,7 @@ function PoliciesContent() {
           placeholder="Search policies..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="h-8 rounded-lg border border-border bg-background px-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[var(--brand,#0066FF)]/20 w-56"
+          className="h-8 rounded-lg border border-border bg-background px-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[var(--brand,#673DE6)]/20 w-56"
         />
         <select
           value={statusFilter}
@@ -498,7 +527,7 @@ function PoliciesContent() {
           <div className="flex items-center justify-center gap-2">
             <button
               onClick={() => setShowCreate(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--brand,#0066FF)] px-3 py-1.5 text-sm font-medium text-white hover:bg-[var(--brand,#0066FF)]/90 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--brand,#673DE6)] px-3 py-1.5 text-sm font-medium text-white hover:bg-[var(--brand,#673DE6)]/90 transition-colors"
             >
               New Policy
             </button>
@@ -577,7 +606,7 @@ function PoliciesContent() {
                   value={createTitle}
                   onChange={(e) => setCreateTitle(e.target.value)}
                   placeholder="e.g. AI Acceptable Use Policy"
-                  className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand,#0066FF)]/20"
+                  className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand,#673DE6)]/20"
                   autoFocus
                 />
               </div>
@@ -604,7 +633,7 @@ function PoliciesContent() {
                 <button
                   type="submit"
                   disabled={!createTitle.trim() || submitting}
-                  className="rounded-lg bg-[var(--brand,#0066FF)] px-3 py-1.5 text-sm font-medium text-white hover:bg-[var(--brand,#0066FF)]/90 transition-colors disabled:opacity-50"
+                  className="rounded-lg bg-[var(--brand,#673DE6)] px-3 py-1.5 text-sm font-medium text-white hover:bg-[var(--brand,#673DE6)]/90 transition-colors disabled:opacity-50"
                 >
                   {submitting ? "Creating..." : "Create Policy"}
                 </button>
@@ -631,7 +660,7 @@ function PoliciesContent() {
           ) : undefined
         }
         actions={
-          selected && selected.status !== "archived" ? (
+          selected ? (
             <>
               {selected.status === "draft" && (
                 <button
@@ -658,11 +687,20 @@ function PoliciesContent() {
                 </button>
               )}
               <button
-                onClick={() => handleArchive(selected)}
-                className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                onClick={() => handleDownload(selected)}
+                className="rounded-lg border px-3 py-1.5 text-sm font-medium hover:bg-accent transition-colors inline-flex items-center gap-1.5"
               >
-                Archive
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                Download
               </button>
+              {selected.status !== "archived" && (
+                <button
+                  onClick={() => handleArchive(selected)}
+                  className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  Archive
+                </button>
+              )}
             </>
           ) : undefined
         }
@@ -732,7 +770,7 @@ function PoliciesContent() {
                       setShowLinkDropdown(!showLinkDropdown);
                       if (!showLinkDropdown) fetchOrgSystems();
                     }}
-                    className="text-xs text-[var(--brand,#0066FF)] hover:text-[var(--brand,#0066FF)]/80 font-medium"
+                    className="text-xs text-[var(--brand,#673DE6)] hover:text-[var(--brand,#673DE6)]/80 font-medium"
                   >
                     {showLinkDropdown ? "Cancel" : "+ Link System"}
                   </button>
@@ -862,7 +900,7 @@ function PoliciesContent() {
                       setEditContent(selected.content ?? "");
                       setEditingContent(true);
                     }}
-                    className="text-xs text-[var(--brand,#0066FF)] hover:text-[var(--brand,#0066FF)]/80 font-medium"
+                    className="text-xs text-[var(--brand,#673DE6)] hover:text-[var(--brand,#673DE6)]/80 font-medium"
                   >
                     Edit
                   </button>
@@ -875,7 +913,7 @@ function PoliciesContent() {
                     value={editContent}
                     onChange={(e) => setEditContent(e.target.value)}
                     rows={16}
-                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-[var(--brand,#0066FF)]/20 resize-y"
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-[var(--brand,#673DE6)]/20 resize-y"
                   />
                   <div className="flex items-center gap-2 justify-end">
                     <button
@@ -886,7 +924,7 @@ function PoliciesContent() {
                     </button>
                     <button
                       onClick={handleSaveContent}
-                      className="rounded-lg bg-[var(--brand,#0066FF)] px-3 py-1 text-xs font-medium text-white hover:bg-[var(--brand,#0066FF)]/90 transition-colors"
+                      className="rounded-lg bg-[var(--brand,#673DE6)] px-3 py-1 text-xs font-medium text-white hover:bg-[var(--brand,#673DE6)]/90 transition-colors"
                     >
                       Save
                     </button>
@@ -904,7 +942,7 @@ function PoliciesContent() {
                       setEditContent("");
                       setEditingContent(true);
                     }}
-                    className="text-xs text-[var(--brand,#0066FF)] hover:text-[var(--brand,#0066FF)]/80 font-medium"
+                    className="text-xs text-[var(--brand,#673DE6)] hover:text-[var(--brand,#673DE6)]/80 font-medium"
                   >
                     Add content
                   </button>

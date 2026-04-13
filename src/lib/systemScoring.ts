@@ -137,6 +137,63 @@ export function computeAllScores(
 }
 
 // ---------------------------------------------------------------------------
+// Data Governance scoring (auto-rated from inventory)
+// ---------------------------------------------------------------------------
+
+/**
+ * Score data governance based on system_data_inventory records.
+ * Returns 0 if no inventory, scales up to 100 with:
+ *   - PII/sensitive_pii classification present: +25
+ *   - Residency set (not 'unknown'): +25
+ *   - Retention days set: +25
+ *   - Processor documented: +25
+ */
+export function dataGovernanceScore(
+  hasPiiEntry: boolean,
+  hasResidency: boolean,
+  hasRetention: boolean,
+  hasProcessor: boolean
+): number {
+  let score = 0;
+  if (hasPiiEntry) score += 25;
+  if (hasResidency) score += 25;
+  if (hasRetention) score += 25;
+  if (hasProcessor) score += 25;
+  return score;
+}
+
+// ---------------------------------------------------------------------------
+// Fairness & Bias scoring
+// ---------------------------------------------------------------------------
+
+/**
+ * Score fairness based on assessment status.
+ * Returns 0 if no assessment, 33 if warn, 66 if fail, 100 if pass.
+ * Also considers metric coverage: full score only if 2+ metric types.
+ */
+export function fairnessScore(
+  overallStatus: string | undefined,
+  metricCount: number = 0,
+  passCount: number = 0
+): number {
+  if (!overallStatus || overallStatus === 'draft') return 0;
+
+  const hasMultipleMetricTypes = metricCount >= 2;
+  const passRatio = metricCount > 0 ? passCount / metricCount : 0;
+
+  if (overallStatus === 'pass' && hasMultipleMetricTypes) {
+    return 100;
+  }
+  if (overallStatus === 'warn') {
+    return Math.round(50 * passRatio);
+  }
+  if (overallStatus === 'fail') {
+    return Math.round(25 * passRatio);
+  }
+  return 0;
+}
+
+// ---------------------------------------------------------------------------
 // Risk flags
 // ---------------------------------------------------------------------------
 
@@ -222,4 +279,190 @@ export function computeRiskFlags(
   }
 
   return flags;
+}
+
+// ---------------------------------------------------------------------------
+// Incident Readiness (server-side only)
+// ---------------------------------------------------------------------------
+
+/**
+ * Compute incident readiness score for a system (server-side).
+ * - 0 if no playbooks configured in org + no incidents
+ * - 50 if playbooks exist but no recent incident playbook runs
+ * - 100 if last 3 incidents had playbook runs with 90%+ SLA adherence
+ */
+export async function computeIncidentReadiness(
+  systemId: string,
+  orgId: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  db: any
+): Promise<number> {
+  // Get playbook count
+  const { count: playbookCount } = await db
+    .from("incident_playbooks")
+    .select("id", { count: "exact", head: true })
+    .eq("organisation_id", orgId);
+
+  if ((playbookCount ?? 0) === 0) {
+    // No playbooks = low readiness
+    return 0;
+  }
+
+  // Get last 3 incidents for this system
+  const { data: incidents } = await db
+    .from("incidents")
+    .select("id")
+    .eq("system_id", systemId)
+    .eq("organisation_id", orgId)
+    .order("created_at", { ascending: false })
+    .limit(3);
+
+  if (!incidents || incidents.length === 0) {
+    // No incidents but playbooks exist = partial readiness
+    return 50;
+  }
+
+  // Check playbook run coverage
+  const incidentIds = (incidents as Array<{ id: string }>).map((i) => i.id);
+  const { data: runs } = await db
+    .from("incident_playbook_runs")
+    .select("incident_id")
+    .in("incident_id", incidentIds);
+
+  const incidentsWithRuns = new Set(((runs ?? []) as Array<{ incident_id: string }>).map((r) => r.incident_id)).size;
+  const coverage = incidentsWithRuns / incidents.length;
+
+  if (coverage < 0.67) {
+    // < 67% coverage = partial
+    return 50;
+  }
+
+  // Check SLA adherence on runs with playbooks
+  const { data: breaches } = await db
+    .from("incidents")
+    .select("breach_acknowledge, breach_resolve")
+    .in("id", incidentIds)
+    .not("playbook_id", "is", null);
+
+  if (!breaches || breaches.length === 0) {
+    return 100;
+  }
+
+  const breachCount = (breaches as Array<{ breach_acknowledge: boolean; breach_resolve: boolean }>).filter((b) => b.breach_acknowledge || b.breach_resolve).length;
+  const adherenceRate = (breaches.length - breachCount) / breaches.length;
+
+  return adherenceRate >= 0.9 ? 100 : 75;
+}
+
+// ---------------------------------------------------------------------------
+// Shadow AI Coverage (Capability #1)
+// ---------------------------------------------------------------------------
+
+/**
+ * Score shadow AI coverage based on reviewed sightings in last 90 days.
+ * Returns 0 if no sightings reviewed, 50 if partial, 100 if 1+ reviewed recently.
+ */
+export function shadowAICoverageScore(
+  sightingsCount: number,
+  sightingsReviewedInLast90Days: number
+): number {
+  if (sightingsCount === 0) return 0;
+  if (sightingsReviewedInLast90Days === 0) return 25;
+  if (sightingsReviewedInLast90Days >= 1) return 100;
+  return 0;
+}
+
+// ---------------------------------------------------------------------------
+// Control Coverage (Capability #2)
+// ---------------------------------------------------------------------------
+
+/**
+ * Score control evidence coverage per framework.
+ * Returns % of controls with 1+ evidence link.
+ */
+export function controlCoverageScore(
+  totalControls: number,
+  controlsWithEvidence: number
+): number {
+  if (totalControls === 0) return 0;
+  return Math.round((controlsWithEvidence / totalControls) * 100);
+}
+
+// ---------------------------------------------------------------------------
+// Risk Registry (Capability #3)
+// ---------------------------------------------------------------------------
+
+/**
+ * Score risk registry completeness.
+ * Returns 0 if no risks, 50 if any risk exists without treatment,
+ * 100 if 80%+ of risks have treatment + owner + review date.
+ */
+export function riskRegistryScore(
+  totalRisks: number,
+  risksWithTreatment: number,
+  risksWithOwner: number,
+  risksWithReviewDate: number
+): number {
+  if (totalRisks === 0) return 0;
+
+  // All three attributes required for "complete"
+  const fullyDocumented = Math.min(risksWithTreatment, risksWithOwner, risksWithReviewDate);
+  const completionRate = fullyDocumented / totalRisks;
+
+  if (completionRate >= 0.8) return 100;
+  if (completionRate >= 0.5) return 75;
+  if (completionRate >= 0.2) return 50;
+  return 25;
+}
+
+// ---------------------------------------------------------------------------
+// Accountability (Capability #5)
+// ---------------------------------------------------------------------------
+
+/**
+ * Score accountability completeness per system.
+ * Returns 0 if missing Responsible or Accountable,
+ * 100 if both roles assigned, 75 if only one.
+ */
+export function accountabilityScore(
+  hasResponsible: boolean,
+  hasAccountable: boolean
+): number {
+  if (!hasResponsible && !hasAccountable) return 0;
+  if (hasResponsible && hasAccountable) return 100;
+  return 50;
+}
+
+// ---------------------------------------------------------------------------
+// Explainability (Capability #8)
+// ---------------------------------------------------------------------------
+
+/**
+ * Score explainability of AI system.
+ * Returns 0 if no method, partial if method set + URL,
+ * 100 if reviewed within 180 days AND coverage >= 80%.
+ */
+export function explainabilityScore(
+  method: string,
+  documentationUrl: string | undefined,
+  lastReviewedAt: string | undefined,
+  coveragePercent: number
+): number {
+  if (method === 'none') return 0;
+
+  const hasUrl = !!documentationUrl;
+  const now = new Date();
+  const reviewDate = lastReviewedAt ? new Date(lastReviewedAt) : null;
+  const daysAgo = reviewDate ? Math.floor((now.getTime() - reviewDate.getTime()) / (1000 * 60 * 60 * 24)) : 999;
+
+  if (hasUrl && daysAgo <= 180 && coveragePercent >= 80) {
+    return 100;
+  }
+  if (hasUrl && coveragePercent >= 50) {
+    return 75;
+  }
+  if (hasUrl) {
+    return 50;
+  }
+  return 25;
 }

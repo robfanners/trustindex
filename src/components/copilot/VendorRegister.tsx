@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import EmptyState from "@/components/ui/EmptyState";
 
 type Vendor = {
   id: string;
@@ -195,10 +196,13 @@ export default function VendorRegister() {
 
       {/* Vendor table */}
       {vendors.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-4 text-center">
-          No vendors registered yet. Add vendors manually or they&apos;ll appear
-          automatically from staff declarations.
-        </p>
+        <EmptyState
+          icon="🏢"
+          title="No AI vendors registered"
+          description="Track your third-party AI vendors, their risk levels, and compliance status."
+          ctaLabel="Register your first vendor"
+          ctaAction={() => setShowAdd(true)}
+        />
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm border-collapse">

@@ -1,6 +1,4 @@
-import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 import { writeAuditLog } from "@/lib/audit";
 import {
   createGitHubClient,
@@ -14,31 +12,19 @@ import {
 } from "@/lib/github";
 
 export async function POST() {
-  const authClient = await createSupabaseServerClient();
-  const { data: { user } } = await authClient.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
 
-  const db = supabaseServer();
-  const { data: profile } = await db
-    .from("profiles")
-    .select("organisation_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile?.organisation_id) {
-    return NextResponse.json({ error: "No organisation linked" }, { status: 400 });
-  }
-
-  const { data: connection } = await db
+  const { data: connection } = await auth.db
     .from("integration_connections")
     .select("access_token, sync_config")
-    .eq("organisation_id", profile.organisation_id)
+    .eq("organisation_id", auth.orgId)
     .eq("provider", "github")
     .eq("status", "connected")
     .single();
 
   if (!connection?.access_token) {
-    return NextResponse.json({ error: "GitHub not connected" }, { status: 400 });
+    return apiError("GitHub not connected", 400);
   }
 
   const client = createGitHubClient(connection.access_token);
@@ -70,7 +56,7 @@ export async function POST() {
 
   // Store as runtime signals
   const signals = allEvidence.map((ev) => ({
-    organisation_id: profile.organisation_id,
+    organisation_id: auth.orgId,
     system_name: "github",
     signal_type: "compliance" as const,
     metric_name: ev.type,
@@ -87,21 +73,21 @@ export async function POST() {
   }));
 
   if (signals.length > 0) {
-    await db.from("runtime_signals").insert(signals);
+    await auth.db.from("runtime_signals").insert(signals);
   }
 
-  await db
+  await auth.db
     .from("integration_connections")
     .update({ last_synced_at: new Date().toISOString() })
-    .eq("organisation_id", profile.organisation_id)
+    .eq("organisation_id", auth.orgId)
     .eq("provider", "github");
 
   await writeAuditLog({
-    organisationId: profile.organisation_id,
+    organisationId: auth.orgId,
     entityType: "integration",
     entityId: "github",
     actionType: "synced",
-    performedBy: user.id,
+    performedBy: auth.user.id,
     metadata: {
       evidence_count: allEvidence.length,
       repos_synced: repos.length,
@@ -109,7 +95,7 @@ export async function POST() {
     },
   });
 
-  return NextResponse.json({
+  return apiOk({
     data: {
       evidence_collected: allEvidence.length,
       signals_created: signals.length,

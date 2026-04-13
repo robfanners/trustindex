@@ -1,6 +1,4 @@
-import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { requireAuth, apiError } from "@/lib/apiHelpers";
 import { canExportResults, getUserPlan } from "@/lib/entitlements";
 
 // ---------------------------------------------------------------------------
@@ -16,29 +14,18 @@ function escapeCsv(val: unknown): string {
 }
 
 export async function GET() {
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
+  const { user, db } = auth;
+
   try {
-    // 1. Authenticate
-    const authClient = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await authClient.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    // 2. Plan check
+    // 1. Plan check
     const plan = await getUserPlan(user.id);
     if (!canExportResults(plan)) {
-      return NextResponse.json(
-        { error: "Export requires Pro or Enterprise plan" },
-        { status: 403 }
-      );
+      return apiError("Export requires Pro or Enterprise plan", 403);
     }
 
-    const db = supabaseServer();
-
-    // 3. Fetch user's surveys
+    // 2. Fetch user's surveys
     const { data: runs } = await db
       .from("survey_runs")
       .select("id, title, mode, status, opens_at")
@@ -59,13 +46,13 @@ export async function GET() {
     const runIds = runs.map((r) => r.id);
     const runMap = new Map(runs.map((r) => [r.id, r]));
 
-    // 4. Fetch responses for all runs
+    // 3. Fetch responses for all runs
     const { data: responses } = await db
       .from("responses")
       .select("run_id, invite_token, question_id, value, created_at")
       .in("run_id", runIds);
 
-    // 5. Fetch questions
+    // 4. Fetch questions
     const { data: questions } = await db
       .from("questions")
       .select("id, dimension, prompt");
@@ -74,7 +61,7 @@ export async function GET() {
       (questions || []).map((q: { id: string; dimension: string; prompt: string }) => [q.id, q])
     );
 
-    // 6. Build CSV
+    // 5. Build CSV
     const header = [
       "survey_title",
       "mode",
@@ -121,6 +108,6 @@ export async function GET() {
     });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return apiError(msg, 500);
   }
 }

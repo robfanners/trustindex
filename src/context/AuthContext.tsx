@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import type { User } from "@supabase/supabase-js";
-import { createSupabaseBrowserClient } from "@/lib/supabase-auth-browser";
+import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type Profile = {
   id: string;

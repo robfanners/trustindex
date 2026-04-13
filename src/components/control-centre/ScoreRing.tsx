@@ -83,7 +83,7 @@ function DimensionBar({
       </span>
       <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-gray-100">
         <div
-          className="absolute inset-y-0 left-0 rounded-full bg-[var(--brand,#0066FF)] transition-[width] duration-500 ease-out"
+          className="absolute inset-y-0 left-0 rounded-full bg-[var(--brand,#673DE6)] transition-[width] duration-500 ease-out"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -164,7 +164,7 @@ export default function ScoreRing({ score, orgScore, sysScore, dimensions }: Sco
           href="/govern/trustgraph?tab=trustorg"
           className="group flex items-center gap-2 text-xs text-[var(--muted-foreground,#6B7280)] hover:text-[var(--foreground,#111)] transition-colors no-underline"
         >
-          <span className="flex items-center justify-center w-5 h-5 rounded bg-[var(--brand,#0066FF)]/10 text-[var(--brand,#0066FF)]">
+          <span className="flex items-center justify-center w-5 h-5 rounded bg-[var(--brand,#673DE6)]/10 text-[var(--brand,#673DE6)]">
             <svg width="10" height="10" viewBox="0 0 14 14" fill="none" aria-hidden="true">
               <path d="M7 1L1 4v2c0 3.87 2.56 7.49 6 8.5 3.44-1.01 6-4.63 6-8.5V4L7 1z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" fill="none" />
             </svg>
@@ -209,7 +209,7 @@ export default function ScoreRing({ score, orgScore, sysScore, dimensions }: Sco
 
         <Link
           href="/govern/trustgraph"
-          className="text-xs text-[var(--brand,#0066FF)] hover:text-[var(--brand,#0066FF)]/80 font-medium transition-colors no-underline"
+          className="text-xs text-[var(--brand,#673DE6)] hover:text-[var(--brand,#673DE6)]/80 font-medium transition-colors no-underline"
         >
           View TrustGraph
         </Link>

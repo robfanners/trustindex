@@ -78,7 +78,7 @@ const ACTIONS: Action[] = [
     label: "New Assessment",
     href: "/trustsys",
     icon: <AssessmentIcon />,
-    iconBg: "bg-[var(--brand,#0066FF)]/10 text-[var(--brand,#0066FF)]",
+    iconBg: "bg-[var(--brand,#673DE6)]/10 text-[var(--brand,#673DE6)]",
   },
   {
     label: "Run Policy Check",
@@ -124,7 +124,7 @@ export default function QuickActions() {
           <Link
             key={action.href}
             href={action.href}
-            className="flex items-center gap-2.5 rounded-lg px-2.5 py-2.5 transition-all duration-150 border border-transparent hover:border-[var(--brand,#0066FF)] hover:bg-[var(--brand,#0066FF)]/5 min-w-0"
+            className="flex items-center gap-2.5 rounded-lg px-2.5 py-2.5 transition-all duration-150 border border-transparent hover:border-[var(--brand,#673DE6)] hover:bg-[var(--brand,#673DE6)]/5 min-w-0"
           >
             <span
               className={`shrink-0 flex items-center justify-center w-9 h-9 rounded-lg ${action.iconBg}`}

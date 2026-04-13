@@ -27,7 +27,7 @@ vi.mock("@/lib/prove/chain", () => ({
 
 import { GET, POST } from "@/app/api/prove/incident-locks/route";
 import { requireTier } from "@/lib/requireTier";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseServer } from "@/lib/supabase/admin";
 
 // ---------------------------------------------------------------------------
 // Helpers

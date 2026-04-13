@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 import { isPaidPlan } from "@/lib/entitlements";
 import { sendEmail } from "@/lib/email";
 import { declarationInviteEmail } from "@/lib/emailTemplates";
@@ -8,47 +7,44 @@ import { getServerOrigin } from "@/lib/url";
 
 export async function POST(req: Request) {
   try {
-    const authClient = await createSupabaseServerClient();
-    const { data: { user } } = await authClient.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    const auth = await requireAuth({ withPlan: true });
+    if (auth.error) return auth.error;
+
+    if (!isPaidPlan(auth.plan)) {
+      return apiError("Not available", 403);
     }
 
-    const sb = supabaseServer();
-    const { data: profile } = await sb
+    // Get full_name for email
+    const { data: profile } = await auth.db
       .from("profiles")
-      .select("organisation_id, plan, full_name")
-      .eq("id", user.id)
+      .select("full_name")
+      .eq("id", auth.user.id)
       .single();
-
-    if (!profile?.organisation_id || !isPaidPlan(profile.plan)) {
-      return NextResponse.json({ error: "Not available" }, { status: 403 });
-    }
 
     const body = await req.json();
     const { tokenId, emails } = body as { tokenId: string; emails: string[] };
 
     if (!tokenId || !emails?.length) {
-      return NextResponse.json({ error: "tokenId and emails required" }, { status: 400 });
+      return apiError("tokenId and emails required", 400);
     }
 
     // Validate token belongs to org
-    const { data: token } = await sb
+    const { data: token } = await auth.db
       .from("declaration_tokens")
       .select("id, token, label, organisation_id")
       .eq("id", tokenId)
-      .eq("organisation_id", profile.organisation_id)
+      .eq("organisation_id", auth.orgId)
       .single();
 
     if (!token) {
-      return NextResponse.json({ error: "Token not found" }, { status: 404 });
+      return apiError("Token not found", 404);
     }
 
     // Get org name
-    const { data: org } = await sb
+    const { data: org } = await auth.db
       .from("organisations")
       .select("name")
-      .eq("id", profile.organisation_id)
+      .eq("id", auth.orgId)
       .single();
 
     const origin = getServerOrigin(req);
@@ -60,7 +56,7 @@ export async function POST(req: Request) {
       orgName,
       campaignLabel: token.label ?? "",
       declarationUrl,
-      senderName: profile.full_name ?? undefined,
+      senderName: profile?.full_name ?? undefined,
     });
 
     // Send emails and create invite records
@@ -73,7 +69,7 @@ export async function POST(req: Request) {
       try {
         await sendEmail({ to: email, subject, html });
 
-        await sb.from("declaration_invites").insert({
+        await auth.db.from("declaration_invites").insert({
           token_id: tokenId,
           email,
         });
@@ -84,12 +80,9 @@ export async function POST(req: Request) {
       }
     }
 
-    return NextResponse.json({ sent: sentCount, total: validEmails.length });
+    return apiOk({ sent: sentCount, total: validEmails.length });
   } catch (err: unknown) {
     console.error("[declarations] invite error:", err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Internal server error" },
-      { status: 500 }
-    );
+    return apiError(err instanceof Error ? err.message : "Internal server error", 500);
   }
 }

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 import { writeAuditLog } from "@/lib/audit";
 import { validateGitHubToken } from "@/lib/github";
 import { z } from "zod";
@@ -14,35 +13,23 @@ const connectSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const authClient = await createSupabaseServerClient();
-  const { data: { user } } = await authClient.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-
-  const db = supabaseServer();
-  const { data: profile } = await db
-    .from("profiles")
-    .select("organisation_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile?.organisation_id) {
-    return NextResponse.json({ error: "No organisation linked" }, { status: 400 });
-  }
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
 
   const parsed = connectSchema.safeParse(await req.json());
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid input" }, { status: 400 });
+    return apiError(parsed.error.issues[0]?.message ?? "Invalid input", 400);
   }
 
   const valid = await validateGitHubToken(parsed.data.token);
   if (!valid) {
-    return NextResponse.json({ error: "Invalid GitHub token" }, { status: 400 });
+    return apiError("Invalid GitHub token", 400);
   }
 
-  const { data, error } = await db
+  const { data, error } = await auth.db
     .from("integration_connections")
     .upsert({
-      organisation_id: profile.organisation_id,
+      organisation_id: auth.orgId,
       provider: "github",
       status: "connected",
       access_token: parsed.data.token,
@@ -51,50 +38,38 @@ export async function POST(req: NextRequest) {
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error.message, 500);
 
   await writeAuditLog({
-    organisationId: profile.organisation_id,
+    organisationId: auth.orgId,
     entityType: "integration",
     entityId: data.id,
     actionType: "connected",
-    performedBy: user.id,
+    performedBy: auth.user.id,
     metadata: { provider: "github", repos: parsed.data.repos.length },
   });
 
-  return NextResponse.json({ data: { status: "connected", repos: parsed.data.repos } });
+  return apiOk({ data: { status: "connected", repos: parsed.data.repos } });
 }
 
 export async function DELETE(_req: NextRequest) {
-  const authClient = await createSupabaseServerClient();
-  const { data: { user } } = await authClient.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
 
-  const db = supabaseServer();
-  const { data: profile } = await db
-    .from("profiles")
-    .select("organisation_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile?.organisation_id) {
-    return NextResponse.json({ error: "No organisation linked" }, { status: 400 });
-  }
-
-  await db
+  await auth.db
     .from("integration_connections")
     .update({ status: "disconnected", access_token: null })
-    .eq("organisation_id", profile.organisation_id)
+    .eq("organisation_id", auth.orgId)
     .eq("provider", "github");
 
   await writeAuditLog({
-    organisationId: profile.organisation_id,
+    organisationId: auth.orgId,
     entityType: "integration",
     entityId: "github",
     actionType: "disconnected",
-    performedBy: user.id,
+    performedBy: auth.user.id,
     metadata: { provider: "github" },
   });
 
-  return NextResponse.json({ data: { status: "disconnected" } });
+  return apiOk({ data: { status: "disconnected" } });
 }

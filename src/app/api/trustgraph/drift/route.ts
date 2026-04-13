@@ -1,6 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireAuth, apiError, apiOk, withErrorHandling } from "@/lib/apiHelpers";
-import { requireTier } from "@/lib/requireTier";
+import { requireAuth, checkTierAccess, apiError, apiOk, withErrorHandling } from "@/lib/apiHelpers";
 
 // ---------------------------------------------------------------------------
 // GET /api/trustgraph/drift — list drift events for the user's org
@@ -10,17 +9,13 @@ import { requireTier } from "@/lib/requireTier";
 
 export async function GET(req: NextRequest) {
   return withErrorHandling(async () => {
-    const check = await requireTier("Assure");
-    if (!check.authorized) return check.response;
-
-    if (!check.orgId) {
-      return apiError("No organisation linked", 400);
-    }
-
-    const auth = await requireAuth({ withPlan: false });
+    const auth = await requireAuth();
     if (auth.error) return auth.error;
 
-    const orgId = check.orgId;
+    const tierCheck = checkTierAccess(auth.plan, "Assure");
+    if (tierCheck) return tierCheck;
+
+    const orgId = auth.orgId;
     const db = auth.db;
     const url = req.nextUrl;
 

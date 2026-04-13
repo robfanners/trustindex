@@ -1,26 +1,14 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { NextRequest } from "next/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 
 type RouteContext = { params: Promise<{ systemId: string }> };
 
 // ---------------------------------------------------------------------------
-// Helper: authenticate + verify system ownership
+// Helper: verify system ownership
 // ---------------------------------------------------------------------------
 
-async function authenticateAndAuthorise(systemId: string) {
-  const authClient = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await authClient.auth.getUser();
-
-  if (!user) {
-    return {
-      error: NextResponse.json({ error: "Not authenticated" }, { status: 401 }),
-    };
-  }
-
-  const db = supabaseServer();
+async function verifySystemOwnership(db: SupabaseClient, userId: string, systemId: string) {
   const { data: system, error: sysErr } = await db
     .from("systems")
     .select("id, owner_id")
@@ -29,17 +17,17 @@ async function authenticateAndAuthorise(systemId: string) {
 
   if (sysErr || !system) {
     return {
-      error: NextResponse.json({ error: "System not found" }, { status: 404 }),
+      error: apiError("System not found", 404),
     };
   }
 
-  if (system.owner_id !== user.id) {
+  if (system.owner_id !== userId) {
     return {
-      error: NextResponse.json({ error: "Not authorised" }, { status: 403 }),
+      error: apiError("Not authorised", 403),
     };
   }
 
-  return { user, system };
+  return { system };
 }
 
 // ---------------------------------------------------------------------------
@@ -47,9 +35,13 @@ async function authenticateAndAuthorise(systemId: string) {
 // ---------------------------------------------------------------------------
 
 export async function POST(req: NextRequest, context: RouteContext) {
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
+  const { user, db } = auth;
+
   try {
     const { systemId } = await context.params;
-    const result = await authenticateAndAuthorise(systemId);
+    const result = await verifySystemOwnership(db, user.id, systemId);
     if ("error" in result) return result.error;
 
     const body = await req.json().catch(() => ({}));
@@ -57,8 +49,6 @@ export async function POST(req: NextRequest, context: RouteContext) {
       typeof body.version_label === "string"
         ? body.version_label.trim() || null
         : null;
-
-    const db = supabaseServer();
 
     const { data: run, error: insertErr } = await db
       .from("system_runs")
@@ -72,16 +62,13 @@ export async function POST(req: NextRequest, context: RouteContext) {
       .single();
 
     if (insertErr || !run) {
-      return NextResponse.json(
-        { error: insertErr?.message || "Failed to create run" },
-        { status: 500 }
-      );
+      return apiError(insertErr?.message || "Failed to create run", 500);
     }
 
-    return NextResponse.json({ run }, { status: 201 });
+    return apiOk({ run }, 201);
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return apiError(message, 500);
   }
 }
 
@@ -90,12 +77,14 @@ export async function POST(req: NextRequest, context: RouteContext) {
 // ---------------------------------------------------------------------------
 
 export async function GET(_req: NextRequest, context: RouteContext) {
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
+  const { user, db } = auth;
+
   try {
     const { systemId } = await context.params;
-    const result = await authenticateAndAuthorise(systemId);
+    const result = await verifySystemOwnership(db, user.id, systemId);
     if ("error" in result) return result.error;
-
-    const db = supabaseServer();
 
     const { data: runs, error: listErr } = await db
       .from("system_runs")
@@ -106,12 +95,12 @@ export async function GET(_req: NextRequest, context: RouteContext) {
       .order("created_at", { ascending: false });
 
     if (listErr) {
-      return NextResponse.json({ error: listErr.message }, { status: 500 });
+      return apiError(listErr.message, 500);
     }
 
-    return NextResponse.json({ runs: runs || [] });
+    return apiOk({ runs: runs || [] });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return apiError(message, 500);
   }
 }

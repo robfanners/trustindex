@@ -11,8 +11,9 @@
  */
 
 import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { supabaseServer } from "@/lib/supabase/admin";
+import { hasTierAccess, type VersiumTier } from "@/lib/tiers";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { User } from "@supabase/supabase-js";
 import type { ZodSchema, ZodError } from "zod";
@@ -89,6 +90,41 @@ export async function requireAuth(
   }
 
   return { user, orgId, plan, db };
+}
+
+// ---------------------------------------------------------------------------
+// Tier checking
+// ---------------------------------------------------------------------------
+
+/**
+ * After calling requireAuth(), optionally check that the user's plan meets
+ * a required tier. If tier access is denied, returns an error response.
+ *
+ * ```ts
+ * const auth = await requireAuth();
+ * if (auth.error) return auth.error;
+ *
+ * const tierCheck = checkTierAccess(auth.plan, "Verify");
+ * if (tierCheck) return tierCheck; // returns error response
+ *
+ * // Now user is guaranteed to have "Verify" tier or above
+ * ```
+ */
+export function checkTierAccess(
+  userPlan: string,
+  requiredTier: VersiumTier
+): NextResponse | undefined {
+  if (!hasTierAccess(userPlan, requiredTier)) {
+    return NextResponse.json(
+      {
+        error: "Plan upgrade required",
+        required_tier: requiredTier,
+        current_plan: userPlan,
+      },
+      { status: 403 }
+    );
+  }
+  return undefined;
 }
 
 // ---------------------------------------------------------------------------

@@ -73,7 +73,7 @@ export default function ActivityFeed({ items }: { items: ActivityItem[] }) {
         </h3>
         <Link
           href="/actions"
-          className="text-xs font-medium text-[var(--brand,#0066FF)] hover:underline"
+          className="text-xs font-medium text-[var(--brand,#673DE6)] hover:underline"
         >
           All activity
         </Link>

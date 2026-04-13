@@ -16,7 +16,7 @@ vi.mock("@/lib/rateLimit", () => ({
 }));
 
 import { GET } from "@/app/api/public/verify/route";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseServer } from "@/lib/supabase/admin";
 import { checkRateLimit } from "@/lib/rateLimit";
 
 // ---------------------------------------------------------------------------

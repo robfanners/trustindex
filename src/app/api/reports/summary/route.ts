@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { getAuthenticatedOrgWithRole } from "@/lib/reportAuth.server";
 import { apiError, apiOk, withErrorHandling } from "@/lib/apiHelpers";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseServer } from "@/lib/supabase/admin";
 
 // ---------------------------------------------------------------------------
 // GET /api/reports/summary — aggregated board summary for date range

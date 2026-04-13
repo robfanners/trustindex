@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { createSupabaseBrowserClient } from "@/lib/supabase-auth-browser";
+import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import AuthenticatedShell from "@/components/AuthenticatedShell";
 import RequireAuth from "@/components/RequireAuth";
 import { useAuth } from "@/context/AuthContext";

@@ -1,6 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { NextRequest } from "next/server";
+import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 
 // ---------------------------------------------------------------------------
 // POST /api/claim-explorer-run
@@ -11,14 +10,9 @@ import { supabaseServer } from "@/lib/supabaseServer";
 export async function POST(req: NextRequest) {
   try {
     // 1. Require authentication
-    const authClient = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await authClient.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
+    const auth = await requireAuth({ orgOptional: true });
+    if (auth.error) return auth.error;
+    const { user, db } = auth;
 
     // 2. Parse body
     const body = await req.json();
@@ -29,10 +23,8 @@ export async function POST(req: NextRequest) {
     const role = body.role as string | undefined;
 
     if (!runId) {
-      return NextResponse.json({ error: "runId is required" }, { status: 400 });
+      return apiError("runId is required", 400);
     }
-
-    const db = supabaseServer();
 
     // 3. Verify the run exists and is unclaimed (owner_user_id IS NULL)
     const { data: run, error: runErr } = await db
@@ -42,18 +34,15 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (runErr || !run) {
-      return NextResponse.json({ error: "Survey not found" }, { status: 404 });
+      return apiError("Survey not found", 404);
     }
 
     if (run.owner_user_id) {
       // Already claimed — not an error if it's the same user
       if (run.owner_user_id === user.id) {
-        return NextResponse.json({ ok: true, alreadyClaimed: true });
+        return apiOk({ ok: true, alreadyClaimed: true });
       }
-      return NextResponse.json(
-        { error: "This survey is already linked to another account" },
-        { status: 403 }
-      );
+      return apiError("This survey is already linked to another account", 403);
     }
 
     // 4. Claim the run
@@ -63,7 +52,7 @@ export async function POST(req: NextRequest) {
       .eq("id", runId);
 
     if (claimErr) {
-      return NextResponse.json({ error: claimErr.message }, { status: 500 });
+      return apiError(claimErr.message, 500);
     }
 
     // 5. Update profile with onboarding data (if provided)
@@ -80,9 +69,9 @@ export async function POST(req: NextRequest) {
         .eq("id", user.id);
     }
 
-    return NextResponse.json({ ok: true });
+    return apiOk({ ok: true });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return apiError(msg, 500);
   }
 }

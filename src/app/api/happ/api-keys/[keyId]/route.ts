@@ -1,50 +1,54 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireTier } from "@/lib/requireTier";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 import { writeAuditLog } from "@/lib/audit";
+import { hasTierAccess } from "@/lib/tiers";
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ keyId: string }> }
 ) {
-  const check = await requireTier("Assure");
-  if (!check.authorized) return check.response;
-  if (!check.orgId) return NextResponse.json({ error: "No organisation linked" }, { status: 400 });
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
+  if (!hasTierAccess(auth.plan, "Assure")) {
+    return apiError("Plan upgrade required", 403);
+  }
 
   const { keyId } = await params;
-  const db = supabaseServer();
+  const db = auth.db;
   const { data, error } = await db
     .from("api_keys")
     .select("id, name, key_prefix, scopes, status, tier_at_creation, last_used_at, expires_at, revoked_at, created_at, profiles!api_keys_created_by_fkey(full_name, email)")
     .eq("id", keyId)
-    .eq("organisation_id", check.orgId)
+    .eq("organisation_id", auth.orgId)
     .single();
 
-  if (error || !data) return NextResponse.json({ error: "API key not found" }, { status: 404 });
-  return NextResponse.json(data);
+  if (error || !data) return apiError("API key not found", 404);
+  return apiOk(data);
 }
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ keyId: string }> }
 ) {
-  const check = await requireTier("Assure");
-  if (!check.authorized) return check.response;
-  if (!check.orgId) return NextResponse.json({ error: "No organisation linked" }, { status: 400 });
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
+  if (!hasTierAccess(auth.plan, "Assure")) {
+    return apiError("Plan upgrade required", 403);
+  }
 
   const { keyId } = await params;
   const body = await req.json();
-  const db = supabaseServer();
+  const db = auth.db;
 
   // Fetch existing key
   const { data: existing, error: fetchErr } = await db
     .from("api_keys")
     .select("id, status")
     .eq("id", keyId)
-    .eq("organisation_id", check.orgId)
+    .eq("organisation_id", auth.orgId)
     .single();
 
-  if (fetchErr || !existing) return NextResponse.json({ error: "API key not found" }, { status: 404 });
+  if (fetchErr || !existing) return apiError("API key not found", 404);
 
   const updates: Record<string, unknown> = {};
 
@@ -56,7 +60,7 @@ export async function PATCH(
   }
 
   if (Object.keys(updates).length === 0) {
-    return NextResponse.json({ error: "No valid updates" }, { status: 400 });
+    return apiError("No valid updates", 400);
   }
 
   const { data, error } = await db
@@ -66,54 +70,56 @@ export async function PATCH(
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error.message, 500);
 
   await writeAuditLog({
-    organisationId: check.orgId,
+    organisationId: auth.orgId,
     entityType: "api_key",
     entityId: keyId,
     actionType: updates.status === "revoked" ? "revoked" : "updated",
-    performedBy: check.userId,
+    performedBy: auth.user.id,
     metadata: updates,
   });
 
-  return NextResponse.json(data);
+  return apiOk(data);
 }
 
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ keyId: string }> }
 ) {
-  const check = await requireTier("Assure");
-  if (!check.authorized) return check.response;
-  if (!check.orgId) return NextResponse.json({ error: "No organisation linked" }, { status: 400 });
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
+  if (!hasTierAccess(auth.plan, "Assure")) {
+    return apiError("Plan upgrade required", 403);
+  }
 
   const { keyId } = await params;
-  const db = supabaseServer();
+  const db = auth.db;
 
   const { data: existing } = await db
     .from("api_keys")
     .select("id, status")
     .eq("id", keyId)
-    .eq("organisation_id", check.orgId)
+    .eq("organisation_id", auth.orgId)
     .single();
 
-  if (!existing) return NextResponse.json({ error: "API key not found" }, { status: 404 });
+  if (!existing) return apiError("API key not found", 404);
   if (existing.status !== "revoked") {
-    return NextResponse.json({ error: "Only revoked keys can be deleted. Revoke the key first." }, { status: 400 });
+    return apiError("Only revoked keys can be deleted. Revoke the key first.", 400);
   }
 
   const { error } = await db.from("api_keys").delete().eq("id", keyId);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error.message, 500);
 
   await writeAuditLog({
-    organisationId: check.orgId,
+    organisationId: auth.orgId,
     entityType: "api_key",
     entityId: keyId,
     actionType: "deleted",
-    performedBy: check.userId,
+    performedBy: auth.user.id,
     metadata: {},
   });
 
-  return NextResponse.json({ success: true });
+  return apiOk({ success: true });
 }

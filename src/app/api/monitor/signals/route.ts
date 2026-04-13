@@ -1,18 +1,16 @@
 import { NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabaseServer";
-import { requireTier } from "@/lib/requireTier";
+import { requireAuth, checkTierAccess, apiError } from "@/lib/apiHelpers";
 import { createSignalSchema, firstZodError } from "@/lib/validations";
 import { writeAuditLog } from "@/lib/audit";
 
 // GET — list runtime signals for org
 export async function GET(req: Request) {
   try {
-    const check = await requireTier("Assure");
-    if (!check.authorized) return check.response;
+    const auth = await requireAuth();
+    if (auth.error) return auth.error;
 
-    if (!check.orgId) {
-      return NextResponse.json({ error: "No organisation" }, { status: 400 });
-    }
+    const tierCheck = checkTierAccess(auth.plan, "Assure");
+    if (tierCheck) return tierCheck;
 
     const { searchParams } = new URL(req.url);
     const signal_type = searchParams.get("signal_type");
@@ -25,13 +23,13 @@ export async function GET(req: Request) {
     const since = new Date();
     since.setDate(since.getDate() - days);
 
-    const sb = supabaseServer();
+    const sb = auth.db;
 
     // Build query
     let query = sb
       .from("runtime_signals")
       .select("*")
-      .eq("organisation_id", check.orgId)
+      .eq("organisation_id", auth.orgId)
       .gte("created_at", since.toISOString())
       .order("created_at", { ascending: false })
       .range((page - 1) * per_page, page * per_page - 1);
@@ -50,7 +48,7 @@ export async function GET(req: Request) {
     let countQuery = sb
       .from("runtime_signals")
       .select("id", { count: "exact", head: true })
-      .eq("organisation_id", check.orgId)
+      .eq("organisation_id", auth.orgId)
       .gte("created_at", since.toISOString());
 
     if (signal_type) countQuery = countQuery.eq("signal_type", signal_type);
@@ -72,12 +70,11 @@ export async function GET(req: Request) {
 // POST — create a runtime signal
 export async function POST(req: Request) {
   try {
-    const check = await requireTier("Assure");
-    if (!check.authorized) return check.response;
+    const auth = await requireAuth();
+    if (auth.error) return auth.error;
 
-    if (!check.orgId) {
-      return NextResponse.json({ error: "No organisation" }, { status: 400 });
-    }
+    const tierCheck = checkTierAccess(auth.plan, "Assure");
+    if (tierCheck) return tierCheck;
 
     const body = await req.json();
     const parsed = createSignalSchema.safeParse(body);
@@ -86,11 +83,11 @@ export async function POST(req: Request) {
     }
     const { system_name, signal_type, metric_name, metric_value, severity, source, context } = parsed.data;
 
-    const sb = supabaseServer();
+    const sb = auth.db;
     const { data: signal, error } = await sb
       .from("runtime_signals")
       .insert({
-        organisation_id: check.orgId,
+        organisation_id: auth.orgId,
         system_name,
         signal_type,
         metric_name,
@@ -107,11 +104,11 @@ export async function POST(req: Request) {
     }
 
     await writeAuditLog({
-      organisationId: check.orgId,
+      organisationId: auth.orgId,
       entityType: "signal",
       entityId: signal.id,
       actionType: "created",
-      performedBy: check.userId,
+      performedBy: auth.user.id,
       metadata: { severity: signal.severity, system_name: signal.system_name, signal_type: signal.signal_type },
     });
 

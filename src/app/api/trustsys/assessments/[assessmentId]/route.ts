@@ -1,32 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { NextRequest } from "next/server";
+import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
+import { supabaseServer } from "@/lib/supabase/admin";
 
 type RouteContext = { params: Promise<{ assessmentId: string }> };
 
 // ---------------------------------------------------------------------------
-// Helper: authenticate + verify ownership via systems table
+// Helper: verify ownership via systems table
 // ---------------------------------------------------------------------------
 
-async function authenticateAndAuthorise(assessmentId: string) {
-  const authClient = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await authClient.auth.getUser();
-
-  if (!user) {
-    return {
-      error: NextResponse.json({ error: "Not authenticated" }, { status: 401 }),
-    };
-  }
-
+async function verifyOwnership(assessmentId: string, orgId: string) {
   const db = supabaseServer();
-
-  const { data: profile } = await db
-    .from("profiles")
-    .select("organisation_id")
-    .eq("id", user.id)
-    .single();
 
   // Get the system (assessment) from the systems table
   const { data: system, error: sysErr } = await db
@@ -37,29 +20,24 @@ async function authenticateAndAuthorise(assessmentId: string) {
 
   if (sysErr || !system) {
     return {
-      error: NextResponse.json(
-        { error: "Assessment not found" },
-        { status: 404 }
-      ),
+      error: apiError("Assessment not found", 404),
     };
   }
 
   // Verify org ownership: system.owner_id must be in the same org
-  if (profile?.organisation_id) {
-    const { data: ownerProfile } = await db
-      .from("profiles")
-      .select("organisation_id")
-      .eq("id", system.owner_id)
-      .single();
+  const { data: ownerProfile } = await db
+    .from("profiles")
+    .select("organisation_id")
+    .eq("id", system.owner_id)
+    .single();
 
-    if (ownerProfile?.organisation_id !== profile.organisation_id) {
-      return {
-        error: NextResponse.json({ error: "Not authorised" }, { status: 403 }),
-      };
-    }
+  if (ownerProfile?.organisation_id !== orgId) {
+    return {
+      error: apiError("Not authorised", 403),
+    };
   }
 
-  return { user, system };
+  return { system };
 }
 
 // ---------------------------------------------------------------------------
@@ -69,12 +47,15 @@ async function authenticateAndAuthorise(assessmentId: string) {
 
 export async function GET(_req: NextRequest, context: RouteContext) {
   try {
-    const { assessmentId } = await context.params;
-    const result = await authenticateAndAuthorise(assessmentId);
-    if ("error" in result) return result.error;
+    const auth = await requireAuth();
+    if (auth.error) return auth.error;
+    const { orgId, db } = auth;
 
-    const { system } = result;
-    const db = supabaseServer();
+    const { assessmentId } = await context.params;
+    const ownershipResult = await verifyOwnership(assessmentId, orgId);
+    if ("error" in ownershipResult) return ownershipResult.error;
+
+    const { system } = ownershipResult;
 
     const { data: runs, error: runsErr } = await db
       .from("system_runs")
@@ -85,7 +66,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
       .order("created_at", { ascending: false });
 
     if (runsErr) {
-      return NextResponse.json({ error: runsErr.message }, { status: 500 });
+      return apiError(runsErr.message, 500);
     }
 
     // Map DB columns to frontend-expected property names
@@ -108,7 +89,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
       completed_at: r.submitted_at,
     }));
 
-    return NextResponse.json({
+    return apiOk({
       assessment: {
         id: system.id,
         name: system.name,
@@ -123,6 +104,6 @@ export async function GET(_req: NextRequest, context: RouteContext) {
     });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return apiError(message, 500);
   }
 }

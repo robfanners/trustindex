@@ -1,6 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { NextRequest } from "next/server";
+import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 import { canManageIBG } from "@/lib/entitlements";
 
 // ---------------------------------------------------------------------------
@@ -11,41 +10,22 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ assessmentId: string }> }
 ) {
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
+  const { user, orgId, plan, db } = auth;
+
   try {
     const { assessmentId } = await params;
-    const authClient = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await authClient.auth.getUser();
 
-    if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    const db = supabaseServer();
-
-    const { data: profile } = await db
-      .from("profiles")
-      .select("organisation_id, plan")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile?.organisation_id) {
-      return NextResponse.json({ error: "No organisation" }, { status: 400 });
-    }
-
-    if (!canManageIBG(profile.plan)) {
-      return NextResponse.json(
-        { error: "Upgrade to Pro to manage IBG specifications", upgrade: true },
-        { status: 403 }
-      );
+    if (!canManageIBG(plan)) {
+      return apiError("Upgrade to Pro to manage IBG specifications", 403);
     }
 
     const body = await req.json();
     const specId = body.id;
 
     if (!specId) {
-      return NextResponse.json({ error: "Spec id is required" }, { status: 400 });
+      return apiError("Spec id is required", 400);
     }
 
     // Verify spec exists, is draft, and belongs to this assessment + org
@@ -54,26 +34,23 @@ export async function POST(
       .select("id, status, authorised_goals")
       .eq("id", specId)
       .eq("assessment_id", assessmentId)
-      .eq("organisation_id", profile.organisation_id)
+      .eq("organisation_id", orgId)
       .single();
 
     if (!spec) {
-      return NextResponse.json({ error: "IBG spec not found" }, { status: 404 });
+      return apiError("IBG spec not found", 404);
     }
 
     if (spec.status !== "draft") {
-      return NextResponse.json(
-        { error: "Only draft specs can be activated" },
-        { status: 400 }
-      );
+      return apiError("Only draft specs can be activated", 400);
     }
 
     // Require at least one authorised goal to activate
     const goals = spec.authorised_goals as unknown[];
     if (!goals || goals.length === 0) {
-      return NextResponse.json(
-        { error: "At least one authorised goal is required to activate an IBG specification" },
-        { status: 400 }
+      return apiError(
+        "At least one authorised goal is required to activate an IBG specification",
+        400
       );
     }
 
@@ -91,15 +68,12 @@ export async function POST(
       .single();
 
     if (activateErr || !activated) {
-      return NextResponse.json(
-        { error: activateErr?.message || "Failed to activate IBG spec" },
-        { status: 500 }
-      );
+      return apiError(activateErr?.message || "Failed to activate IBG spec", 500);
     }
 
-    return NextResponse.json({ spec: activated });
+    return apiOk({ spec: activated });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return apiError(message, 500);
   }
 }

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseServer } from "@/lib/supabase/admin";
 import { getReportLevel } from "@/lib/entitlements";
 import { sendEmail } from "@/lib/email";
 import { monthlyReportEmail } from "@/lib/emailTemplates";

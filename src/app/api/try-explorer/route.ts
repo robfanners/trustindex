@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseServer } from "@/lib/supabase/admin";
+import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 
 // ---------------------------------------------------------------------------
 // POST /api/try-explorer — create an anonymous Explorer self-assessment
@@ -14,7 +15,16 @@ function randomToken(length = 28) {
   return out;
 }
 
-export async function POST() {
+export async function POST(req: Request) {
+  // Rate limiting: 10 requests per minute
+  const ip = getClientIp(req.headers);
+  const limit = checkRateLimit(ip, { windowMs: 60_000, maxRequests: 10 });
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(Math.ceil(limit.retryAfterMs / 1000)) } }
+    );
+  }
   try {
     let supabase: ReturnType<typeof supabaseServer>;
     try {

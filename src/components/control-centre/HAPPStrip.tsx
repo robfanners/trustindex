@@ -72,7 +72,7 @@ export default function HAPPStrip({
   const isEnterprise = plan === "enterprise";
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-[var(--brand,#0066FF)]/30 bg-[var(--foreground,#111827)]/95 px-5 py-4">
+    <div className="relative overflow-hidden rounded-xl border border-[var(--brand,#673DE6)]/30 bg-[var(--foreground,#111827)]/95 px-5 py-4">
       <div className="flex items-center gap-4">
         {/* shield icon */}
         <div

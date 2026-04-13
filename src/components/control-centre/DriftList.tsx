@@ -98,7 +98,7 @@ export default function DriftList({ events }: { events: DriftEvent[] }) {
         </div>
         <Link
           href="/monitor/drift"
-          className="text-xs font-medium text-[var(--brand,#0066FF)] hover:underline"
+          className="text-xs font-medium text-[var(--brand,#673DE6)] hover:underline"
         >
           View all
         </Link>

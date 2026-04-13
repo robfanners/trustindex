@@ -5,7 +5,7 @@
 // Logs but does not throw on failure (audit failure shouldn't block ops).
 // ---------------------------------------------------------------------------
 
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseServer } from "@/lib/supabase/admin";
 import type { AdminRole } from "./permissions";
 import { primaryRole } from "./permissions";
 

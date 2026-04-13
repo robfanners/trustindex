@@ -1,46 +1,50 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireTier } from "@/lib/requireTier";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 import { hashPayload, generateVerificationId, anchorOnChain } from "@/lib/prove/chain";
 import { createAttestationSchema, firstZodError } from "@/lib/validations";
 import { writeAuditLog } from "@/lib/audit";
+import { hasTierAccess } from "@/lib/tiers";
 
 export async function GET(req: NextRequest) {
-  const check = await requireTier("Verify");
-  if (!check.authorized) return check.response;
-  if (!check.orgId) return NextResponse.json({ error: "No organisation linked" }, { status: 400 });
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
+  if (!hasTierAccess(auth.plan, "Verify")) {
+    return apiError("Plan upgrade required", 403);
+  }
 
   const params = req.nextUrl.searchParams;
   const page = Math.max(1, Number(params.get("page") || 1));
   const perPage = Math.min(100, Math.max(1, Number(params.get("per_page") || 20)));
   const offset = (page - 1) * perPage;
 
-  const db = supabaseServer();
+  const db = auth.db;
   const { data, count, error } = await db
     .from("prove_attestations")
     .select("*", { count: "exact" })
-    .eq("organisation_id", check.orgId)
+    .eq("organisation_id", auth.orgId)
     .order("created_at", { ascending: false })
     .range(offset, offset + perPage - 1);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error.message, 500);
 
   const enriched = (data ?? []).map((a: Record<string, unknown>) => ({
     ...a,
     is_valid: !a.revoked_at && (!a.valid_until || new Date(a.valid_until as string) > new Date()),
   }));
-  return NextResponse.json({ attestations: enriched, total: count ?? 0 });
+  return apiOk({ attestations: enriched, total: count ?? 0 });
 }
 
 export async function POST(req: NextRequest) {
-  const check = await requireTier("Verify");
-  if (!check.authorized) return check.response;
-  if (!check.orgId) return NextResponse.json({ error: "No organisation linked" }, { status: 400 });
+  const auth = await requireAuth();
+  if (auth.error) return auth.error;
+  if (!hasTierAccess(auth.plan, "Verify")) {
+    return apiError("Plan upgrade required", 403);
+  }
 
   const body = await req.json();
   const parsed = createAttestationSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: firstZodError(parsed.error) }, { status: 400 });
+    return apiError(firstZodError(parsed.error), 400);
   }
   const { title, statement, posture_snapshot, valid_days } = parsed.data;
 
@@ -53,36 +57,36 @@ export async function POST(req: NextRequest) {
   // Generate verification ID and event hash
   const verificationId = generateVerificationId({
     type: "attestation",
-    org: check.orgId,
+    org: auth.orgId,
     title,
     statement,
-    attested_by: check.userId,
+    attested_by: auth.user.id,
     attested_at: now,
   });
 
   const eventHash = hashPayload({
     type: "attestation",
-    org: check.orgId,
+    org: auth.orgId,
     title,
     statement,
     verification_id: verificationId,
-    attested_by: check.userId,
+    attested_by: auth.user.id,
     attested_at: now,
   });
 
   // Attempt chain anchoring
   const chainResult = await anchorOnChain(eventHash);
 
-  const db = supabaseServer();
+  const db = auth.db;
   const { data, error } = await db
     .from("prove_attestations")
     .insert({
-      organisation_id: check.orgId,
+      organisation_id: auth.orgId,
       title,
       statement,
       posture_snapshot: posture_snapshot || null,
       valid_until,
-      attested_by: check.userId,
+      attested_by: auth.user.id,
       attested_at: now,
       verification_id: verificationId,
       event_hash: eventHash,
@@ -92,16 +96,16 @@ export async function POST(req: NextRequest) {
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error.message, 500);
 
   await writeAuditLog({
-    organisationId: check.orgId,
+    organisationId: auth.orgId,
     entityType: "attestation",
     entityId: data.id,
     actionType: "created",
-    performedBy: check.userId,
+    performedBy: auth.user.id,
     metadata: { title, verification_id: verificationId },
   });
 
-  return NextResponse.json(data, { status: 201 });
+  return apiOk(data, 201);
 }
