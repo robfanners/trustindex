@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 import { generateApiKey } from "@/lib/apiKeyAuth";
 import { createApiKeySchema, firstZodError } from "@/lib/validations";

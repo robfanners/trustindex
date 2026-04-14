@@ -4,4 +4,5 @@
 export class JsonRpcProvider {}
 export class Wallet {}
 export class Contract {}
-export default { JsonRpcProvider, Wallet, Contract };
+const ethersStub = { JsonRpcProvider, Wallet, Contract };
+export default ethersStub;

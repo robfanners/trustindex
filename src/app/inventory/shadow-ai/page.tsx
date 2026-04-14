@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import RequireAuth from '@/components/RequireAuth';
 import AuthenticatedShell from '@/components/AuthenticatedShell';
 
@@ -23,11 +23,7 @@ export default function ShadowAiPage() {
   const [toolName, setToolName] = useState('');
   const [domain, setDomain] = useState('');
 
-  useEffect(() => {
-    fetchSightings();
-  }, [statusFilter]);
-
-  const fetchSightings = async () => {
+  const fetchSightings = useCallback(async () => {
     try {
       const res = await fetch('/api/inventory/sightings');
       if (!res.ok) throw new Error('Failed to fetch sightings');
@@ -42,7 +38,11 @@ export default function ShadowAiPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter]);
+
+  useEffect(() => {
+    fetchSightings();
+  }, [fetchSightings]);
 
   const handleAddSighting = async () => {
     if (!toolName) return;

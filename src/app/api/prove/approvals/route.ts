@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 import { hashPayload, anchorOnChain } from "@/lib/prove/chain";
 import { createApprovalSchema, approvalDecisionSchema, firstZodError } from "@/lib/validations";

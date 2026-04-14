@@ -14,14 +14,14 @@ export async function POST(req: Request) {
     let supabase: ReturnType<typeof supabaseServer>;
     try {
       supabase = supabaseServer();
-    } catch (_configErr: unknown) {
+    } catch {
       return apiError("Server configuration error. Please try again later or contact support.", 503);
     }
 
     // Require authenticated user
     const auth = await requireAuth({ orgOptional: true });
     if (auth.error) return auth.error;
-    const { user: ownerUser, db } = auth;
+    const { user: ownerUser } = auth;
     const ownerUserId = ownerUser.id;
 
     const body = await req.json();

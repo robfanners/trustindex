@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import ModuleSwitcher from "@/components/header/ModuleSwitcher";
@@ -88,7 +88,6 @@ function NavIcon({ icon }: { icon: string }) {
 
 function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
   const pathname = usePathname();
-  const router = useRouter();
   const { profile } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);

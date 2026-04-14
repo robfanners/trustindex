@@ -85,13 +85,7 @@ function DataGovernanceContent() {
   });
   const [submitting, setSubmitting] = useState(false);
 
-  // Load assessment and inventory
-  useEffect(() => {
-    if (!assessmentId) return;
-    loadData();
-  }, [assessmentId]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const [assRes, invRes] = await Promise.all([
@@ -116,7 +110,13 @@ function DataGovernanceContent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [assessmentId]);
+
+  // Load assessment and inventory
+  useEffect(() => {
+    if (!assessmentId) return;
+    loadData();
+  }, [assessmentId, loadData]);
 
   const handleAddClick = useCallback(() => {
     setEditingEntry(null);

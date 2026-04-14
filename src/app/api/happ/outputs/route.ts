@@ -7,27 +7,19 @@ import { writeAuditLog } from "@/lib/audit";
 
 export async function GET(req: NextRequest) {
   // Try session auth first, then API key
+  // NOTE: GET only needs organisationId; user/apiKey identity reserved for future audit logging
   const sessionAuth = await requireAuth({ orgOptional: false });
-  let authSource: "session" | "api_key";
   let organisationId: string;
-  let userId: string | null;
-  let apiKeyId: string | null;
 
   if (!sessionAuth.error) {
-    authSource = "session";
     organisationId = sessionAuth.orgId;
-    userId = sessionAuth.user.id;
-    apiKeyId = null;
   } else {
     // Try API key
     const apiKeyAuth = await authenticateApiKey(req, "Verify", "outputs:read");
     if (!apiKeyAuth) {
       return apiError("Not authenticated", 401);
     }
-    authSource = "api_key";
     organisationId = apiKeyAuth.organisationId;
-    userId = null;
-    apiKeyId = apiKeyAuth.apiKeyId;
   }
 
   const db = sessionAuth.error ? undefined : sessionAuth.db;

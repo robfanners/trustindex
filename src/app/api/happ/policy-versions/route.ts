@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth, checkTierAccess, apiError } from "@/lib/apiHelpers";
+import { requireAuth, checkTierAccess } from "@/lib/apiHelpers";
 import { hashPayload } from "@/lib/prove/chain";
 import { createPolicyVersionSchema, firstZodError } from "@/lib/validations";
 import { writeAuditLog } from "@/lib/audit";

@@ -1,4 +1,4 @@
-import { requireAuth, apiOk, apiError, parseBody, withErrorHandling } from "@/lib/apiHelpers";
+import { requireAuth, apiOk, parseBody, withErrorHandling } from "@/lib/apiHelpers";
 import { z } from "zod";
 
 const createPlaybookSchema = z.object({
@@ -17,7 +17,7 @@ const createPlaybookSchema = z.object({
 });
 
 // GET — list playbooks (including default/global ones)
-export async function GET(req: Request) {
+export async function GET(_req: Request) {
   return withErrorHandling(async () => {
     const auth = await requireAuth();
     if (auth.error) return auth.error;

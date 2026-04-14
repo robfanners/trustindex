@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 import { isPaidPlan } from "@/lib/entitlements";
 import { sendEmail } from "@/lib/email";

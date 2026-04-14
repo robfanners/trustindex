@@ -18,8 +18,6 @@ const updateDataInventorySchema = z.object({
   processor: z.string().optional().nullable(),
 });
 
-type DataInventoryUpdate = z.infer<typeof updateDataInventorySchema>;
-
 /**
  * Verify the entry belongs to the assessment and user has access.
  * Returns { entry, assessment, orgId } on success, or an error response.

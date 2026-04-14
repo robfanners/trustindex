@@ -25,8 +25,6 @@ const createDataInventorySchema = z.object({
   processor: z.string().optional().nullable(),
 });
 
-type DataInventoryCreate = z.infer<typeof createDataInventorySchema>;
-
 /**
  * Verify the user owns this assessment and get its org_id.
  * Returns { assessment, orgId } on success, or an error response.

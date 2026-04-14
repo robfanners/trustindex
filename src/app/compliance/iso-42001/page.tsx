@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import RequireAuth from '@/components/RequireAuth';
 import AuthenticatedShell from '@/components/AuthenticatedShell';
 

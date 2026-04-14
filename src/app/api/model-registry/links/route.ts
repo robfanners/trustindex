@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
 import { linkModelToSystemSchema, firstZodError } from "@/lib/validations";
 import { writeAuditLog } from "@/lib/audit";

@@ -1,16 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface RaciAssignment {
   id: string;
   user_id: string;
   role: 'responsible' | 'accountable' | 'consulted' | 'informed';
-}
-
-interface User {
-  id: string;
-  full_name: string;
 }
 
 interface RaciPanelProps {
@@ -20,17 +15,11 @@ interface RaciPanelProps {
 
 export function RaciPanel({ entityType, entityId }: RaciPanelProps) {
   const [assignments, setAssignments] = useState<RaciAssignment[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRole, setSelectedRole] = useState<'responsible' | 'accountable' | 'consulted' | 'informed'>('responsible');
   const [selectedUserId, setSelectedUserId] = useState('');
 
-  useEffect(() => {
-    fetchAssignments();
-    fetchUsers();
-  }, [entityType, entityId]);
-
-  const fetchAssignments = async () => {
+  const fetchAssignments = useCallback(async () => {
     try {
       const res = await fetch(`/api/raci?entity_type=${entityType}&entity_id=${entityId}`);
       if (!res.ok) throw new Error('Failed to fetch RACI assignments');
@@ -41,17 +30,11 @@ export function RaciPanel({ entityType, entityId }: RaciPanelProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [entityType, entityId]);
 
-  const fetchUsers = async () => {
-    try {
-      // This would need an endpoint to list org users
-      // For now, we'll keep it simple
-      setUsers([]);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  useEffect(() => {
+    fetchAssignments();
+  }, [fetchAssignments]);
 
   const handleAddAssignment = async () => {
     if (!selectedUserId) return;

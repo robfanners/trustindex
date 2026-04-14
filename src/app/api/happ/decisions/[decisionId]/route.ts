@@ -7,15 +7,12 @@ type Ctx = { params: Promise<{ decisionId: string }> };
 
 export async function GET(req: NextRequest, ctx: Ctx) {
   // Try session auth first, then API key
+  // NOTE: GET only needs organisationId; user/apiKey identity reserved for future audit logging
   const sessionAuth = await requireAuth({ orgOptional: false });
   let organisationId: string;
-  let userId: string | null;
-  let apiKeyId: string | null;
 
   if (!sessionAuth.error) {
     organisationId = sessionAuth.orgId;
-    userId = sessionAuth.user.id;
-    apiKeyId = null;
   } else {
     // Try API key
     const apiKeyAuth = await authenticateApiKey(req, "Verify", "decisions:read");
@@ -23,8 +20,6 @@ export async function GET(req: NextRequest, ctx: Ctx) {
       return apiError("Not authenticated", 401);
     }
     organisationId = apiKeyAuth.organisationId;
-    userId = null;
-    apiKeyId = apiKeyAuth.apiKeyId;
   }
 
   const { supabaseServer } = await import("@/lib/supabase/admin");
