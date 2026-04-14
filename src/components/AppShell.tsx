@@ -23,6 +23,8 @@ export default function AppShell({ children }: AppShellProps) {
   const runId = adminRunMatch?.[1] ?? dashboardRunMatch?.[1] ?? null;
 
   const isAdminOrDashboard = pathname.startsWith("/admin") || pathname.startsWith("/dashboard");
+  // Hide the "Log in" CTA on auth pages — user is already in the login flow. See TG-54.
+  const isAuthPage = pathname.startsWith("/auth");
 
   const navItems = useMemo(() => {
     const items: Array<{ label: string; href: string; isActive?: boolean; isExternal?: boolean }> = [];
@@ -91,7 +93,7 @@ export default function AppShell({ children }: AppShellProps) {
                 </Link>
               ))}
 
-              {!authLoading && (
+              {!authLoading && !isAuthPage && (
                 user ? (
                   <div className="flex items-center gap-2 ml-3 pl-3 border-l border-border">
                     <Link
@@ -161,7 +163,7 @@ export default function AppShell({ children }: AppShellProps) {
                     {item.label}
                   </a>
                 ))}
-                {!authLoading && (
+                {!authLoading && !isAuthPage && (
                   user ? (
                     <div className="border-t border-border mt-2 pt-2 flex flex-col gap-1">
                       <Link

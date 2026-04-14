@@ -73,6 +73,10 @@ export async function proxy(request: NextRequest) {
     "/try",
     "/verify",
     "/api/auth",
+    // Anonymous Explorer flow: /try fires POST /api/try-explorer before the
+    // user has a session. Must be whitelisted or the middleware redirects the
+    // POST to /auth/login → 405. See TG-54.
+    "/api/try-explorer",
     "/_next",
     "/favicon.ico",
   ];
