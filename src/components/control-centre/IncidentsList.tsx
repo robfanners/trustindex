@@ -130,7 +130,7 @@ export default function IncidentsList({ escalations, incidents }: Props) {
           Active Escalations &amp; Incidents
         </h3>
         <Link
-          href="/monitor/incidents"
+          href="/monitor"
           className="text-xs font-medium text-[var(--brand,#673DE6)] hover:underline"
         >
           View all &rarr;

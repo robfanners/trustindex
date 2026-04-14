@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import AuthenticatedShell from "@/components/AuthenticatedShell";
-import RequireAuth from "@/components/RequireAuth";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -93,11 +91,7 @@ function StatBadge({ value, label, color }: { value: number | string; label: str
 // ---------------------------------------------------------------------------
 
 export default function ProveDashboard() {
-  return (
-    <RequireAuth>
-      <ProveContent />
-    </RequireAuth>
-  );
+  return <ProveContent />;
 }
 
 function ProveContent() {
@@ -122,7 +116,6 @@ function ProveContent() {
   }, []);
 
   return (
-    <AuthenticatedShell>
       <div className="flex flex-col gap-6">
         {/* Page header */}
         <div>
@@ -220,6 +213,5 @@ function ProveContent() {
           </>
         )}
       </div>
-    </AuthenticatedShell>
   );
 }

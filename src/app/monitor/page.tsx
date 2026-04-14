@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import AuthenticatedShell from "@/components/AuthenticatedShell";
-import RequireAuth from "@/components/RequireAuth";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -121,11 +119,7 @@ function SeverityBadge({ severity }: { severity: string }) {
 // ---------------------------------------------------------------------------
 
 export default function MonitorDashboard() {
-  return (
-    <RequireAuth>
-      <MonitorContent />
-    </RequireAuth>
-  );
+  return <MonitorContent />;
 }
 
 function MonitorContent() {
@@ -152,7 +146,6 @@ function MonitorContent() {
   }, []);
 
   return (
-    <AuthenticatedShell>
       <div className="flex flex-col gap-6">
         {/* Page header */}
         <div>
@@ -303,6 +296,5 @@ function MonitorContent() {
           </>
         )}
       </div>
-    </AuthenticatedShell>
   );
 }

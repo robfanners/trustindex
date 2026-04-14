@@ -1,44 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { NextResponse } from "next/server";
 import type { Mock } from "vitest";
 import {
   mockPostRequest,
   mockGetRequest,
-  mockAuthorized,
-  createMockSupabase,
 } from "@/lib/__tests__/test-helpers";
+import {
+  mockApiHelpers,
+  mockAudit,
+  mockRequireAuthAuthorized,
+  mockRequireAuthUnauthorized,
+  mockRequireAuthNoOrg,
+  createMockSupabase,
+} from "@/lib/__tests__/mockAuth";
 
 // ---------------------------------------------------------------------------
-// Mock dependencies BEFORE importing the route
+// Mock dependencies BEFORE importing the route (vi.mock is hoisted).
 // ---------------------------------------------------------------------------
-vi.mock("@/lib/requireTier", () => ({
-  requireTier: vi.fn(),
-}));
-vi.mock("@/lib/supabaseServer", () => ({
-  supabaseServer: vi.fn(),
-}));
+mockApiHelpers();
+mockAudit();
 
 import { GET, POST } from "@/app/api/monitor/signals/route";
-import { requireTier } from "@/lib/requireTier";
-import { supabaseServer } from "@/lib/supabase/admin";
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-const mockUnauthorized = {
-  authorized: false as const,
-  response: NextResponse.json({ error: "Not authenticated" }, { status: 401 }),
-};
-
-const mockNoOrg = {
-  authorized: true as const,
-  userId: "user-123",
-  plan: "pro",
-  orgId: null,
-};
-
-// The signals route uses plain Request, not NextRequest, for its handler signatures.
-// Our mockPostRequest creates NextRequest, which extends Request, so it works.
+import { requireAuth } from "@/lib/apiHelpers";
 
 // ---------------------------------------------------------------------------
 // POST /api/monitor/signals
@@ -49,7 +31,7 @@ describe("POST /api/monitor/signals", () => {
   });
 
   it("returns 401 when unauthenticated", async () => {
-    (requireTier as unknown as Mock).mockResolvedValue(mockUnauthorized);
+    mockRequireAuthUnauthorized(requireAuth as unknown as Mock);
 
     const req = mockPostRequest({
       system_name: "chat-model",
@@ -65,7 +47,7 @@ describe("POST /api/monitor/signals", () => {
   });
 
   it("returns 400 when no organisation linked", async () => {
-    (requireTier as unknown as Mock).mockResolvedValue(mockNoOrg);
+    mockRequireAuthNoOrg(requireAuth as unknown as Mock);
 
     const req = mockPostRequest({
       system_name: "chat-model",
@@ -77,11 +59,13 @@ describe("POST /api/monitor/signals", () => {
 
     expect(res.status).toBe(400);
     const json = await res.json();
-    expect(json.error).toBe("No organisation");
+    expect(json.error).toBe("No organisation linked");
   });
 
   it("returns 400 when system_name is missing", async () => {
-    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
+    mockRequireAuthAuthorized(requireAuth as unknown as Mock, {
+      db: createMockSupabase(),
+    });
 
     const req = mockPostRequest({
       signal_type: "accuracy",
@@ -96,7 +80,9 @@ describe("POST /api/monitor/signals", () => {
   });
 
   it("returns 400 when system_name is empty", async () => {
-    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
+    mockRequireAuthAuthorized(requireAuth as unknown as Mock, {
+      db: createMockSupabase(),
+    });
 
     const req = mockPostRequest({
       system_name: "",
@@ -110,7 +96,9 @@ describe("POST /api/monitor/signals", () => {
   });
 
   it("returns 400 when metric_value is not a number", async () => {
-    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
+    mockRequireAuthAuthorized(requireAuth as unknown as Mock, {
+      db: createMockSupabase(),
+    });
 
     const req = mockPostRequest({
       system_name: "chat-model",
@@ -126,7 +114,9 @@ describe("POST /api/monitor/signals", () => {
   });
 
   it("returns 400 when signal_type is invalid", async () => {
-    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
+    mockRequireAuthAuthorized(requireAuth as unknown as Mock, {
+      db: createMockSupabase(),
+    });
 
     const req = mockPostRequest({
       system_name: "chat-model",
@@ -140,7 +130,9 @@ describe("POST /api/monitor/signals", () => {
   });
 
   it("returns 400 when metric_name is missing", async () => {
-    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
+    mockRequireAuthAuthorized(requireAuth as unknown as Mock, {
+      db: createMockSupabase(),
+    });
 
     const req = mockPostRequest({
       system_name: "chat-model",
@@ -153,8 +145,6 @@ describe("POST /api/monitor/signals", () => {
   });
 
   it("returns 201 on valid signal", async () => {
-    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
-
     const signalRow = {
       id: "sig-1",
       organisation_id: "org-456",
@@ -167,8 +157,8 @@ describe("POST /api/monitor/signals", () => {
       context: {},
     };
 
-    const mockDb = createMockSupabase(signalRow);
-    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
+    const mockDb = createMockSupabase({ data: signalRow });
+    mockRequireAuthAuthorized(requireAuth as unknown as Mock, { db: mockDb });
 
     const req = mockPostRequest({
       system_name: "chat-model",
@@ -186,8 +176,6 @@ describe("POST /api/monitor/signals", () => {
   });
 
   it("returns 201 with optional severity and source", async () => {
-    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
-
     const signalRow = {
       id: "sig-2",
       system_name: "fraud-detector",
@@ -199,8 +187,8 @@ describe("POST /api/monitor/signals", () => {
       context: { region: "EU" },
     };
 
-    const mockDb = createMockSupabase(signalRow);
-    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
+    const mockDb = createMockSupabase({ data: signalRow });
+    mockRequireAuthAuthorized(requireAuth as unknown as Mock, { db: mockDb });
 
     const req = mockPostRequest({
       system_name: "fraud-detector",
@@ -220,10 +208,11 @@ describe("POST /api/monitor/signals", () => {
   });
 
   it("returns 500 when Supabase insert fails", async () => {
-    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
-
-    const mockDb = createMockSupabase(null, { message: "Insert failed" });
-    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
+    const mockDb = createMockSupabase({
+      data: null,
+      error: { message: "Insert failed" },
+    });
+    mockRequireAuthAuthorized(requireAuth as unknown as Mock, { db: mockDb });
 
     const req = mockPostRequest({
       system_name: "chat-model",
@@ -248,7 +237,7 @@ describe("GET /api/monitor/signals", () => {
   });
 
   it("returns 401 when unauthenticated", async () => {
-    (requireTier as unknown as Mock).mockResolvedValue(mockUnauthorized);
+    mockRequireAuthUnauthorized(requireAuth as unknown as Mock);
 
     const req = mockGetRequest("/api/monitor/signals");
     const res = await GET(req);
@@ -257,83 +246,24 @@ describe("GET /api/monitor/signals", () => {
   });
 
   it("returns 400 when no organisation linked", async () => {
-    (requireTier as unknown as Mock).mockResolvedValue(mockNoOrg);
+    mockRequireAuthNoOrg(requireAuth as unknown as Mock);
 
     const req = mockGetRequest("/api/monitor/signals");
     const res = await GET(req);
 
     expect(res.status).toBe(400);
     const json = await res.json();
-    expect(json.error).toBe("No organisation");
+    expect(json.error).toBe("No organisation linked");
   });
 
   it("returns 200 with signals array", async () => {
-    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
-
     const rows = [
       { id: "sig-1", metric_value: 0.92 },
       { id: "sig-2", metric_value: 1.15 },
     ];
 
-    // The GET handler makes two queries: one for data and one for count.
-    // Both use the chainable pattern ending with implicit await (no .single())
-    const mockDb: Record<string, unknown> & {
-      from: Mock;
-      select: Mock;
-      eq: Mock;
-      gte: Mock;
-      order: Mock;
-      range: Mock;
-    } = {
-      from: vi.fn(() => mockDb),
-      select: vi.fn(() => mockDb),
-      eq: vi.fn(() => mockDb),
-      gte: vi.fn(() => mockDb),
-      order: vi.fn(() => mockDb),
-      range: vi.fn(() => Promise.resolve({ data: rows, error: null })),
-    };
-
-    // For the count query, we need a separate resolution
-    let fromCallCount = 0;
-    mockDb.from.mockImplementation(() => {
-      fromCallCount++;
-      const countChain: Record<string, unknown> & {
-        from: Mock;
-        select: Mock;
-        eq: Mock;
-        gte: Mock;
-        order: Mock;
-        range: Mock;
-        then: undefined;
-      } = {
-        from: vi.fn(() => countChain),
-        select: vi.fn(() => countChain),
-        eq: vi.fn(() => countChain),
-        gte: vi.fn(() => countChain),
-        order: vi.fn(() => countChain),
-        range: vi.fn(() =>
-          Promise.resolve({ data: rows, error: null })
-        ),
-        // Count query resolves as a thenable
-        then: undefined,
-      };
-      if (fromCallCount <= 1) {
-        // First query (data): return chainable with range
-        return mockDb;
-      }
-      // Second query (count): resolves directly with count
-      // The count query doesn't use range, it resolves implicitly
-      const countResult = Promise.resolve({ count: 2 });
-      return {
-        select: vi.fn(() => ({
-          eq: vi.fn(function () { return this; }),
-          gte: vi.fn(function () { return this; }),
-          then: (resolve: (value: unknown) => void) => countResult.then(resolve),
-        })),
-      };
-    });
-
-    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
+    const mockDb = createMockSupabase({ data: rows, count: 2 });
+    mockRequireAuthAuthorized(requireAuth as unknown as Mock, { db: mockDb });
 
     const req = mockGetRequest("/api/monitor/signals?page=1&per_page=20");
     const res = await GET(req);
@@ -341,5 +271,6 @@ describe("GET /api/monitor/signals", () => {
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.signals).toBeDefined();
+    expect(Array.isArray(json.signals)).toBe(true);
   });
 });

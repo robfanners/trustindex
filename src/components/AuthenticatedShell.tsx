@@ -15,6 +15,32 @@ import { navSections, meetsMinTier } from "@/lib/navigation";
 import UpgradeModal from "@/components/UpgradeModal";
 import type { VersiumTier } from "@/lib/tiers";
 import { canSeeSection } from "@/lib/roles";
+import {
+  Home,
+  LayoutDashboard,
+  ClipboardCheck,
+  Cpu,
+  CheckCircle2,
+  FileText,
+  Settings as SettingsIcon,
+  ScrollText,
+  HeartPulse,
+  AlertTriangle,
+  Zap,
+  UserCheck,
+  ShieldCheck,
+  Stamp,
+  Link2,
+  Search,
+  Lock,
+  Building2,
+  Server,
+  Radio,
+  Share2,
+  GitBranch,
+  KeyRound,
+  Gavel,
+} from "lucide-react";
 
 type AuthenticatedShellProps = {
   children: React.ReactNode;
@@ -23,163 +49,41 @@ type AuthenticatedShellProps = {
 const SIDEBAR_KEY = "ti_sidebar_collapsed";
 
 
+/**
+ * Canonical icon registry — one Lucide icon per capability, used everywhere.
+ * To lock a new capability icon: add a case here + reference by key from navigation.ts.
+ */
+const ICON_MAP: Record<string, React.ComponentType<{ className?: string; strokeWidth?: number }>> = {
+  "home": Home,
+  "layout-dashboard": LayoutDashboard,
+  "clipboard": ClipboardCheck,
+  "cpu": Cpu,
+  "check-circle": CheckCircle2,
+  "file-text": FileText,
+  "settings": SettingsIcon,
+  "scroll": ScrollText,
+  "activity": HeartPulse,       // Drift & Alerts — heartbeat
+  "alert-triangle": AlertTriangle, // Escalations
+  "zap": Zap,                   // Incidents — lightning
+  "user-check": UserCheck,      // Declarations
+  "shield-check": ShieldCheck,  // Approvals
+  "stamp": Stamp,               // Attestations
+  "link": Link2,                // Provenance
+  "search": Search,             // Verification
+  "lock": Lock,                 // Incident Lock
+  "building": Building2,        // Vendors
+  "server": Server,             // AI Registry
+  "radio": Radio,               // Signals
+  "share": Share2,              // Trust Exchange
+  "git-branch": GitBranch,      // TrustGraph
+  "key": KeyRound,              // API Keys
+  "gavel": Gavel,               // Regulation & Compliance
+};
+
 function NavIcon({ icon }: { icon: string }) {
-  const cls = "w-5 h-5 shrink-0";
-  switch (icon) {
-    case "home":
-      return (
-        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1" />
-        </svg>
-      );
-    case "layout-dashboard":
-      return (
-        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <rect x="3" y="3" width="7" height="7" rx="2" strokeWidth={1.5} />
-          <rect x="14" y="3" width="7" height="7" rx="2" strokeWidth={1.5} />
-          <rect x="3" y="14" width="7" height="7" rx="2" strokeWidth={1.5} />
-          <rect x="14" y="14" width="7" height="7" rx="2" strokeWidth={1.5} />
-        </svg>
-      );
-    case "clipboard":
-      return (
-        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-        </svg>
-      );
-    case "cpu":
-      return (
-        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 3v2m6-2v2M9 19v2m6-2v2M3 9h2m-2 6h2m14-6h2m-2 6h2M7 7h10v10H7V7z" />
-        </svg>
-      );
-    case "check-circle":
-      return (
-        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      );
-    case "file-text":
-      return (
-        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-      );
-    case "settings":
-      return (
-        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-      );
-    case "scroll":
-      return (
-        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2" />
-        </svg>
-      );
-    case "activity":
-      return (
-        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <polyline strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} points="22 12 18 12 15 21 9 3 6 12 2 12" />
-        </svg>
-      );
-    case "alert-triangle":
-      return (
-        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4m0 4h.01" />
-        </svg>
-      );
-    case "zap":
-      return (
-        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <polygon strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-        </svg>
-      );
-    case "user-check":
-      return (
-        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2m16 6l2 2 4-4M12.5 7a4 4 0 11-8 0 4 4 0 018 0z" />
-        </svg>
-      );
-    case "shield-check":
-      return (
-        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4" />
-        </svg>
-      );
-    case "stamp":
-      return (
-        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 21h14M12 17V9m-3 8h6l1-4H8l1 4zM9 9a3 3 0 116 0" />
-        </svg>
-      );
-    case "link":
-      return (
-        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
-        </svg>
-      );
-    case "search":
-      return (
-        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <circle strokeWidth={1.5} cx="11" cy="11" r="8" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-4.35-4.35" />
-        </svg>
-      );
-    case "lock":
-      return (
-        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <rect strokeWidth={1.5} x="3" y="11" width="18" height="11" rx="2" ry="2" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 11V7a5 5 0 0110 0v4" />
-        </svg>
-      );
-    case "building":
-      return (
-        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0H5m14 0h2m-16 0H3m5-10h.01M12 11h.01M9 15h.01M12 15h.01M9 7h.01M12 7h.01" />
-        </svg>
-      );
-    case "server":
-      return (
-        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <rect strokeWidth={1.5} x="2" y="2" width="20" height="8" rx="2" ry="2" />
-          <rect strokeWidth={1.5} x="2" y="14" width="20" height="8" rx="2" ry="2" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 6h.01M6 18h.01" />
-        </svg>
-      );
-    case "radio":
-      return (
-        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.24 7.76a6 6 0 010 8.49m-8.48-.01a6 6 0 010-8.49m11.31-2.82a10 10 0 010 14.14m-14.14 0a10 10 0 010-14.14" />
-          <circle cx="12" cy="12" r="2" strokeWidth={1.5} />
-        </svg>
-      );
-    case "share":
-      return (
-        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <circle strokeWidth={1.5} cx="18" cy="5" r="3" />
-          <circle strokeWidth={1.5} cx="6" cy="12" r="3" />
-          <circle strokeWidth={1.5} cx="18" cy="19" r="3" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.59 13.51l6.83 3.98m-.01-10.98l-6.82 3.98" />
-        </svg>
-      );
-    case "git-branch":
-      return (
-        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 3v12m0 0a3 3 0 103 3m-3-3a3 3 0 01-3 3m12-6a3 3 0 100-6 3 3 0 000 6zm0 0v3a3 3 0 01-3 3H9" />
-        </svg>
-      );
-    case "key":
-      return (
-        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-        </svg>
-      );
-    default:
-      return null;
-  }
+  const Comp = ICON_MAP[icon];
+  if (!Comp) return null;
+  return <Comp className="w-5 h-5 shrink-0" strokeWidth={1.75} />;
 }
 
 function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
@@ -360,39 +264,55 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
                   {/* Section header */}
                   {section.label && !sidebarCollapsed && (
                     isCollapsible ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          toggleSection(section.id);
-                          if (section.href && !isLocked) {
-                            router.push(section.href);
-                          }
-                        }}
-                        className="w-full flex items-center justify-between px-3 mb-1 group"
-                      >
-                        <div className="flex items-center gap-1.5">
-                          <svg
-                            className={`w-3 h-3 transition-transform duration-200 ${
-                              isExpanded ? "rotate-90" : ""
-                            } ${isLocked ? "text-muted-foreground/40" : "text-muted-foreground/60 group-hover:text-muted-foreground"}`}
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+                      <div className="w-full flex items-center justify-between px-3 mb-1 group">
+                        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                          {/* Arrow-only toggle: expands/collapses sub-nav */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleSection(section.id);
+                            }}
+                            aria-label={isExpanded ? `Collapse ${section.label}` : `Expand ${section.label}`}
+                            className="p-0.5 -m-0.5 rounded hover:bg-brand/10 transition-colors cursor-pointer"
                           >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                          <span className={`text-[10px] font-semibold tracking-widest ${
-                            isLocked ? "text-muted-foreground/50" : "text-muted-foreground"
-                          }`}>
-                            {section.label}
-                          </span>
+                            <svg
+                              className={`w-3 h-3 transition-transform duration-200 ${
+                                isExpanded ? "rotate-90" : ""
+                              } ${isLocked ? "text-muted-foreground/40" : "text-muted-foreground/60 group-hover:text-muted-foreground"}`}
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </button>
+                          {/* Label navigates to section page (does NOT toggle expand) */}
+                          {section.href && !isLocked ? (
+                            <Link
+                              href={section.href}
+                              className={`text-[10px] font-semibold tracking-widest truncate transition-colors ${
+                                activeNav === section.href
+                                  ? "text-brand"
+                                  : "text-muted-foreground hover:text-foreground cursor-pointer"
+                              }`}
+                            >
+                              {section.label}
+                            </Link>
+                          ) : (
+                            <span className={`text-[10px] font-semibold tracking-widest truncate ${
+                              isLocked ? "text-muted-foreground/50" : "text-muted-foreground"
+                            }`}>
+                              {section.label}
+                            </span>
+                          )}
                         </div>
                         {isLocked && section.tierBadge && (
                           <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-brand/10 text-brand">
                             {section.tierBadge}
                           </span>
                         )}
-                      </button>
+                      </div>
                     ) : (
                       <div className="flex items-center justify-between px-3 mb-1">
                         <span className={`text-[10px] font-semibold tracking-widest ${
