@@ -15,32 +15,7 @@ import { navSections, meetsMinTier } from "@/lib/navigation";
 import UpgradeModal from "@/components/UpgradeModal";
 import type { VersiumTier } from "@/lib/tiers";
 import { canSeeSection } from "@/lib/roles";
-import {
-  Home,
-  LayoutDashboard,
-  ClipboardCheck,
-  Cpu,
-  CheckCircle2,
-  FileText,
-  Settings as SettingsIcon,
-  ScrollText,
-  HeartPulse,
-  AlertTriangle,
-  Zap,
-  UserCheck,
-  ShieldCheck,
-  Stamp,
-  Link2,
-  Search,
-  Lock,
-  Building2,
-  Server,
-  Radio,
-  Share2,
-  GitBranch,
-  KeyRound,
-  Gavel,
-} from "lucide-react";
+import { resolveIcon } from "@/lib/capabilityIcons";
 
 type AuthenticatedShellProps = {
   children: React.ReactNode;
@@ -48,41 +23,16 @@ type AuthenticatedShellProps = {
 
 const SIDEBAR_KEY = "ti_sidebar_collapsed";
 
-
 /**
- * Canonical icon registry — one Lucide icon per capability, used everywhere.
- * To lock a new capability icon: add a case here + reference by key from navigation.ts.
+ * TG-52 — sidebar icons pull from the single capability-icon registry at
+ * src/lib/capabilityIcons.ts. Any new icon MUST be added there, not here.
  */
-const ICON_MAP: Record<string, React.ComponentType<{ className?: string; strokeWidth?: number }>> = {
-  "home": Home,
-  "layout-dashboard": LayoutDashboard,
-  "clipboard": ClipboardCheck,
-  "cpu": Cpu,
-  "check-circle": CheckCircle2,
-  "file-text": FileText,
-  "settings": SettingsIcon,
-  "scroll": ScrollText,
-  "activity": HeartPulse,       // Drift & Alerts — heartbeat
-  "alert-triangle": AlertTriangle, // Escalations
-  "zap": Zap,                   // Incidents — lightning
-  "user-check": UserCheck,      // Declarations
-  "shield-check": ShieldCheck,  // Approvals
-  "stamp": Stamp,               // Attestations
-  "link": Link2,                // Provenance
-  "search": Search,             // Verification
-  "lock": Lock,                 // Incident Lock
-  "building": Building2,        // Vendors
-  "server": Server,             // AI Registry
-  "radio": Radio,               // Signals
-  "share": Share2,              // Trust Exchange
-  "git-branch": GitBranch,      // TrustGraph
-  "key": KeyRound,              // API Keys
-  "gavel": Gavel,               // Regulation & Compliance
-};
-
 function NavIcon({ icon }: { icon: string }) {
-  const Comp = ICON_MAP[icon];
+  const Comp = resolveIcon(icon);
   if (!Comp) return null;
+  // resolveIcon returns a stable reference from the frozen capability
+  // registry — the react-hooks/static-components check can't prove this.
+  // eslint-disable-next-line react-hooks/static-components
   return <Comp className="w-5 h-5 shrink-0" strokeWidth={1.75} />;
 }
 
@@ -286,14 +236,26 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
                           </button>
-                          {/* Label navigates to section page (does NOT toggle expand) */}
-                          {section.href && !isLocked ? (
+                          {/* Label navigates to section page (does NOT toggle expand).
+                              TG-53: always render as Link; lock is handled in onClick so
+                              clicks work regardless of profile load state. */}
+                          {section.href ? (
                             <Link
-                              href={section.href}
+                              href={isLocked ? "#" : section.href}
+                              onClick={(e) => {
+                                if (isLocked) {
+                                  e.preventDefault();
+                                  setUpgradeModalTier((section.tierBadge as VersiumTier) ?? "Assure");
+                                  setUpgradeModalFeature(section.label);
+                                  setUpgradeModalOpen(true);
+                                }
+                              }}
                               className={`text-[10px] font-semibold tracking-widest truncate transition-colors ${
-                                activeNav === section.href
-                                  ? "text-brand"
-                                  : "text-muted-foreground hover:text-foreground cursor-pointer"
+                                isLocked
+                                  ? "text-muted-foreground/50 cursor-pointer"
+                                  : activeNav === section.href
+                                    ? "text-brand"
+                                    : "text-muted-foreground hover:text-foreground cursor-pointer"
                               }`}
                             >
                               {section.label}
