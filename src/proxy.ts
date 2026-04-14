@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createSupabaseMiddlewareClient } from "@/lib/supabase-auth-middleware";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
   // Create a response we can mutate (for cookie refresh)
