@@ -1,22 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { NextResponse } from "next/server";
 import type { Mock } from "vitest";
 import {
   mockPostRequest,
   mockGetRequest,
-  mockAuthorized,
-  createMockSupabase,
 } from "@/lib/__tests__/test-helpers";
+import {
+  mockApiHelpers,
+  mockAudit,
+  mockRequireAuthAuthorized,
+  mockRequireAuthUnauthorized,
+  mockRequireAuthNoOrg,
+  createMockSupabase,
+} from "@/lib/__tests__/mockAuth";
 
 // ---------------------------------------------------------------------------
-// Mock dependencies BEFORE importing the route
+// Mock dependencies BEFORE importing the route (vi.mock is hoisted).
 // ---------------------------------------------------------------------------
-vi.mock("@/lib/requireTier", () => ({
-  requireTier: vi.fn(),
-}));
-vi.mock("@/lib/supabaseServer", () => ({
-  supabaseServer: vi.fn(),
-}));
+mockApiHelpers();
+mockAudit();
 vi.mock("@/lib/prove/chain", () => ({
   hashPayload: vi.fn(() => "0xabc123"),
   generateVerificationId: vi.fn(() => "VER-ABC12345"),
@@ -26,23 +27,7 @@ vi.mock("@/lib/prove/chain", () => ({
 }));
 
 import { GET, POST } from "@/app/api/prove/attestations/route";
-import { requireTier } from "@/lib/requireTier";
-import { supabaseServer } from "@/lib/supabase/admin";
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-const mockUnauthorized = {
-  authorized: false as const,
-  response: NextResponse.json({ error: "Not authenticated" }, { status: 401 }),
-};
-
-const mockNoOrg = {
-  authorized: true as const,
-  userId: "user-123",
-  plan: "enterprise",
-  orgId: null,
-};
+import { requireAuth } from "@/lib/apiHelpers";
 
 // ---------------------------------------------------------------------------
 // POST /api/prove/attestations
@@ -53,7 +38,7 @@ describe("POST /api/prove/attestations", () => {
   });
 
   it("returns 401 when unauthenticated", async () => {
-    (requireTier as unknown as Mock).mockResolvedValue(mockUnauthorized);
+    mockRequireAuthUnauthorized(requireAuth as unknown as Mock);
 
     const req = mockPostRequest({ title: "T", statement: "S" });
     const res = await POST(req);
@@ -64,7 +49,7 @@ describe("POST /api/prove/attestations", () => {
   });
 
   it("returns 400 when no organisation linked", async () => {
-    (requireTier as unknown as Mock).mockResolvedValue(mockNoOrg);
+    mockRequireAuthNoOrg(requireAuth as unknown as Mock);
 
     const req = mockPostRequest({ title: "T", statement: "S" });
     const res = await POST(req);
@@ -75,7 +60,9 @@ describe("POST /api/prove/attestations", () => {
   });
 
   it("returns 400 when title is missing", async () => {
-    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
+    mockRequireAuthAuthorized(requireAuth as unknown as Mock, {
+      db: createMockSupabase(),
+    });
 
     const req = mockPostRequest({ statement: "Some statement" });
     const res = await POST(req);
@@ -86,7 +73,9 @@ describe("POST /api/prove/attestations", () => {
   });
 
   it("returns 400 when title is empty string", async () => {
-    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
+    mockRequireAuthAuthorized(requireAuth as unknown as Mock, {
+      db: createMockSupabase(),
+    });
 
     const req = mockPostRequest({ title: "", statement: "Some statement" });
     const res = await POST(req);
@@ -97,7 +86,9 @@ describe("POST /api/prove/attestations", () => {
   });
 
   it("returns 400 when statement is missing", async () => {
-    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
+    mockRequireAuthAuthorized(requireAuth as unknown as Mock, {
+      db: createMockSupabase(),
+    });
 
     const req = mockPostRequest({ title: "Some title" });
     const res = await POST(req);
@@ -108,7 +99,9 @@ describe("POST /api/prove/attestations", () => {
   });
 
   it("returns 400 when statement is empty string", async () => {
-    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
+    mockRequireAuthAuthorized(requireAuth as unknown as Mock, {
+      db: createMockSupabase(),
+    });
 
     const req = mockPostRequest({ title: "Some title", statement: "" });
     const res = await POST(req);
@@ -119,7 +112,9 @@ describe("POST /api/prove/attestations", () => {
   });
 
   it("returns 400 when both title and statement missing", async () => {
-    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
+    mockRequireAuthAuthorized(requireAuth as unknown as Mock, {
+      db: createMockSupabase(),
+    });
 
     const req = mockPostRequest({});
     const res = await POST(req);
@@ -128,8 +123,6 @@ describe("POST /api/prove/attestations", () => {
   });
 
   it("returns 201 on valid input", async () => {
-    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
-
     const insertedRow = {
       id: "att-1",
       organisation_id: "org-456",
@@ -141,8 +134,8 @@ describe("POST /api/prove/attestations", () => {
       chain_status: "skipped",
     };
 
-    const mockDb = createMockSupabase(insertedRow);
-    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
+    const mockDb = createMockSupabase({ data: insertedRow });
+    mockRequireAuthAuthorized(requireAuth as unknown as Mock, { db: mockDb });
 
     const req = mockPostRequest({
       title: "Our AI Ethics Policy",
@@ -157,8 +150,6 @@ describe("POST /api/prove/attestations", () => {
   });
 
   it("returns 201 with optional posture_snapshot", async () => {
-    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
-
     const insertedRow = {
       id: "att-2",
       title: "Policy Update",
@@ -167,8 +158,8 @@ describe("POST /api/prove/attestations", () => {
       verification_id: "VER-ABC12345",
     };
 
-    const mockDb = createMockSupabase(insertedRow);
-    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
+    const mockDb = createMockSupabase({ data: insertedRow });
+    mockRequireAuthAuthorized(requireAuth as unknown as Mock, { db: mockDb });
 
     const req = mockPostRequest({
       title: "Policy Update",
@@ -183,10 +174,11 @@ describe("POST /api/prove/attestations", () => {
   });
 
   it("returns 500 when Supabase insert fails", async () => {
-    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
-
-    const mockDb = createMockSupabase(null, { message: "DB insert failed" });
-    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
+    const mockDb = createMockSupabase({
+      data: null,
+      error: { message: "DB insert failed" },
+    });
+    mockRequireAuthAuthorized(requireAuth as unknown as Mock, { db: mockDb });
 
     const req = mockPostRequest({
       title: "Good title",
@@ -209,7 +201,7 @@ describe("GET /api/prove/attestations", () => {
   });
 
   it("returns 401 when unauthenticated", async () => {
-    (requireTier as unknown as Mock).mockResolvedValue(mockUnauthorized);
+    mockRequireAuthUnauthorized(requireAuth as unknown as Mock);
 
     const req = mockGetRequest("/api/prove/attestations");
     const res = await GET(req);
@@ -218,7 +210,7 @@ describe("GET /api/prove/attestations", () => {
   });
 
   it("returns 400 when no organisation linked", async () => {
-    (requireTier as unknown as Mock).mockResolvedValue(mockNoOrg);
+    mockRequireAuthNoOrg(requireAuth as unknown as Mock);
 
     const req = mockGetRequest("/api/prove/attestations");
     const res = await GET(req);
@@ -229,17 +221,13 @@ describe("GET /api/prove/attestations", () => {
   });
 
   it("returns 200 with attestations array", async () => {
-    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
-
     const rows = [
       { id: "att-1", title: "Policy A" },
       { id: "att-2", title: "Policy B" },
     ];
 
-    const mockDb = createMockSupabase(rows);
-    // Override range to return data + count (GET uses range, not single)
-    mockDb.range.mockResolvedValue({ data: rows, count: 2, error: null });
-    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
+    const mockDb = createMockSupabase({ data: rows, count: 2 });
+    mockRequireAuthAuthorized(requireAuth as unknown as Mock, { db: mockDb });
 
     const req = mockGetRequest("/api/prove/attestations?page=1&per_page=20");
     const res = await GET(req);
@@ -251,11 +239,8 @@ describe("GET /api/prove/attestations", () => {
   });
 
   it("returns empty array when no attestations exist", async () => {
-    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
-
-    const mockDb = createMockSupabase([]);
-    mockDb.range.mockResolvedValue({ data: [], count: 0, error: null });
-    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
+    const mockDb = createMockSupabase({ data: [], count: 0 });
+    mockRequireAuthAuthorized(requireAuth as unknown as Mock, { db: mockDb });
 
     const req = mockGetRequest("/api/prove/attestations");
     const res = await GET(req);
@@ -267,15 +252,12 @@ describe("GET /api/prove/attestations", () => {
   });
 
   it("returns 500 when Supabase query fails", async () => {
-    (requireTier as unknown as Mock).mockResolvedValue(mockAuthorized);
-
-    const mockDb = createMockSupabase(null, { message: "DB error" });
-    mockDb.range.mockResolvedValue({
+    const mockDb = createMockSupabase({
       data: null,
-      count: null,
       error: { message: "DB error" },
+      count: null,
     });
-    (supabaseServer as unknown as Mock).mockReturnValue(mockDb);
+    mockRequireAuthAuthorized(requireAuth as unknown as Mock, { db: mockDb });
 
     const req = mockGetRequest("/api/prove/attestations");
     const res = await GET(req);

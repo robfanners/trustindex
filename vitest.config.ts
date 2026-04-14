@@ -30,6 +30,12 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // `ethers` is an optional runtime dependency loaded dynamically in
+      // src/lib/prove/chain.ts. It is not installed in node_modules because
+      // chain-anchoring is opt-in. Tests always mock @/lib/prove/chain, but
+      // vite still statically analyses the import — stub it so resolution
+      // succeeds under vitest.
+      ethers: path.resolve(__dirname, "./src/lib/__tests__/ethers-stub.ts"),
     },
   },
 });

@@ -3,13 +3,13 @@ import type { Mock } from "vitest";
 import {
   mockGetRequest,
 } from "@/lib/__tests__/test-helpers";
+import { mockSupabaseAdmin } from "@/lib/__tests__/mockAuth";
 
 // ---------------------------------------------------------------------------
-// Mock dependencies BEFORE importing the route
+// Mock dependencies BEFORE importing the route (vi.mock is hoisted).
+// Public/verify is a no-auth endpoint that calls supabaseServer() directly.
 // ---------------------------------------------------------------------------
-vi.mock("@/lib/supabaseServer", () => ({
-  supabaseServer: vi.fn(),
-}));
+mockSupabaseAdmin();
 vi.mock("@/lib/rateLimit", () => ({
   checkRateLimit: vi.fn(() => ({ allowed: true })),
   getClientIp: vi.fn(() => "127.0.0.1"),

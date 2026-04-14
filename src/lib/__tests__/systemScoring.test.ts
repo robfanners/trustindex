@@ -113,13 +113,13 @@ describe("questionScore", () => {
       )
     ).toBe(1.0);
 
-    // Base 0.5 × cap 0.6 = 0.3
+    // min(base 0.5, cap 0.6) = 0.5
     expect(
       questionScore(
         { maturity: "defined", evidence: { type: "document_ref", pointer: "doc" } },
         "maturity"
       )
-    ).toBe(0.3);
+    ).toBe(0.5);
   });
 
   it("handles empty answers", () => {
@@ -134,29 +134,36 @@ describe("questionScore", () => {
 
 describe("dimensionScore", () => {
   it("computes weighted average of questions in a dimension", () => {
-    const answers: Record<string, QuestionAnswer> = {
-      "TXS_GOV_01": { boolean: true, evidence: { type: "link", pointer: "url" } },
-      "TXS_GOV_02": { boolean: false, evidence: undefined },
-    };
+    // Pick the first two questions from the Transparency dimension and answer them
+    const dimQs = SYSTEM_QUESTIONS.filter((q) => q.dimension === "Transparency").slice(0, 2);
+    const answers: Record<string, QuestionAnswer> = {};
+    for (const q of dimQs) {
+      answers[q.id] =
+        q.answerType === "boolean"
+          ? { boolean: true, evidence: { type: "link", pointer: "url" } }
+          : { maturity: "enforced", evidence: { type: "link", pointer: "url" } };
+    }
 
-    // Both answers exist, scores will be weighted and multiplied by 100
-    const score = dimensionScore(SYSTEM_QUESTIONS, answers, "governance");
+    const score = dimensionScore(SYSTEM_QUESTIONS, answers, "Transparency");
     expect(typeof score).toBe("number");
     expect(score).toBeGreaterThanOrEqual(0);
     expect(score).toBeLessThanOrEqual(100);
   });
 
   it("returns 0 when no answers for dimension", () => {
-    const score = dimensionScore(SYSTEM_QUESTIONS, {}, "governance");
+    const score = dimensionScore(SYSTEM_QUESTIONS, {}, "Transparency");
     expect(score).toBe(0);
   });
 
   it("rounds result to integer", () => {
     const answers: Record<string, QuestionAnswer> = {};
-    for (const q of SYSTEM_QUESTIONS.filter((q) => q.dimension === "governance").slice(0, 2)) {
-      answers[q.id] = { maturity: "enforced", evidence: { type: "link", pointer: "url" } };
+    for (const q of SYSTEM_QUESTIONS.filter((q) => q.dimension === "Transparency").slice(0, 2)) {
+      answers[q.id] =
+        q.answerType === "boolean"
+          ? { boolean: true, evidence: { type: "link", pointer: "url" } }
+          : { maturity: "enforced", evidence: { type: "link", pointer: "url" } };
     }
-    const score = dimensionScore(SYSTEM_QUESTIONS, answers, "governance");
+    const score = dimensionScore(SYSTEM_QUESTIONS, answers, "Transparency");
     expect(Number.isInteger(score)).toBe(true);
   });
 });
@@ -166,59 +173,64 @@ describe("dimensionScore", () => {
 // ---------------------------------------------------------------------------
 
 describe("overallScore", () => {
-  it("computes 20% average of all dimensions", () => {
+  it("computes equal-weight average of all dimensions", () => {
     const dimScores = {
-      governance: 80,
-      transparency: 70,
-      accountability: 60,
-      safety: 50,
-      fairness: 40,
+      "Transparency": 90,
+      "Explainability": 80,
+      "Human Oversight": 70,
+      "Risk Controls": 60,
+      "Accountability": 50,
+      "Intent-Based Governance": 40,
     };
-    // (80 + 70 + 60 + 50 + 40) × 0.2 = 60
-    expect(overallScore(dimScores)).toBe(60);
+    // mean = (90+80+70+60+50+40)/6 = 65
+    expect(overallScore(dimScores)).toBe(65);
   });
 
   it("handles missing dimensions as 0", () => {
     const dimScores = {
-      governance: 100,
-      transparency: 100,
-      accountability: 0,
-      safety: 0,
-      fairness: 0,
+      "Transparency": 100,
+      "Explainability": 100,
+      "Human Oversight": 100,
+      "Risk Controls": 0,
+      "Accountability": 0,
+      "Intent-Based Governance": 0,
     };
-    // (100 + 100 + 0 + 0 + 0) × 0.2 = 40
-    expect(overallScore(dimScores)).toBe(40);
+    // mean = 300/6 = 50
+    expect(overallScore(dimScores)).toBe(50);
   });
 
   it("returns 0 when all dimensions are 0", () => {
     const dimScores = {
-      governance: 0,
-      transparency: 0,
-      accountability: 0,
-      safety: 0,
-      fairness: 0,
+      "Transparency": 0,
+      "Explainability": 0,
+      "Human Oversight": 0,
+      "Risk Controls": 0,
+      "Accountability": 0,
+      "Intent-Based Governance": 0,
     };
     expect(overallScore(dimScores)).toBe(0);
   });
 
   it("returns 100 when all dimensions are 100", () => {
     const dimScores = {
-      governance: 100,
-      transparency: 100,
-      accountability: 100,
-      safety: 100,
-      fairness: 100,
+      "Transparency": 100,
+      "Explainability": 100,
+      "Human Oversight": 100,
+      "Risk Controls": 100,
+      "Accountability": 100,
+      "Intent-Based Governance": 100,
     };
     expect(overallScore(dimScores)).toBe(100);
   });
 
   it("rounds result to integer", () => {
     const dimScores = {
-      governance: 33,
-      transparency: 33,
-      accountability: 33,
-      safety: 33,
-      fairness: 33,
+      "Transparency": 33,
+      "Explainability": 33,
+      "Human Oversight": 33,
+      "Risk Controls": 33,
+      "Accountability": 33,
+      "Intent-Based Governance": 33,
     };
     expect(Number.isInteger(overallScore(dimScores))).toBe(true);
   });

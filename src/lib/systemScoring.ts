@@ -105,15 +105,17 @@ export function dimensionScore(
 // Overall score (0–100)
 // ---------------------------------------------------------------------------
 
-/** Equal 20% weight per dimension: round(Σ(dimScore × 0.2)) */
+/** Equal weight per dimension: round(mean(dimScores across SYSTEM_DIMENSIONS)). */
 export function overallScore(
   dimScores: Record<string, number>
 ): number {
+  const n = SYSTEM_DIMENSIONS.length;
+  if (n === 0) return 0;
   let sum = 0;
   for (const dim of SYSTEM_DIMENSIONS) {
-    sum += (dimScores[dim] ?? 0) * 0.2;
+    sum += dimScores[dim] ?? 0;
   }
-  return Math.round(sum);
+  return Math.round(sum / n);
 }
 
 // ---------------------------------------------------------------------------
