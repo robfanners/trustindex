@@ -1,11 +1,13 @@
 // src/lib/navigation.ts
 
 import type { PlanName } from "@/lib/entitlements";
+import type { CapabilityKey } from "@/lib/capabilityIcons";
 
 export type NavItem = {
   label: string;
   href: string;
-  icon: string;
+  /** Icon key from the canonical capability registry (src/lib/capabilityIcons.ts). */
+  icon: CapabilityKey;
   /** If true, this item links to an existing page. If false, it's a new placeholder. */
   exists: boolean;
 };
@@ -61,13 +63,13 @@ export const navSections: NavSection[] = [
     minTier: null,
     href: "/govern",
     items: [
-      { label: "TrustGraph", href: "/govern/trustgraph", icon: "git-branch", exists: true },
-      { label: "Policies", href: "/govern/policies", icon: "scroll", exists: true },
-      { label: "AI Registry", href: "/govern/registry", icon: "server", exists: true },
-      { label: "Vendors", href: "/govern/vendors", icon: "building", exists: true },
-      { label: "Models", href: "/govern/models", icon: "cpu", exists: true },
-      { label: "Regulation & Compliance", href: "/govern/compliance", icon: "gavel", exists: true },
-      { label: "Actions", href: "/actions", icon: "check-circle", exists: true },
+      { label: "TrustGraph", href: "/govern/trustgraph", icon: "trustgraph", exists: true },
+      { label: "Policies", href: "/govern/policies", icon: "policies", exists: true },
+      { label: "AI Registry", href: "/govern/registry", icon: "ai-registry", exists: true },
+      { label: "Vendors", href: "/govern/vendors", icon: "vendors", exists: true },
+      { label: "Models", href: "/govern/models", icon: "models", exists: true },
+      { label: "Regulation & Compliance", href: "/govern/compliance", icon: "regulation", exists: true },
+      { label: "Actions", href: "/actions", icon: "actions", exists: true },
     ],
   },
   {
@@ -77,11 +79,11 @@ export const navSections: NavSection[] = [
     tierBadge: "Assure",
     href: "/monitor",
     items: [
-      { label: "Drift & Alerts", href: "/monitor/drift", icon: "activity", exists: true },
-      { label: "Escalations", href: "/monitor/escalations", icon: "alert-triangle", exists: true },
-      { label: "Incidents", href: "/monitor/incidents", icon: "zap", exists: true },
-      { label: "Declarations", href: "/monitor/declarations", icon: "user-check", exists: true },
-      { label: "Signals", href: "/monitor/signals", icon: "radio", exists: true },
+      { label: "Drift & Alerts", href: "/monitor/drift", icon: "drift-alerts", exists: true },
+      { label: "Escalations", href: "/monitor/escalations", icon: "escalations", exists: true },
+      { label: "Incidents", href: "/monitor/incidents", icon: "incidents", exists: true },
+      { label: "Declarations", href: "/monitor/declarations", icon: "declarations", exists: true },
+      { label: "Signals", href: "/monitor/signals", icon: "signals", exists: true },
     ],
   },
   {
@@ -91,13 +93,13 @@ export const navSections: NavSection[] = [
     tierBadge: "Verify",
     href: "/prove",
     items: [
-      { label: "Approvals", href: "/prove/approvals", icon: "shield-check", exists: true },
-      { label: "Attestations", href: "/prove/attestations", icon: "stamp", exists: true },
-      { label: "Provenance", href: "/prove/provenance", icon: "link", exists: true },
-      { label: "Decisions", href: "/prove/decisions", icon: "file-text", exists: true },
-      { label: "Incident Lock", href: "/prove/incident-locks", icon: "lock", exists: true },
-      { label: "Trust Exchange", href: "/prove/exchanges", icon: "share", exists: true },
-      { label: "Verification", href: "/prove/verification", icon: "search", exists: true },
+      { label: "Approvals", href: "/prove/approvals", icon: "approvals", exists: true },
+      { label: "Attestations", href: "/prove/attestations", icon: "attestations", exists: true },
+      { label: "Provenance", href: "/prove/provenance", icon: "provenance", exists: true },
+      { label: "Decisions", href: "/prove/decisions", icon: "decisions", exists: true },
+      { label: "Incident Lock", href: "/prove/incident-locks", icon: "incident-lock", exists: true },
+      { label: "Trust Exchange", href: "/prove/exchanges", icon: "trust-exchange", exists: true },
+      { label: "Verification", href: "/prove/verification", icon: "verification", exists: true },
     ],
   },
   {
@@ -114,7 +116,7 @@ export const navSections: NavSection[] = [
     label: "REPORT",
     minTier: null,
     items: [
-      { label: "Reports", href: "/reports", icon: "file-text", exists: true },
+      { label: "Reports", href: "/reports", icon: "reports", exists: true },
     ],
   },
   {

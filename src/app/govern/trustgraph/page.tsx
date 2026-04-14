@@ -8,6 +8,10 @@ import { getPlanLimits } from "@/lib/entitlements";
 import { getTierForScore } from "@/lib/trustGraphTiers";
 import { getStabilityBadge, type StabilityStatus } from "@/lib/assessmentLifecycle";
 import Tooltip from "@/components/Tooltip";
+import { getCapabilityIcon } from "@/lib/capabilityIcons";
+
+// TG-52 — page header icon from the canonical capability registry.
+const TrustGraphIcon = getCapabilityIcon("trustgraph");
 
 // ---------------------------------------------------------------------------
 // Types
@@ -273,11 +277,16 @@ function TrustGraphContent() {
   return (
       <div className="flex flex-col gap-6">
         {/* Page header */}
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">TrustGraph</h1>
-          <p className="text-sm text-[var(--muted-foreground,#6B7280)] mt-1">
-            Your composite governance score — combining organisational readiness and system assessments
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-brand/10 text-brand">
+            <TrustGraphIcon className="w-6 h-6" strokeWidth={1.5} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">TrustGraph</h1>
+            <p className="text-sm text-[var(--muted-foreground,#6B7280)] mt-1">
+              Your composite governance score — combining organisational readiness and system assessments
+            </p>
+          </div>
         </div>
 
         {/* Score overview strip */}

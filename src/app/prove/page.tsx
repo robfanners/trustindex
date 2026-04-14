@@ -2,6 +2,16 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { getCapabilityIcon } from "@/lib/capabilityIcons";
+
+// TG-52 — module card icons sourced from the single capability registry.
+const ApprovalsIcon = getCapabilityIcon("approvals");
+const AttestationsIcon = getCapabilityIcon("attestations");
+const ProvenanceIcon = getCapabilityIcon("provenance");
+const DecisionsIcon = getCapabilityIcon("decisions");
+const IncidentLockIcon = getCapabilityIcon("incident-lock");
+const TrustExchangeIcon = getCapabilityIcon("trust-exchange");
+const VerificationIcon = getCapabilityIcon("verification");
 
 // ---------------------------------------------------------------------------
 // Types
@@ -147,7 +157,7 @@ function ProveContent() {
             {/* Module grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <ModuleCard
-                icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0 1 12 2.944a11.955 11.955 0 0 1-8.618 3.04A12.02 12.02 0 0 0 3 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>}
+                icon={<ApprovalsIcon className="w-4 h-4" strokeWidth={1.75} />}
                 title="Approvals"
                 description="Manage governance approval workflows. Route decisions through the right stakeholders."
                 href="/prove/approvals"
@@ -157,7 +167,7 @@ function ProveContent() {
               />
 
               <ModuleCard
-                icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>}
+                icon={<AttestationsIcon className="w-4 h-4" strokeWidth={1.75} />}
                 title="Attestations"
                 description="Issue cryptographically signed governance attestations. Prove compliance at a point in time."
                 href="/prove/attestations"
@@ -167,7 +177,7 @@ function ProveContent() {
               />
 
               <ModuleCard
-                icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>}
+                icon={<ProvenanceIcon className="w-4 h-4" strokeWidth={1.75} />}
                 title="Provenance"
                 description="Track the origin and lineage of AI decisions. Maintain an immutable audit trail."
                 href="/prove/provenance"
@@ -177,7 +187,7 @@ function ProveContent() {
               />
 
               <ModuleCard
-                icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /></svg>}
+                icon={<DecisionsIcon className="w-4 h-4" strokeWidth={1.75} />}
                 title="Decisions"
                 description="Record and justify governance decisions. Create a decision ledger for audit and accountability."
                 href="/prove/decisions"
@@ -187,7 +197,7 @@ function ProveContent() {
               />
 
               <ModuleCard
-                icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>}
+                icon={<IncidentLockIcon className="w-4 h-4" strokeWidth={1.75} />}
                 title="Incident Lock"
                 description="Freeze incident evidence for investigation. Prevent tampering with critical records."
                 href="/prove/incident-locks"
@@ -195,7 +205,7 @@ function ProveContent() {
               />
 
               <ModuleCard
-                icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" /></svg>}
+                icon={<TrustExchangeIcon className="w-4 h-4" strokeWidth={1.75} />}
                 title="Trust Exchange"
                 description="Share governance credentials with partners. Exchange verified trust signals between organisations."
                 href="/prove/exchanges"
@@ -203,7 +213,7 @@ function ProveContent() {
               />
 
               <ModuleCard
-                icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>}
+                icon={<VerificationIcon className="w-4 h-4" strokeWidth={1.75} />}
                 title="Verification"
                 description="Verify governance claims and attestations. Confirm the validity of trust credentials."
                 href="/prove/verification"

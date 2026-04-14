@@ -7,6 +7,10 @@ import EmptyState from "@/components/ui/EmptyState";
 import DetailPanel from "@/components/ui/DetailPanel";
 import OnboardingTour from "@/components/ui/OnboardingTour";
 import { showActionToast } from "@/components/ui/Toast";
+import { getCapabilityIcon } from "@/lib/capabilityIcons";
+
+// TG-52 — page header icon sourced from the canonical capability registry.
+const TrustExchangeIcon = getCapabilityIcon("trust-exchange");
 
 type Exchange = {
   id: string;
@@ -43,11 +47,7 @@ function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-const headerIcon = (
-  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 4v12m0-12l-4 4m4-4l4 4" />
-  </svg>
-);
+const headerIcon = <TrustExchangeIcon className="w-6 h-6" strokeWidth={1.5} />;
 
 const tourSteps = [
   { target: "[data-tour='page-header']", title: "Trust Exchange", content: "Share governance proofs with external parties for independent verification." },

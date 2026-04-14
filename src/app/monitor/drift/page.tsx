@@ -7,6 +7,10 @@ import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import DetailPanel from "@/components/ui/DetailPanel";
 import OnboardingTour from "@/components/ui/OnboardingTour";
+import { getCapabilityIcon } from "@/lib/capabilityIcons";
+
+// TG-52 — page header icon sourced from the canonical capability registry.
+const DriftIcon = getCapabilityIcon("drift-alerts");
 
 type DriftEvent = {
   id: string;
@@ -101,11 +105,7 @@ export default function DriftPage() {
         {/* Header */}
         <div data-tour="page-header">
           <PageHeader
-            icon={
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <polyline strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} points="22 12 18 12 15 21 9 3 6 12 2 12" />
-              </svg>
-            }
+            icon={<DriftIcon className="w-6 h-6" strokeWidth={1.5} />}
             title="Drift & Alerts"
             description="Score changes across governance assessments — tracking whether your trust posture is improving or degrading"
             workflowHint={[

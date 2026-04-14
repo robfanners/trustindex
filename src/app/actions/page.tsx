@@ -5,6 +5,10 @@ import Link from "next/link";
 import AuthenticatedShell from "@/components/AuthenticatedShell";
 import RequireAuth from "@/components/RequireAuth";
 import EmptyState from "@/components/ui/EmptyState";
+import { getCapabilityIcon } from "@/lib/capabilityIcons";
+
+// TG-52 — page header icon from the canonical capability registry.
+const ActionsIcon = getCapabilityIcon("actions");
 
 // ---------------------------------------------------------------------------
 // Types
@@ -246,11 +250,16 @@ function ActionsContent() {
   return (
     <div>
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-foreground">Actions</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Track, assign, and resolve trust governance actions
-        </p>
+      <div className="mb-6 flex items-center gap-3">
+        <div className="p-2 rounded-lg bg-brand/10 text-brand">
+          <ActionsIcon className="w-6 h-6" strokeWidth={1.5} />
+        </div>
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">Actions</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Track, assign, and resolve trust governance actions
+          </p>
+        </div>
       </div>
 
       {/* Summary stats */}

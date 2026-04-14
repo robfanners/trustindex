@@ -5,6 +5,10 @@ import Link from "next/link";
 import DetailPanel from "@/components/ui/DetailPanel";
 import { showActionToast, showErrorToast } from "@/components/ui/Toast";
 import { useAuth } from "@/context/AuthContext";
+import { getCapabilityIcon } from "@/lib/capabilityIcons";
+
+// TG-52 — page header icon from the canonical capability registry.
+const PoliciesIcon = getCapabilityIcon("policies");
 
 // ---------------------------------------------------------------------------
 // Types
@@ -433,11 +437,16 @@ function PoliciesContent() {
     <div className="flex flex-col gap-5">
       {/* Header */}
       <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Policies</h1>
-          <p className="text-sm text-muted-foreground">
-            Create, manage, and approve AI governance policies
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-brand/10 text-brand">
+            <PoliciesIcon className="w-6 h-6" strokeWidth={1.5} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">Policies</h1>
+            <p className="text-sm text-muted-foreground">
+              Create, manage, and approve AI governance policies
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <Link

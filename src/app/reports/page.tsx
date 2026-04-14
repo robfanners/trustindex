@@ -38,6 +38,10 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { getCapabilityIcon } from "@/lib/capabilityIcons";
+
+// TG-52 — page header icon from the canonical capability registry.
+const ReportsIcon = getCapabilityIcon("reports");
 
 // ---------------------------------------------------------------------------
 // Types
@@ -105,11 +109,16 @@ function ReportsContent() {
   if (permitted.length === 0) {
     return (
       <div>
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-foreground">Reports</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Trust governance analytics and reporting
-          </p>
+        <div className="mb-8 flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-brand/10 text-brand">
+            <ReportsIcon className="w-6 h-6" strokeWidth={1.5} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-semibold text-foreground">Reports</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Trust governance analytics and reporting
+            </p>
+          </div>
         </div>
         <div className="border border-border rounded-xl p-8 text-center">
           <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
@@ -135,11 +144,16 @@ function ReportsContent() {
   return (
     <div>
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-foreground">Reports</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Trust governance analytics and reporting
-        </p>
+      <div className="mb-6 flex items-center gap-3">
+        <div className="p-2 rounded-lg bg-brand/10 text-brand">
+          <ReportsIcon className="w-6 h-6" strokeWidth={1.5} />
+        </div>
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">Reports</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Trust governance analytics and reporting
+          </p>
+        </div>
       </div>
 
       {/* Tab bar */}

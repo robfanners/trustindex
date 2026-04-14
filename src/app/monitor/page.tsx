@@ -2,6 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { getCapabilityIcon } from "@/lib/capabilityIcons";
+
+// TG-52 — module card icons source from the single capability registry.
+const DriftIcon = getCapabilityIcon("drift-alerts");
+const EscalationsIcon = getCapabilityIcon("escalations");
+const IncidentsIcon = getCapabilityIcon("incidents");
+const DeclarationsIcon = getCapabilityIcon("declarations");
+const SignalsIcon = getCapabilityIcon("signals");
 
 // ---------------------------------------------------------------------------
 // Types
@@ -183,7 +191,7 @@ function MonitorContent() {
             {/* Module grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <ModuleCard
-                icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg>}
+                icon={<DriftIcon className="w-4 h-4" strokeWidth={1.75} />}
                 title="Drift & Alerts"
                 description="Track score drift over time. Get alerted when assessments shift beyond thresholds."
                 href="/monitor/drift"
@@ -193,7 +201,7 @@ function MonitorContent() {
               />
 
               <ModuleCard
-                icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>}
+                icon={<EscalationsIcon className="w-4 h-4" strokeWidth={1.75} />}
                 title="Escalations"
                 description="Manage governance escalations. Assign, track, and resolve issues that need attention."
                 href="/monitor/escalations"
@@ -203,7 +211,7 @@ function MonitorContent() {
               />
 
               <ModuleCard
-                icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>}
+                icon={<IncidentsIcon className="w-4 h-4" strokeWidth={1.75} />}
                 title="Incidents"
                 description="Log and investigate AI incidents. Record impact, root cause, and remediation steps."
                 href="/monitor/incidents"
@@ -213,7 +221,7 @@ function MonitorContent() {
               />
 
               <ModuleCard
-                icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="8.5" cy="7" r="4" /><polyline points="17 11 19 13 23 9" /></svg>}
+                icon={<DeclarationsIcon className="w-4 h-4" strokeWidth={1.75} />}
                 title="Declarations"
                 description="Collect staff declarations about AI usage. Issue tokens and track compliance."
                 href="/monitor/declarations"
@@ -223,7 +231,7 @@ function MonitorContent() {
               />
 
               <ModuleCard
-                icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>}
+                icon={<SignalsIcon className="w-4 h-4" strokeWidth={1.75} />}
                 title="Signals"
                 description="Monitor real-time governance signals. Surface emerging risks and patterns."
                 href="/monitor/signals"

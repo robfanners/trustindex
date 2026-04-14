@@ -2,6 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { getCapabilityIcon } from "@/lib/capabilityIcons";
+
+// TG-52 — module card icons from the capability registry.
+const TrustGraphIcon = getCapabilityIcon("trustgraph");
+const PoliciesIcon = getCapabilityIcon("policies");
+const RegistryIcon = getCapabilityIcon("ai-registry");
+const VendorsIcon = getCapabilityIcon("vendors");
+const ModelsIcon = getCapabilityIcon("models");
+const ActionsIcon = getCapabilityIcon("actions");
 
 // ---------------------------------------------------------------------------
 // Types
@@ -161,7 +170,7 @@ function GovernContent() {
             {/* Module grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <ModuleCard
-                icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>}
+                icon={<TrustGraphIcon className="w-4 h-4" strokeWidth={1.75} />}
                 title="TrustGraph"
                 description="View your composite trust score. Assess organisational readiness and individual AI systems."
                 href="/govern/trustgraph"
@@ -171,7 +180,7 @@ function GovernContent() {
               />
 
               <ModuleCard
-                icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" /></svg>}
+                icon={<PoliciesIcon className="w-4 h-4" strokeWidth={1.75} />}
                 title="Policies"
                 description="Generate and manage AI governance policies. Use the copilot to create policies aligned to your context."
                 href="/copilot/generate-policy"
@@ -181,7 +190,7 @@ function GovernContent() {
               />
 
               <ModuleCard
-                icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" /></svg>}
+                icon={<RegistryIcon className="w-4 h-4" strokeWidth={1.75} />}
                 title="AI Registry"
                 description="Maintain a central register of all AI systems with risk classifications and compliance status."
                 href="/govern/registry"
@@ -191,7 +200,7 @@ function GovernContent() {
               />
 
               <ModuleCard
-                icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z" /><path d="M9 22V12h6v10" /></svg>}
+                icon={<VendorsIcon className="w-4 h-4" strokeWidth={1.75} />}
                 title="Vendors"
                 description="Track and assess AI vendors. Evaluate third-party risk and maintain supplier records."
                 href="/govern/vendors"
@@ -201,7 +210,7 @@ function GovernContent() {
               />
 
               <ModuleCard
-                icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="4" y="4" width="16" height="16" rx="2" /><path d="M9 9h6M9 12h6M9 15h4" /></svg>}
+                icon={<ModelsIcon className="w-4 h-4" strokeWidth={1.75} />}
                 title="Models"
                 description="Register and monitor AI models deployed across your organisation."
                 href="/govern/models"
@@ -211,7 +220,7 @@ function GovernContent() {
               />
 
               <ModuleCard
-                icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>}
+                icon={<ActionsIcon className="w-4 h-4" strokeWidth={1.75} />}
                 title="Actions"
                 description="Track remediation actions arising from assessments and governance reviews."
                 href="/actions"

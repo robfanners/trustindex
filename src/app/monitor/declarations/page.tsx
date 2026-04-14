@@ -2,6 +2,10 @@
 
 import TierGate from "@/components/TierGate";
 import DeclarationManager from "@/components/monitor/DeclarationManager";
+import { getCapabilityIcon } from "@/lib/capabilityIcons";
+
+// TG-52 — header icon sourced from the canonical capability registry.
+const DeclarationsIcon = getCapabilityIcon("declarations");
 
 export default function DeclarationsPage() {
   return (
@@ -9,9 +13,7 @@ export default function DeclarationsPage() {
       <div className="space-y-6">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-brand/10 text-brand">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4-4v2m16 6l2 2 4-4M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
+            <DeclarationsIcon className="w-6 h-6" strokeWidth={1.5} />
           </div>
           <div>
             <h1 className="text-2xl font-semibold">Staff Declarations</h1>
