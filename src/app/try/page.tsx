@@ -183,7 +183,23 @@ export default function TryExplorerPage() {
           fetch("/api/try-explorer", { method: "POST" }),
           QUERY_TIMEOUT
         );
-        const json = await res.json();
+
+        // Guard JSON parse: if middleware 307'd the POST (e.g. auth redirect)
+        // the body will be HTML and res.json() throws a cryptic
+        // "string did not match the expected pattern" in WebKit. See TG-54.
+        let json: { runId?: string; token?: string; error?: string } = {};
+        try {
+          json = await res.json();
+        } catch {
+          if (!cancelled) {
+            setError(
+              res.status === 405 || res.redirected
+                ? "Couldn't start your self-assessment. Please refresh and try again."
+                : `Failed to set up survey (HTTP ${res.status}).`
+            );
+          }
+          return;
+        }
 
         if (!res.ok || !json.runId) {
           if (!cancelled) setError(json.error || "Failed to set up survey.");
@@ -198,7 +214,7 @@ export default function TryExplorerPage() {
 
         if (!cancelled) {
           setRunId(json.runId);
-          setToken(json.token);
+          setToken(json.token ?? null);
         }
 
         // ------------------------------------------------------------------

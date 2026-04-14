@@ -53,14 +53,21 @@ export function getClientOrigin(): string {
 /**
  * Validate a `next` redirect parameter to prevent open redirects.
  *
- * Allows only relative paths starting with a single `/`.
- * Rejects: "//evil.com", "https://evil.com", "", null, etc.
+ * Allows only relative paths starting with a single `/` that point at a
+ * navigable page. Rejects:
+ *   - absolute / protocol-relative URLs ("//evil.com", "https://evil.com")
+ *   - empty / null
+ *   - /api/*  (API routes are typically POST-only — a GET from the auth
+ *             callback would 405. See TG-54.)
+ *   - /auth/* (would loop the user back to the login flow)
  */
 export function safeRedirectPath(
   next: string | null | undefined,
   fallback: string = "/dashboard"
 ): string {
   if (!next) return fallback;
-  if (/^\/(?:[^/]|$)/.test(next)) return next;
-  return fallback;
+  if (!/^\/(?:[^/]|$)/.test(next)) return fallback;
+  if (next === "/api" || next.startsWith("/api/")) return fallback;
+  if (next === "/auth" || next.startsWith("/auth/")) return fallback;
+  return next;
 }
