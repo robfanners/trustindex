@@ -635,7 +635,7 @@ function BoardSummaryReport({
               <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={80} />
               <Tooltip
                 {...TOOLTIP_STYLE}
-                formatter={(value) => [`${Number(value) || 0}%`, "Penalty"]}
+                formatter={(value: number | undefined) => [`${value ?? 0}%`, "Penalty"]}
               />
               <Bar dataKey="value" radius={[0, 4, 4, 0]} maxBarSize={24}>
                 {penaltyBars.map((_, i) => (
