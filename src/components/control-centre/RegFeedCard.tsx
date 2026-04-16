@@ -50,7 +50,7 @@ export default function RegFeedCard({ updates }: { updates: RegUpdate[] }) {
           </span>
         </div>
         <Link
-          href="/copilot/generate-policy"
+          href="/govern/compliance"
           className="text-xs font-medium text-[var(--brand,#673DE6)] hover:underline"
         >
           All updates

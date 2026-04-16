@@ -11,6 +11,7 @@ const RegistryIcon = getCapabilityIcon("ai-registry");
 const VendorsIcon = getCapabilityIcon("vendors");
 const ModelsIcon = getCapabilityIcon("models");
 const ActionsIcon = getCapabilityIcon("actions");
+const RegulationIcon = getCapabilityIcon("regulation");
 
 // ---------------------------------------------------------------------------
 // Types
@@ -217,6 +218,16 @@ function GovernContent() {
                 stat={data?.model_count ?? 0}
                 statLabel="Models"
                 color="#059669"
+              />
+
+              <ModuleCard
+                icon={<RegulationIcon className="w-4 h-4" strokeWidth={1.75} />}
+                title="Regulation & Compliance"
+                description="Track framework coverage (EU AI Act, ISO 42001, NIST AI RMF) and monitor the regulatory feed."
+                href="/govern/compliance"
+                stat={null}
+                statLabel=""
+                color="#673DE6"
               />
 
               <ModuleCard
