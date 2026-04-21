@@ -1,3 +1,7 @@
+-- Ensure pgcrypto functions (gen_random_bytes, gen_random_uuid, etc) resolve
+-- in all migration sessions, including supabase db push.
+SET search_path = public, extensions, pg_catalog;
+
 -- =============================================================================
 -- Verisum — Baseline Schema (TG-32)
 -- Reconstructed from live Supabase project on 2026-03-25.
