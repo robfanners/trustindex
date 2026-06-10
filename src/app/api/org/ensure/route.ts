@@ -1,12 +1,15 @@
 import { requireAuth, apiError, apiOk } from "@/lib/apiHelpers";
-import { isPaidPlan } from "@/lib/entitlements";
 
 /**
  * POST /api/org/ensure
  *
  * Ensures the authenticated user has an organisation linked to their profile.
- * If they are on a paid plan and have no org, creates one automatically using
- * their profile company_name (or a fallback) and links it.
+ * If they have no org, creates one automatically using their profile
+ * company_name (or a fallback derived from their email) and links it.
+ *
+ * Available to all authenticated users (including Explorer/free) — every
+ * profile must have an organisation_id linked or all org-scoped API endpoints
+ * return 400 "No organisation linked".
  *
  * Returns { organisation_id, created } — where created is true if a new org was made.
  */
@@ -14,7 +17,7 @@ export async function POST() {
   try {
     const auth = await requireAuth({ orgOptional: true });
     if (auth.error) return auth.error;
-    const { user, orgId, plan, db: sb } = auth;
+    const { user, orgId, db: sb } = auth;
 
     // Already has an org — nothing to do
     if (orgId) {
@@ -22,11 +25,6 @@ export async function POST() {
         organisation_id: orgId,
         created: false,
       });
-    }
-
-    // Only auto-create for paid users
-    if (!isPaidPlan(plan)) {
-      return apiError("Upgrade to a paid plan to create an organisation", 403);
     }
 
     // Get email from user
