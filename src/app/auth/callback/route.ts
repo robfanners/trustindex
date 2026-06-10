@@ -3,6 +3,64 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { getServerOrigin, safeRedirectPath } from "@/lib/url";
 import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
+import { supabaseServer } from "@/lib/supabase/admin";
+
+// ---------------------------------------------------------------------------
+// ensureOrganisationLinked — server-side helper
+//
+// Every signed-in user must have profiles.organisation_id set, otherwise all
+// org-scoped API endpoints return 400 "No organisation linked". The /api/org/
+// ensure route used to gate this behind a paid plan, which created a chicken-
+// and-egg for free signups: they couldn't progress without an org, but
+// couldn't get an org without paying.
+//
+// This helper runs on every successful magic-link exchange, idempotently
+// creates+links an organisation if missing. Uses the service-role admin
+// client because organisations has RLS enabled with no public-insert policy.
+// ---------------------------------------------------------------------------
+async function ensureOrganisationLinked(userId: string, userEmail: string | null) {
+  try {
+    const admin = supabaseServer();
+
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("organisation_id, company_name, email")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (!profile || profile.organisation_id) {
+      return; // No profile yet (trigger may not have fired) or already linked
+    }
+
+    const orgName =
+      (profile.company_name as string | null)?.trim() ||
+      (profile.email ?? userEmail ?? "").split("@")[1]?.split(".")[0] ||
+      "My Organisation";
+
+    const { data: org, error: orgErr } = await admin
+      .from("organisations")
+      .insert({ name: orgName })
+      .select("id")
+      .single();
+
+    if (orgErr || !org) {
+      console.error("[auth/callback] org insert failed:", orgErr);
+      return;
+    }
+
+    const { error: linkErr } = await admin
+      .from("profiles")
+      .update({ organisation_id: org.id })
+      .eq("id", userId);
+
+    if (linkErr) {
+      console.error("[auth/callback] org link failed:", linkErr);
+    }
+  } catch (e) {
+    console.error("[auth/callback] ensureOrganisationLinked failed:", e);
+    // Non-fatal: continue with normal redirect
+  }
+}
 
 // ---------------------------------------------------------------------------
 // GET /auth/callback — Server-side PKCE code exchange
@@ -59,6 +117,13 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
+      // Ensure the user has an organisation linked. Runs on every successful
+      // exchange (idempotent: skips users who already have one).
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await ensureOrganisationLinked(user.id, user.email ?? null);
+      }
+
       // If the Explorer claim flag is set, redirect via the client-side
       // /auth/complete page so it can read localStorage and call the
       // claim API before landing on the dashboard.
