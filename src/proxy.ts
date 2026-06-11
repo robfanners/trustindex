@@ -77,6 +77,11 @@ export async function proxy(request: NextRequest) {
     // user has a session. Must be whitelisted or the middleware redirects the
     // POST to /auth/login → 405. See TG-54.
     "/api/try-explorer",
+    // Stripe sends signed webhook POSTs from its own infrastructure — they have
+    // no Supabase session. Must be whitelisted or all webhook deliveries are
+    // 307-redirected to /auth/login and the handler never runs. Discovered
+    // 2026-06-09 — caused first live £79 charge to not upgrade the user's plan.
+    "/api/stripe/webhook",
     "/_next",
     "/favicon.ico",
   ];
@@ -102,11 +107,13 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - api/webhooks (webhooks, auth, etc.)
+     * - api/webhooks (any future webhook namespace)
+     * - api/stripe/webhook (current Stripe webhook handler — receives signed
+     *   POSTs from Stripe with no Supabase session; must skip proxy entirely)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    "/((?!api/webhooks|_next/static|_next/image|favicon.ico).*)",
+    "/((?!api/webhooks|api/stripe/webhook|_next/static|_next/image|favicon.ico).*)",
   ],
 };
