@@ -57,9 +57,9 @@ export default function AppShell({ children }: AppShellProps) {
       <header className="sticky top-0 z-50 h-16 border-b border-border/60 backdrop-blur-lg bg-background/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
           <div className="flex items-center justify-between h-full">
-            {/* Left: Logo + Brand */}
+            {/* Left: Logo + Brand — signed-in users land in their app, anonymous on marketing */}
             <Link
-              href="/"
+              href={user ? "/dashboard" : "/"}
               className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
             >
               <Image
