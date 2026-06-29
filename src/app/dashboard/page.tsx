@@ -110,20 +110,23 @@ function DashboardContent() {
   const [data, setData] = useState<ControlCentreData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showUpgradeBanner, setShowUpgradeBanner] = useState(false);
 
   // Handle post-payment redirect: show success banner + force profile refresh
   // so the new plan state is visible immediately (Stripe checkout success_url
   // redirects here with ?upgraded=true).
+  // Initialise state from the URL synchronously so eslint doesn't flag a
+  // setState-inside-effect cascade.
+  const isUpgraded = searchParams.get("upgraded") === "true";
+  const [showUpgradeBanner, setShowUpgradeBanner] = useState(isUpgraded);
+
   useEffect(() => {
-    if (searchParams.get("upgraded") === "true") {
-      setShowUpgradeBanner(true);
+    if (isUpgraded) {
       // Force a profile refresh so plan limits / UI gating reflect the new plan
       refreshProfile();
       // Clean up the URL so a refresh doesn't re-show the banner
       router.replace("/dashboard");
     }
-  }, [searchParams, refreshProfile, router]);
+  }, [isUpgraded, refreshProfile, router]);
 
   useEffect(() => {
     fetch("/api/dashboard/control-centre")
