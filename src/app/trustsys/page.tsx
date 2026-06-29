@@ -202,7 +202,7 @@ function TrustSysContent() {
                 Create system assessment
               </span>
               <p className="text-sm text-muted-foreground mt-2">
-                Systems assessment is available on Pro plans.{" "}
+                Systems assessment is available on Core, Assure and Verify plans.{" "}
                 <a href="/upgrade" className="text-brand underline hover:text-foreground transition-colors">Upgrade</a>
               </p>
             </div>
@@ -305,7 +305,7 @@ function TrustSysContent() {
             <div className="text-muted-foreground mb-2">No systems yet</div>
             <p className="text-sm text-muted-foreground mb-4">
               {blocked
-                ? "Systems assessment is available on Pro plans."
+                ? "Systems assessment is available on Core, Assure and Verify plans."
                 : "Create your first system assessment to get started."}
             </p>
             {!blocked && !atCap && (

@@ -65,7 +65,7 @@ export async function POST(
     const { assessmentId } = await params;
 
     if (!canManageIBG(plan)) {
-      return apiError("Upgrade to Pro to manage IBG specifications", 403);
+      return apiError("Upgrade to Assure or Verify to manage IBG specifications", 403);
     }
 
     // Verify the assessment belongs to this org
@@ -125,7 +125,7 @@ export async function PUT(
     const { assessmentId } = await params;
 
     if (!canManageIBG(plan)) {
-      return apiError("Upgrade to Pro to manage IBG specifications", 403);
+      return apiError("Upgrade to Assure or Verify to manage IBG specifications", 403);
     }
 
     const body = await req.json();

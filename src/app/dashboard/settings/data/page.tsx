@@ -82,8 +82,8 @@ export default function DataSettingsPage() {
       <div className="border border-border rounded-lg p-6 space-y-3">
         <h2 className="text-lg font-semibold text-foreground">Data & Export</h2>
         <p className="text-sm text-muted-foreground">
-          Data export and account management are available on Pro and Enterprise
-          plans.
+          Data export and account management are available on Core, Assure and
+          Verify plans.
         </p>
         <a
           href="/upgrade"

@@ -803,7 +803,7 @@ function SystemAssessContent() {
           ) : (
             <>
               <p className="text-sm text-muted-foreground">
-                CSV export is available on Pro and Enterprise plans.
+                CSV export is available on Core, Assure and Verify plans.
               </p>
               <Link
                 href="/upgrade"

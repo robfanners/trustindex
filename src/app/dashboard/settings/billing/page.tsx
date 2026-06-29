@@ -47,7 +47,7 @@ export default function BillingSettingsPage() {
       <div className="border border-border rounded-lg p-6 space-y-3">
         <h2 className="text-lg font-semibold text-foreground">Billing</h2>
         <p className="text-sm text-muted-foreground">
-          Billing management is available on Pro and Enterprise plans.
+          Billing management is available on Core, Assure and Verify plans.
         </p>
         <a
           href="/upgrade"

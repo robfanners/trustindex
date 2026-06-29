@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import AuthenticatedShell from "@/components/AuthenticatedShell";
 import RequireAuth from "@/components/RequireAuth";
@@ -95,11 +96,37 @@ export default function DashboardHome() {
 // Content
 // ---------------------------------------------------------------------------
 
+// Map internal plan key → customer-facing label
+const PLAN_LABEL: Record<string, string> = {
+  starter: "Core",
+  pro: "Assure",
+  enterprise: "Verify",
+};
+
 function DashboardContent() {
-  useAuth();
+  const { profile, refreshProfile } = useAuth();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [data, setData] = useState<ControlCentreData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Handle post-payment redirect: show success banner + force profile refresh
+  // so the new plan state is visible immediately (Stripe checkout success_url
+  // redirects here with ?upgraded=true).
+  // Initialise state from the URL synchronously so eslint doesn't flag a
+  // setState-inside-effect cascade.
+  const isUpgraded = searchParams.get("upgraded") === "true";
+  const [showUpgradeBanner, setShowUpgradeBanner] = useState(isUpgraded);
+
+  useEffect(() => {
+    if (isUpgraded) {
+      // Force a profile refresh so plan limits / UI gating reflect the new plan
+      refreshProfile();
+      // Clean up the URL so a refresh doesn't re-show the banner
+      router.replace("/dashboard");
+    }
+  }, [isUpgraded, refreshProfile, router]);
 
   useEffect(() => {
     fetch("/api/dashboard/control-centre")
@@ -122,9 +149,48 @@ function DashboardContent() {
     year: "numeric",
   });
 
+  const planLabel = PLAN_LABEL[profile?.plan ?? ""] ?? null;
+
   return (
     <AuthenticatedShell>
       <div className="flex flex-col gap-[18px]">
+        {/* Upgrade success banner — shown after returning from Stripe checkout */}
+        {showUpgradeBanner && (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 flex items-start gap-3">
+            <div className="flex-shrink-0 mt-0.5">
+              <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-emerald-900">
+                {planLabel ? `Welcome to Verisum ${planLabel}!` : "Subscription confirmed!"}
+              </p>
+              <p className="text-sm text-emerald-800 mt-1">
+                Your plan is now active. New features are unlocked across the app.{" "}
+                <Link href="/setup" className="underline font-medium">
+                  Run the setup wizard
+                </Link>{" "}
+                to configure your governance bundle, or{" "}
+                <Link href="/dashboard/settings" className="underline font-medium">
+                  visit Settings
+                </Link>{" "}
+                to invite your team.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowUpgradeBanner(false)}
+              className="flex-shrink-0 text-emerald-700 hover:text-emerald-900"
+              aria-label="Dismiss"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
+
         {/* Page header */}
         <div className="flex items-start justify-between">
           <div>

@@ -23,14 +23,14 @@ describe("getPlanLimits", () => {
     expect(limits).toEqual({ maxSurveys: 1, maxSystems: 0, canExport: false });
   });
 
-  it("returns correct limits for starter", () => {
+  it("returns correct limits for starter (Core)", () => {
     const limits = getPlanLimits("starter");
-    expect(limits).toEqual({ maxSurveys: 1, maxSystems: 0, canExport: false });
+    expect(limits).toEqual({ maxSurveys: 2, maxSystems: 2, canExport: true });
   });
 
-  it("returns correct limits for pro", () => {
+  it("returns correct limits for pro (Assure)", () => {
     const limits = getPlanLimits("pro");
-    expect(limits).toEqual({ maxSurveys: 5, maxSystems: 2, canExport: true });
+    expect(limits).toEqual({ maxSurveys: 6, maxSystems: 6, canExport: true });
   });
 
   it("returns correct limits for enterprise", () => {
@@ -80,12 +80,12 @@ describe("canCreateSystem", () => {
     expect(canCreateSystem("pro", 0)).toBe(true);
   });
 
-  it("pro can create a system when count is 1", () => {
-    expect(canCreateSystem("pro", 1)).toBe(true);
+  it("pro can create a system when count is 5", () => {
+    expect(canCreateSystem("pro", 5)).toBe(true);
   });
 
-  it("pro cannot create a system when count is 2", () => {
-    expect(canCreateSystem("pro", 2)).toBe(false);
+  it("pro cannot create a system when count is 6", () => {
+    expect(canCreateSystem("pro", 6)).toBe(false);
   });
 
   it("enterprise can always create systems", () => {
@@ -101,8 +101,8 @@ describe("canExportResults", () => {
     expect(canExportResults("explorer")).toBe(false);
   });
 
-  it("returns false for starter", () => {
-    expect(canExportResults("starter")).toBe(false);
+  it("returns true for starter (Core has CSV export)", () => {
+    expect(canExportResults("starter")).toBe(true);
   });
 
   it("returns true for pro", () => {

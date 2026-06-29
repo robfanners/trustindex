@@ -22,7 +22,7 @@ export async function GET() {
     // 1. Plan check
     const plan = await getUserPlan(user.id);
     if (!canExportResults(plan)) {
-      return apiError("Export requires Pro or Enterprise plan", 403);
+      return apiError("Export requires Core, Assure or Verify plan", 403);
     }
 
     // 2. Fetch user's systems

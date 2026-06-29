@@ -384,7 +384,7 @@ function TrustGraphContent() {
               ) : assessments.length === 0 ? (
                 <div className="text-center py-4">
                   <p className="text-xs text-[var(--muted-foreground,#6B7280)] mb-3">
-                    {sysBlocked ? "Available on Pro plans" : "No systems yet"}
+                    {sysBlocked ? "Available on Core, Assure and Verify plans" : "No systems yet"}
                   </p>
                   {!sysBlocked && !sysAtCap && (
                     <button type="button" onClick={() => { setActiveTab("trustsys"); setShowSysForm(true); }}
@@ -570,7 +570,7 @@ function TrustGraphContent() {
               <LoadingSpinner />
             ) : assessments.length === 0 ? (
               <EmptyState
-                message={sysBlocked ? "Systems assessment is available on Pro plans." : "No systems yet"}
+                message={sysBlocked ? "Systems assessment is available on Core, Assure and Verify plans." : "No systems yet"}
                 action={!sysBlocked && !sysAtCap ? { label: "Create assessment", onClick: () => setShowSysForm(true) } : undefined}
               />
             ) : (
