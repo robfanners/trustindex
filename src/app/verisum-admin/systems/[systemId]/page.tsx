@@ -134,8 +134,9 @@ export default function SystemDetailPage() {
 
   if (!system) return null;
 
-  function hasAdminFlag(flags: RiskFlagItem[]) {
-    return flags.some((f) => f.source === "admin");
+  function hasAdminFlag(flags: RiskFlagItem[] | unknown) {
+    if (!Array.isArray(flags)) return false;
+    return flags.some((f) => f && (f as RiskFlagItem).source === "admin");
   }
 
   const dialogConfig: Record<

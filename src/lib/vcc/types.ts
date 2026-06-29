@@ -16,6 +16,7 @@ export type DashboardMetrics = {
   totalUsers: number;
   planCounts: {
     explorer: number;
+    starter: number;
     pro: number;
     enterprise: number;
   };

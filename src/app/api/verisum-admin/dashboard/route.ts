@@ -56,7 +56,7 @@ export async function GET() {
 
     // Plan breakdown + suspended count
     const profiles = profilesRes.data ?? [];
-    const planCounts = { explorer: 0, pro: 0, enterprise: 0 };
+    const planCounts = { explorer: 0, starter: 0, pro: 0, enterprise: 0 };
     let suspendedCount = 0;
 
     for (const p of profiles) {

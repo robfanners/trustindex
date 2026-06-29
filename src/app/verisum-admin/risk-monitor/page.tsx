@@ -113,8 +113,9 @@ export default function RiskMonitorPage() {
 
   const totalPages = data ? Math.ceil(data.total / perPage) : 0;
 
-  function hasAdminFlag(flags: RiskFlagItem[]) {
-    return flags.some((f) => f.source === "admin");
+  function hasAdminFlag(flags: RiskFlagItem[] | unknown) {
+    if (!Array.isArray(flags)) return false;
+    return flags.some((f) => f && (f as RiskFlagItem).source === "admin");
   }
 
   return (
@@ -171,7 +172,21 @@ export default function RiskMonitorPage() {
                 </tr>
               ) : data && data.runs.length > 0 ? (
                 data.runs.map((r) => {
-                  const flags = (r.risk_flags ?? []) as RiskFlagItem[];
+                  // Defensive: risk_flags may arrive as null, JSON string, or array.
+                  // Coerce to array safely so .some() never throws.
+                  const rawFlags = r.risk_flags;
+                  const flags: RiskFlagItem[] = Array.isArray(rawFlags)
+                    ? rawFlags
+                    : typeof rawFlags === "string"
+                    ? (() => {
+                        try {
+                          const parsed = JSON.parse(rawFlags);
+                          return Array.isArray(parsed) ? parsed : [];
+                        } catch {
+                          return [];
+                        }
+                      })()
+                    : [];
                   const adminFlagged = hasAdminFlag(flags);
                   return (
                     <tr
