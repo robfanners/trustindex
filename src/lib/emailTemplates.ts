@@ -113,6 +113,42 @@ export function welcomeEmail(params: {
 }
 
 /**
+ * Support-sent magic link — fired by Verisum admin when a customer needs
+ * help getting back into their account. Looks like a "we sent you a link"
+ * support touchpoint rather than a routine auth email.
+ */
+export function supportMagicLinkEmail(params: {
+  userName: string;
+  magicLinkUrl: string;
+  expiresInMinutes: number;
+  adminName?: string;
+}): { subject: string; html: string } {
+  const { userName, magicLinkUrl, expiresInMinutes, adminName } = params;
+  const fromLine = adminName ? `${adminName} from Verisum Support` : "Verisum Support";
+
+  return {
+    subject: `Your Verisum sign-in link`,
+    html: layout(
+      `Sign-in link from Verisum Support`,
+      `
+      <p style="font-size:14px;color:#374151;line-height:1.6;">
+        Hi ${userName},
+      </p>
+      <p style="font-size:14px;color:#374151;line-height:1.6;">
+        ${fromLine} has sent you a fresh sign-in link. Click below to access your
+        Verisum account — the link is valid for ${expiresInMinutes} minutes.
+      </p>
+      ${button("Sign in to Verisum", magicLinkUrl)}
+      <p style="font-size:13px;color:${MUTED_COLOR};margin-top:16px;">
+        If you didn't request this, you can safely ignore this email — the link
+        will expire automatically. Reply to this email if you need help.
+      </p>
+      `
+    ),
+  };
+}
+
+/**
  * Monthly report delivery email — sent with compliance report.
  */
 export function monthlyReportEmail(params: {
