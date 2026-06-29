@@ -26,7 +26,10 @@ export type VCCPermission =
   | "manage_roles"
   | "view_audit_log"
   | "apply_credits"
-  | "resend_magic_link";
+  | "resend_magic_link"
+  | "view_stripe_billing"
+  | "refund_payment"
+  | "cancel_subscription";
 
 // ---------------------------------------------------------------------------
 // Permission matrix
@@ -50,6 +53,9 @@ const ROLE_PERMISSIONS: Record<AdminRole, Set<VCCPermission>> = {
     "view_audit_log",
     "apply_credits",
     "resend_magic_link",
+    "view_stripe_billing",
+    "refund_payment",
+    "cancel_subscription",
   ]),
   ORG_SUPPORT: new Set<VCCPermission>([
     "view_dashboard",
@@ -72,6 +78,9 @@ const ROLE_PERMISSIONS: Record<AdminRole, Set<VCCPermission>> = {
     "override_limits",
     "view_audit_log",
     "apply_credits",
+    "view_stripe_billing",
+    "refund_payment",
+    "cancel_subscription",
   ]),
   ANALYTICS_VIEWER: new Set<VCCPermission>([
     "view_dashboard",
