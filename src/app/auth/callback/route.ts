@@ -4,6 +4,8 @@ import { cookies } from "next/headers";
 import { getServerOrigin, safeRedirectPath } from "@/lib/url";
 import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 import { supabaseServer } from "@/lib/supabase/admin";
+import { sendEmail } from "@/lib/email";
+import { welcomeEmail } from "@/lib/emailTemplates";
 
 // ---------------------------------------------------------------------------
 // ensureOrganisationLinked — server-side helper
@@ -18,7 +20,10 @@ import { supabaseServer } from "@/lib/supabase/admin";
 // creates+links an organisation if missing. Uses the service-role admin
 // client because organisations has RLS enabled with no public-insert policy.
 // ---------------------------------------------------------------------------
-async function ensureOrganisationLinked(userId: string, userEmail: string | null) {
+async function ensureOrganisationLinked(
+  userId: string,
+  userEmail: string | null
+): Promise<{ created: boolean }> {
   try {
     const admin = supabaseServer();
 
@@ -29,7 +34,7 @@ async function ensureOrganisationLinked(userId: string, userEmail: string | null
       .maybeSingle();
 
     if (!profile || profile.organisation_id) {
-      return; // No profile yet (trigger may not have fired) or already linked
+      return { created: false }; // No profile yet (trigger may not have fired) or already linked
     }
 
     const orgName =
@@ -45,7 +50,7 @@ async function ensureOrganisationLinked(userId: string, userEmail: string | null
 
     if (orgErr || !org) {
       console.error("[auth/callback] org insert failed:", orgErr);
-      return;
+      return { created: false };
     }
 
     const { error: linkErr } = await admin
@@ -55,10 +60,51 @@ async function ensureOrganisationLinked(userId: string, userEmail: string | null
 
     if (linkErr) {
       console.error("[auth/callback] org link failed:", linkErr);
+      return { created: false };
     }
+
+    return { created: true };
   } catch (e) {
     console.error("[auth/callback] ensureOrganisationLinked failed:", e);
-    // Non-fatal: continue with normal redirect
+    return { created: false };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// sendWelcomeEmail — fires once per user, on their very first successful login
+// (when ensureOrganisationLinked just created their org).
+//
+// Plan-aware: Explorer (free) gets free-assessment framing; paid tiers
+// (Core / Assure / Verify) get "what's now active" framing. See welcomeEmail()
+// in src/lib/emailTemplates.ts.
+//
+// Non-fatal: if email send fails (Resend down, no API key set), log and continue.
+// ---------------------------------------------------------------------------
+async function sendWelcomeEmail(userId: string, origin: string) {
+  try {
+    const admin = supabaseServer();
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("email, full_name, plan")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (!profile?.email) return;
+
+    const userName =
+      (profile.full_name as string | null)?.trim() ||
+      profile.email.split("@")[0];
+
+    const { subject, html } = welcomeEmail({
+      userName,
+      plan: (profile.plan as string | null) ?? "explorer",
+      dashboardUrl: `${origin}/dashboard`,
+    });
+
+    await sendEmail({ to: profile.email, subject, html });
+  } catch (e) {
+    console.error("[auth/callback] welcome email failed:", e);
+    // Non-fatal
   }
 }
 
@@ -118,10 +164,20 @@ export async function GET(request: NextRequest) {
 
     if (!error) {
       // Ensure the user has an organisation linked. Runs on every successful
-      // exchange (idempotent: skips users who already have one).
+      // exchange (idempotent: skips users who already have one). Returns
+      // { created: true } only when this is the user's first-ever login.
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await ensureOrganisationLinked(user.id, user.email ?? null);
+        const { created } = await ensureOrganisationLinked(
+          user.id,
+          user.email ?? null
+        );
+        // First-time signup → send welcome email. Awaited so it goes out
+        // before the redirect resolves, but wrapped in try/catch internally
+        // so a Resend outage can't block sign-in.
+        if (created) {
+          await sendWelcomeEmail(user.id, origin);
+        }
       }
 
       // If the Explorer claim flag is set, redirect via the client-side

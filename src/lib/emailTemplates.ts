@@ -46,7 +46,10 @@ function button(text: string, url: string): string {
 // ---------------------------------------------------------------------------
 
 /**
- * Welcome email — sent after first sign-up or plan upgrade.
+ * Welcome email — sent after first sign-up.
+ *
+ * Plan-aware: Explorer (free) gets free-assessment framing; paid tiers
+ * (Core / Assure / Verify) get "what's now active" framing.
  */
 export function welcomeEmail(params: {
   userName: string;
@@ -54,29 +57,55 @@ export function welcomeEmail(params: {
   dashboardUrl: string;
 }): { subject: string; html: string } {
   const { userName, plan, dashboardUrl } = params;
-  const planLabel = plan.charAt(0).toUpperCase() + plan.slice(1);
+
+  // Internal plan keys → customer-facing labels
+  const PLAN_LABELS: Record<string, string> = {
+    explorer: "Explorer",
+    starter: "Core",
+    pro: "Assure",
+    enterprise: "Verify",
+  };
+  const planLabel = PLAN_LABELS[plan] ?? "Explorer";
+  const isExplorer = plan === "explorer";
+
+  const featureList = isExplorer
+    ? `
+      <ul style="font-size:14px;color:#374151;line-height:1.8;padding-left:20px;">
+        <li>Run a free trust self-assessment in under 3 minutes</li>
+        <li>See your governance baseline across 5 dimensions</li>
+        <li>Save your results to your dashboard</li>
+        <li>Upgrade to Core when you're ready for the full governance bundle</li>
+      </ul>
+    `
+    : `
+      <ul style="font-size:14px;color:#374151;line-height:1.8;padding-left:20px;">
+        <li>Run organisational trust surveys with your team</li>
+        <li>Assess AI systems against governance dimensions</li>
+        <li>Generate tailored AI governance policies</li>
+        <li>Track AI vendors and log incidents</li>
+        <li>Export results to CSV for board reporting</li>
+      </ul>
+    `;
+
+  const nextStepCopy = isExplorer
+    ? `Get started with your free self-assessment, or explore your dashboard:`
+    : `Run the governance setup wizard to configure your bundle:`;
 
   return {
-    subject: `Welcome to Verisum ${planLabel} — your AI governance journey starts here`,
+    subject: `Welcome to Verisum ${planLabel}`,
     html: layout(
-      `Welcome, ${userName}!`,
+      `Welcome to Verisum, ${userName}!`,
       `
       <p style="font-size:14px;color:#374151;line-height:1.6;">
-        You're now on the <strong>${planLabel}</strong> plan. Here's what you can do:
+        You're now on the <strong>${planLabel}</strong> plan. Here's what's available:
       </p>
-      <ul style="font-size:14px;color:#374151;line-height:1.8;padding-left:20px;">
-        <li>Generate AI governance policies tailored to your organisation</li>
-        <li>Collect staff AI usage declarations</li>
-        <li>Track AI vendors and their risk levels</li>
-        <li>Log and manage AI-related incidents</li>
-        <li>Stay current with regulatory updates</li>
-      </ul>
+      ${featureList}
       <p style="font-size:14px;color:#374151;line-height:1.6;">
-        Start by visiting your Copilot dashboard:
+        ${nextStepCopy}
       </p>
-      ${button("Open Copilot Dashboard", dashboardUrl)}
+      ${button("Open Dashboard", dashboardUrl)}
       <p style="font-size:13px;color:${MUTED_COLOR};margin-top:16px;">
-        Need help? Reply to this email or visit our documentation.
+        Need help? Reply to this email — we'll get back to you.
       </p>
       `
     ),
