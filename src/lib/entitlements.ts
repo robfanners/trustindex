@@ -12,10 +12,11 @@
 export type PlanName = "explorer" | "starter" | "pro" | "enterprise";
 
 // Plan limit constants for display/pricing pages
+// Customer-facing names: Core (=starter), Assure (=pro), Verify (=enterprise)
 export const PLAN_CONSTANTS = {
   STARTER: {
-    SURVEYS: 3,
-    SYSTEMS: 1,
+    SURVEYS: 2,
+    SYSTEMS: 2,
     STAFF_DECLARATIONS: 50,
     VENDORS: 10,
     INCIDENTS_PER_MONTH: 5,
@@ -23,8 +24,8 @@ export const PLAN_CONSTANTS = {
     POLICY_GENERATIONS: 3,
   },
   PRO: {
-    SURVEYS: 5,
-    SYSTEMS: 2,
+    SURVEYS: 6,
+    SYSTEMS: 6,
     STAFF_DECLARATIONS: 250,
     VENDORS: Infinity,
     INCIDENTS_PER_MONTH: Infinity,
@@ -45,8 +46,8 @@ export type PlanLimits = {
 
 const LIMITS: Record<PlanName, PlanLimits> = {
   explorer: { maxSurveys: 1, maxSystems: 0, canExport: false },
-  starter: { maxSurveys: 1, maxSystems: 0, canExport: false },
-  pro: { maxSurveys: 5, maxSystems: 2, canExport: true },
+  starter: { maxSurveys: 2, maxSystems: 2, canExport: true },
+  pro: { maxSurveys: 6, maxSystems: 6, canExport: true },
   enterprise: { maxSurveys: Infinity, maxSystems: Infinity, canExport: true },
 };
 
@@ -121,10 +122,10 @@ export function maxTeamMembers(plan: string | null | undefined): number {
   return PLAN_LIMITS[p]?.maxTeamMembers ?? 1;
 }
 
-/** Can the user access data & export settings? (Pro+) */
+/** Can the user access data & export settings? (Core+) */
 export function canAccessDataSettings(plan: string | null | undefined): boolean {
   const p = plan ?? "explorer";
-  return p === "pro" || p === "enterprise";
+  return p === "starter" || p === "pro" || p === "enterprise";
 }
 
 // ---------------------------------------------------------------------------

@@ -76,7 +76,10 @@ export async function POST(req: Request) {
       customer: customerId,
       mode: "subscription",
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${origin}/upgrade?success=true`,
+      // Land users in the app after payment, not back on pricing.
+      // Dashboard reads ?upgraded=true to show a success banner and force
+      // an auth-context refresh so the new plan state is visible immediately.
+      success_url: `${origin}/dashboard?upgraded=true`,
       cancel_url: `${origin}/upgrade?cancelled=true`,
       metadata: { supabase_user_id: user.id, target_plan: targetPlan },
     });

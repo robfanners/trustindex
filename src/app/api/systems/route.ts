@@ -99,7 +99,7 @@ export async function POST(req: Request) {
       const limits = getPlanLimits(plan);
       return apiError(
         limits.maxSystems === 0
-          ? "Systems assessment is available on Pro plans and above."
+          ? "Systems assessment is available on Core, Assure and Verify plans."
           : `You've reached your plan limit of ${limits.maxSystems} system${limits.maxSystems !== 1 ? "s" : ""}. Upgrade to continue.`,
         403
       );
