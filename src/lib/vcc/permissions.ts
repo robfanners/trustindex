@@ -25,7 +25,8 @@ export type VCCPermission =
   | "archive_systems"
   | "manage_roles"
   | "view_audit_log"
-  | "apply_credits";
+  | "apply_credits"
+  | "resend_magic_link";
 
 // ---------------------------------------------------------------------------
 // Permission matrix
@@ -48,6 +49,7 @@ const ROLE_PERMISSIONS: Record<AdminRole, Set<VCCPermission>> = {
     "manage_roles",
     "view_audit_log",
     "apply_credits",
+    "resend_magic_link",
   ]),
   ORG_SUPPORT: new Set<VCCPermission>([
     "view_dashboard",
@@ -60,6 +62,7 @@ const ROLE_PERMISSIONS: Record<AdminRole, Set<VCCPermission>> = {
     "flag_risk",
     "archive_systems",
     "view_audit_log",
+    "resend_magic_link",
   ]),
   BILLING_ADMIN: new Set<VCCPermission>([
     "view_dashboard",
