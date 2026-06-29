@@ -91,9 +91,10 @@ export default function OrganisationsPage() {
           className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
           <option value="">All plans</option>
-          <option value="explorer">Explorer</option>
-          <option value="pro">Pro</option>
-          <option value="enterprise">Enterprise</option>
+          <option value="explorer">Explorer (free)</option>
+          <option value="starter">Core (starter)</option>
+          <option value="pro">Assure (pro)</option>
+          <option value="enterprise">Verify (enterprise)</option>
         </select>
         <select
           value={status}

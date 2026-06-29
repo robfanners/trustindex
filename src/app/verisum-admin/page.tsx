@@ -109,23 +109,33 @@ export default function VCCDashboardPage() {
         <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">
           Plans &amp; Alerts
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <MetricCard
-            label="Explorer Plans"
+            label="Explorer"
             value={metrics.planCounts.explorer}
             accent="gray"
+            sub="Free tier"
             href="/verisum-admin/organisations?plan=explorer"
           />
           <MetricCard
-            label="Pro Plans"
+            label="Core"
+            value={metrics.planCounts.starter}
+            accent="blue"
+            sub="£79/mo"
+            href="/verisum-admin/organisations?plan=starter"
+          />
+          <MetricCard
+            label="Assure"
             value={metrics.planCounts.pro}
             accent="blue"
+            sub="£199/mo"
             href="/verisum-admin/organisations?plan=pro"
           />
           <MetricCard
-            label="Enterprise Plans"
+            label="Verify"
             value={metrics.planCounts.enterprise}
             accent="green"
+            sub="Custom"
             href="/verisum-admin/organisations?plan=enterprise"
           />
           <MetricCard
