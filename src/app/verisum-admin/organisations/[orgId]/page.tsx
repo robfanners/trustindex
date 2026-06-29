@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import ConfirmDialog from "@/components/vcc/ConfirmDialog";
+import BillingSection from "@/components/vcc/BillingSection";
 import { useVCCAuth } from "@/context/VCCAuthContext";
 import type {
   OrgDetail,
@@ -263,6 +264,9 @@ export default function OrgDetailPage() {
 
       {/* Systems */}
       <SystemTable systems={org.systems} />
+
+      {/* Stripe Billing */}
+      <BillingSection orgId={orgId} />
 
       {/* Overrides */}
       <OverrideTable overrides={org.overrides} />
