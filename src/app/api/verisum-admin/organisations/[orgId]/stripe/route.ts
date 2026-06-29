@@ -101,8 +101,6 @@ export async function GET(
       planInterval = price.recurring?.interval ?? null;
     }
 
-    const latestInvoice = invoices[0] ?? null;
-
     return NextResponse.json({
       data: {
         has_stripe_customer: true,
@@ -151,17 +149,10 @@ export async function GET(
           paid_at: inv.status_transitions?.paid_at ?? null,
           hosted_invoice_url: inv.hosted_invoice_url,
           invoice_pdf: inv.invoice_pdf,
-          // The charge ID is what we need for refunds
-          charge_id:
-            typeof inv.charge === "string" ? inv.charge : inv.charge?.id ?? null,
         })),
-        latest_charge_id: latestInvoice
-          ? typeof latestInvoice.charge === "string"
-            ? latestInvoice.charge
-            : latestInvoice.charge?.id ?? null
-          : null,
-        latest_charge_amount: latestInvoice?.amount_paid ?? null,
-        latest_charge_currency: latestInvoice?.currency ?? null,
+        // Refunds removed from in-app actions in v1 — admins refund via the
+        // "Open in Stripe" deep link below. Will be added back post-panel
+        // once we map the new Invoice→Payment structure in Stripe API 2026+.
         dashboardUrl: `https://dashboard.stripe.com/${customer?.livemode ? "" : "test/"}customers/${customerId}`,
       },
     });

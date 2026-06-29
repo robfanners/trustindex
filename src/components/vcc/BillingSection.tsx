@@ -44,11 +44,7 @@ type StripeBillingData = {
     paid_at: number | null;
     hosted_invoice_url: string | null;
     invoice_pdf: string | null;
-    charge_id: string | null;
   }>;
-  latest_charge_id: string | null;
-  latest_charge_amount: number | null;
-  latest_charge_currency: string | null;
   dashboardUrl: string | null;
 };
 
@@ -130,10 +126,6 @@ export default function BillingSection({ orgId }: { orgId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Refund dialog
-  const [refundOpen, setRefundOpen] = useState(false);
-  const [refundLoading, setRefundLoading] = useState(false);
-
   // Cancel-at-period-end dialog
   const [cancelEndOpen, setCancelEndOpen] = useState(false);
   const [cancelEndLoading, setCancelEndLoading] = useState(false);
@@ -168,36 +160,6 @@ export default function BillingSection({ orgId }: { orgId: string }) {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
-
-  const handleRefund = useCallback(
-    async (reason: string) => {
-      if (!data?.latest_charge_id) return;
-      setRefundLoading(true);
-      try {
-        const res = await fetch(
-          `/api/verisum-admin/organisations/${orgId}/stripe/refund`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ chargeId: data.latest_charge_id, reason }),
-          }
-        );
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          alert(body.error ?? "Failed to refund");
-          return;
-        }
-        setRefundOpen(false);
-        alert("Refund issued successfully");
-        fetchData();
-      } catch {
-        alert("Failed to refund");
-      } finally {
-        setRefundLoading(false);
-      }
-    },
-    [orgId, data, fetchData]
-  );
 
   const handleCancel = useCallback(
     async (reason: string, immediate: boolean) => {
@@ -269,7 +231,6 @@ export default function BillingSection({ orgId }: { orgId: string }) {
   }
 
   const sub = data.subscription;
-  const canRefund = hasPermission("refund_payment") && !!data.latest_charge_id;
   const canCancel = hasPermission("cancel_subscription") &&
     !!sub &&
     sub.status === "active" &&
@@ -333,37 +294,31 @@ export default function BillingSection({ orgId }: { orgId: string }) {
           <p className="text-sm text-gray-600">No active subscription.</p>
         )}
 
-        {/* Action buttons */}
-        {(canRefund || canCancel) && (
+        {/* Action buttons — refunds via Stripe deep link until we map the
+            new Invoice→Payment structure in Stripe API 2026+ (post-panel). */}
+        {canCancel && (
           <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-100">
-            {canRefund && (
-              <button
-                onClick={() => setRefundOpen(true)}
+            <button
+              onClick={() => setCancelEndOpen(true)}
+              className="px-3 py-1.5 text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
+            >
+              Cancel at period end
+            </button>
+            <button
+              onClick={() => setCancelNowOpen(true)}
+              className="px-3 py-1.5 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+            >
+              Cancel immediately
+            </button>
+            {hasPermission("refund_payment") && (
+              <a
+                href={data.dashboardUrl ?? "#"}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="px-3 py-1.5 text-sm font-medium text-orange-700 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 transition-colors"
               >
-                Refund last payment
-                {data.latest_charge_amount !== null && (
-                  <span className="ml-1 text-orange-600">
-                    ({formatMoney(data.latest_charge_amount, data.latest_charge_currency)})
-                  </span>
-                )}
-              </button>
-            )}
-            {canCancel && (
-              <>
-                <button
-                  onClick={() => setCancelEndOpen(true)}
-                  className="px-3 py-1.5 text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
-                >
-                  Cancel at period end
-                </button>
-                <button
-                  onClick={() => setCancelNowOpen(true)}
-                  className="px-3 py-1.5 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
-                >
-                  Cancel immediately
-                </button>
-              </>
+                Refund in Stripe ↗
+              </a>
             )}
           </div>
         )}
@@ -420,22 +375,6 @@ export default function BillingSection({ orgId }: { orgId: string }) {
           </div>
         )}
       </div>
-
-      {/* Refund dialog */}
-      <ConfirmDialog
-        open={refundOpen}
-        title="Refund last payment"
-        description={`Issue a full refund of ${formatMoney(
-          data.latest_charge_amount,
-          data.latest_charge_currency
-        )} to this customer. The refund will appear in their bank account within 1-5 business days. The subscription stays active unless you also cancel it.`}
-        confirmLabel="Issue refund"
-        variant="warning"
-        requireReason
-        loading={refundLoading}
-        onConfirm={handleRefund}
-        onCancel={() => setRefundOpen(false)}
-      />
 
       {/* Cancel at period end dialog */}
       <ConfirmDialog
