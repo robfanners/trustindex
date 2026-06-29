@@ -779,9 +779,10 @@ function SurveyResultsContent() {
             Validate this with your organisation
           </div>
           <div className="text-sm text-muted-foreground">
-            Explorer is a single self-assessment. To validate, run an
-            organisational survey with 5\u201315 respondents. Results unlock once
-            5 people respond.
+            Explorer gives you a single self-assessment from one perspective.
+            To validate across your organisation, run an organisational survey \u2014
+            invite 5 to 15 people from across functions (e.g. tech, legal, ops,
+            leadership). Results unlock once 5 people respond.
           </div>
           <Link
             href="/dashboard/surveys/new"

@@ -419,8 +419,18 @@ function NewSurveyForm() {
               <p className="font-semibold text-foreground">Plan limit reached</p>
               <p className="text-sm text-muted-foreground mt-1">
                 You&apos;ve used {surveyCount} of {limits.maxSurveys} survey{limits.maxSurveys !== 1 ? "s" : ""} on your{" "}
-                <span className="font-medium">{profile?.plan ?? "explorer"}</span> plan.
-                Upgrade to create more surveys.
+                <span className="font-medium">
+                  {(() => {
+                    const labels: Record<string, string> = {
+                      explorer: "Explorer",
+                      starter: "Core",
+                      pro: "Assure",
+                      enterprise: "Verify",
+                    };
+                    return labels[profile?.plan ?? "explorer"] ?? "Explorer";
+                  })()}
+                </span>{" "}
+                plan. Upgrade to create more surveys.
               </p>
             </div>
           </div>

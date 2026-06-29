@@ -96,21 +96,22 @@ export default function ComplianceGrid({
             </span>
           </div>
           <Link
-            href="/govern/compliance"
+            href="/setup"
             className="text-xs font-medium text-[var(--brand,#673DE6)] hover:underline"
           >
-            Manage
+            Configure
           </Link>
         </div>
-        <div className="flex flex-col items-center justify-center gap-2 py-12 px-5">
-          <p className="text-sm text-[var(--muted-foreground,#6B7280)]">
-            No frameworks configured yet
+        <div className="flex flex-col items-center justify-center gap-3 py-12 px-5">
+          <p className="text-sm text-[var(--muted-foreground,#6B7280)] text-center max-w-xs">
+            Frameworks are tracked once you complete the governance wizard and
+            map your AI systems to controls.
           </p>
           <Link
-            href="/govern/compliance"
-            className="text-xs font-medium text-[var(--brand,#673DE6)] hover:underline"
+            href="/setup"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--brand,#673DE6)] text-white text-xs font-medium px-3 py-1.5 hover:opacity-90"
           >
-            Go to settings
+            Start setup wizard
           </Link>
         </div>
       </div>
