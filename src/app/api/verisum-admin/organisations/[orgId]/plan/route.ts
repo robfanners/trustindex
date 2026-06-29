@@ -5,7 +5,7 @@ import { supabaseServer } from "@/lib/supabase/admin";
 import { auditLog } from "@/lib/vcc/audit";
 import type { PlanName } from "@/lib/entitlements";
 
-const VALID_PLANS: PlanName[] = ["explorer", "pro", "enterprise"];
+const VALID_PLANS: PlanName[] = ["explorer", "starter", "pro", "enterprise"];
 
 export async function PATCH(
   request: NextRequest,
@@ -22,7 +22,7 @@ export async function PATCH(
 
     if (!VALID_PLANS.includes(plan as PlanName)) {
       return NextResponse.json(
-        { error: "plan must be 'explorer', 'pro', or 'enterprise'" },
+        { error: "plan must be 'explorer', 'starter', 'pro', or 'enterprise'" },
         { status: 400 }
       );
     }

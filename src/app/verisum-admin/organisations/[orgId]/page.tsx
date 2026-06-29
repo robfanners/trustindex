@@ -33,6 +33,10 @@ export default function OrgDetailPage() {
   const [planLoading, setPlanLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string>("");
 
+  // Resend magic link dialog
+  const [magicLinkOpen, setMagicLinkOpen] = useState(false);
+  const [magicLinkLoading, setMagicLinkLoading] = useState(false);
+
   const fetchOrg = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -109,6 +113,36 @@ export default function OrgDetailPage() {
     [orgId, selectedPlan, fetchOrg]
   );
 
+  const handleResendMagicLink = useCallback(
+    async (reason: string) => {
+      setMagicLinkLoading(true);
+      try {
+        const res = await fetch(
+          `/api/verisum-admin/organisations/${orgId}/resend-magic-link`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ reason }),
+          }
+        );
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          alert(body.error ?? "Failed to send sign-in link");
+          return;
+        }
+        const body = await res.json().catch(() => ({}));
+        const sentTo = body?.data?.sent_to ?? "customer";
+        alert(`Sign-in link sent to ${sentTo}`);
+        setMagicLinkOpen(false);
+      } catch {
+        alert("Failed to send sign-in link");
+      } finally {
+        setMagicLinkLoading(false);
+      }
+    },
+    [orgId]
+  );
+
   if (loading) {
     return (
       <div className="animate-pulse space-y-4">
@@ -179,31 +213,41 @@ export default function OrgDetailPage() {
         </div>
 
         {/* Actions */}
-        {hasPermission("suspend_reinstate") && (
-          <div>
-            {isSuspended ? (
-              <button
-                onClick={() => {
-                  setSuspendAction("reinstate");
-                  setSuspendOpen(true);
-                }}
-                className="px-4 py-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
-              >
-                Reinstate
-              </button>
-            ) : (
-              <button
-                onClick={() => {
-                  setSuspendAction("suspend");
-                  setSuspendOpen(true);
-                }}
-                className="px-4 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
-              >
-                Suspend
-              </button>
-            )}
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {hasPermission("resend_magic_link") && !isSuspended && (
+            <button
+              onClick={() => setMagicLinkOpen(true)}
+              className="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+            >
+              Resend sign-in link
+            </button>
+          )}
+          {hasPermission("suspend_reinstate") && (
+            <>
+              {isSuspended ? (
+                <button
+                  onClick={() => {
+                    setSuspendAction("reinstate");
+                    setSuspendOpen(true);
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
+                >
+                  Reinstate
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    setSuspendAction("suspend");
+                    setSuspendOpen(true);
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+                >
+                  Suspend
+                </button>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       {/* Suspension info */}
@@ -288,6 +332,19 @@ export default function OrgDetailPage() {
         onCancel={() => setSuspendOpen(false)}
       />
 
+      {/* Resend Magic Link Dialog */}
+      <ConfirmDialog
+        open={magicLinkOpen}
+        title={`Send sign-in link to ${org.email}`}
+        description={`This will generate a fresh sign-in link, valid for 60 minutes, and email it to the customer via Verisum Support. Use when a customer cannot access their account (lost magic link, email issues, etc).`}
+        confirmLabel="Send sign-in link"
+        variant="default"
+        requireReason
+        loading={magicLinkLoading}
+        onConfirm={handleResendMagicLink}
+        onCancel={() => setMagicLinkOpen(false)}
+      />
+
       {/* Plan Change Dialog */}
       {planOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center">
@@ -317,9 +374,10 @@ export default function OrgDetailPage() {
                 onChange={(e) => setSelectedPlan(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand/30 focus:border-brand"
               >
-                <option value="explorer">Explorer</option>
-                <option value="pro">Pro</option>
-                <option value="enterprise">Enterprise</option>
+                <option value="explorer">Explorer (free)</option>
+                <option value="starter">Core (starter)</option>
+                <option value="pro">Assure (pro)</option>
+                <option value="enterprise">Verify (enterprise)</option>
               </select>
             </div>
 
