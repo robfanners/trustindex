@@ -44,6 +44,8 @@ type StripeBillingData = {
     paid_at: number | null;
     hosted_invoice_url: string | null;
     invoice_pdf: string | null;
+    amount_refunded: number;
+    fully_refunded: boolean;
   }>;
   dashboardUrl: string | null;
 };
@@ -97,7 +99,27 @@ function subscriptionStatusBadge(status: string, cancelAtPeriodEnd: boolean) {
   );
 }
 
-function invoiceStatusBadge(status: string | null) {
+function invoiceStatusBadge(
+  status: string | null,
+  fullyRefunded: boolean,
+  partialRefund: boolean
+) {
+  // Stripe doesn't change invoice.status to "refunded" — we derive it from
+  // the linked charge's amount_refunded field.
+  if (fullyRefunded) {
+    return (
+      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-700">
+        refunded
+      </span>
+    );
+  }
+  if (partialRefund) {
+    return (
+      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700">
+        partly refunded
+      </span>
+    );
+  }
   const colour: Record<string, string> = {
     paid: "bg-green-100 text-green-700",
     open: "bg-amber-100 text-amber-700",
@@ -339,37 +361,55 @@ export default function BillingSection({ orgId }: { orgId: string }) {
                 </tr>
               </thead>
               <tbody>
-                {data.invoices.map((inv) => (
-                  <tr key={inv.id} className="border-b border-gray-50">
-                    <td className="py-2 text-gray-900">{formatDate(inv.created)}</td>
-                    <td className="py-2 text-gray-900">
-                      {formatMoney(inv.amount_paid || inv.amount_due, inv.currency)}
-                    </td>
-                    <td className="py-2">{invoiceStatusBadge(inv.status)}</td>
-                    <td className="py-2 text-right space-x-2">
-                      {inv.hosted_invoice_url && (
-                        <a
-                          href={inv.hosted_invoice_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-blue-600 hover:text-blue-800"
-                        >
-                          View
-                        </a>
-                      )}
-                      {inv.invoice_pdf && (
-                        <a
-                          href={inv.invoice_pdf}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-blue-600 hover:text-blue-800"
-                        >
-                          PDF
-                        </a>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                {data.invoices.map((inv) => {
+                  const grossAmount = inv.amount_paid || inv.amount_due;
+                  const partialRefund =
+                    inv.amount_refunded > 0 && !inv.fully_refunded;
+                  return (
+                    <tr key={inv.id} className="border-b border-gray-50">
+                      <td className="py-2 text-gray-900">
+                        {formatDate(inv.created)}
+                      </td>
+                      <td className="py-2 text-gray-900">
+                        {formatMoney(grossAmount, inv.currency)}
+                        {inv.amount_refunded > 0 && (
+                          <div className="text-xs text-orange-700 mt-0.5">
+                            −{formatMoney(inv.amount_refunded, inv.currency)} refunded
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-2">
+                        {invoiceStatusBadge(
+                          inv.status,
+                          inv.fully_refunded,
+                          partialRefund
+                        )}
+                      </td>
+                      <td className="py-2 text-right space-x-2">
+                        {inv.hosted_invoice_url && (
+                          <a
+                            href={inv.hosted_invoice_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-blue-600 hover:text-blue-800"
+                          >
+                            View
+                          </a>
+                        )}
+                        {inv.invoice_pdf && (
+                          <a
+                            href={inv.invoice_pdf}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-blue-600 hover:text-blue-800"
+                          >
+                            PDF
+                          </a>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
