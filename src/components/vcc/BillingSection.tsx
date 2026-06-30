@@ -44,8 +44,14 @@ type StripeBillingData = {
     paid_at: number | null;
     hosted_invoice_url: string | null;
     invoice_pdf: string | null;
+  }>;
+  refunds: Array<{
+    charge_id: string;
     amount_refunded: number;
     fully_refunded: boolean;
+    currency: string;
+    charge_created: number;
+    description: string | null;
   }>;
   dashboardUrl: string | null;
 };
@@ -99,27 +105,7 @@ function subscriptionStatusBadge(status: string, cancelAtPeriodEnd: boolean) {
   );
 }
 
-function invoiceStatusBadge(
-  status: string | null,
-  fullyRefunded: boolean,
-  partialRefund: boolean
-) {
-  // Stripe doesn't change invoice.status to "refunded" — we derive it from
-  // the linked charge's amount_refunded field.
-  if (fullyRefunded) {
-    return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-700">
-        refunded
-      </span>
-    );
-  }
-  if (partialRefund) {
-    return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700">
-        partly refunded
-      </span>
-    );
-  }
+function invoiceStatusBadge(status: string | null) {
   const colour: Record<string, string> = {
     paid: "bg-green-100 text-green-700",
     open: "bg-amber-100 text-amber-700",
@@ -345,6 +331,40 @@ export default function BillingSection({ orgId }: { orgId: string }) {
           </div>
         )}
 
+        {/* Refunds — Stripe doesn't change invoice.status post-refund, so
+            we surface refunds as their own section. */}
+        {data.refunds && data.refunds.length > 0 && (
+          <div className="rounded-lg border border-orange-200 bg-orange-50 p-4">
+            <h3 className="text-sm font-semibold text-orange-900 mb-2">
+              Refunds issued
+            </h3>
+            <table className="w-full text-sm">
+              <thead className="text-xs text-orange-700">
+                <tr className="border-b border-orange-200">
+                  <th className="text-left py-1 font-medium">Original charge date</th>
+                  <th className="text-left py-1 font-medium">Refund amount</th>
+                  <th className="text-left py-1 font-medium">Type</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.refunds.map((r) => (
+                  <tr key={r.charge_id} className="border-b border-orange-100/40 last:border-0">
+                    <td className="py-1.5 text-gray-900">
+                      {formatDate(r.charge_created)}
+                    </td>
+                    <td className="py-1.5 text-orange-900 font-medium">
+                      −{formatMoney(r.amount_refunded, r.currency)}
+                    </td>
+                    <td className="py-1.5 text-orange-700">
+                      {r.fully_refunded ? "Full refund" : "Partial refund"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
         {/* Invoices */}
         {data.invoices.length > 0 && (
           <div>
@@ -361,55 +381,37 @@ export default function BillingSection({ orgId }: { orgId: string }) {
                 </tr>
               </thead>
               <tbody>
-                {data.invoices.map((inv) => {
-                  const grossAmount = inv.amount_paid || inv.amount_due;
-                  const partialRefund =
-                    inv.amount_refunded > 0 && !inv.fully_refunded;
-                  return (
-                    <tr key={inv.id} className="border-b border-gray-50">
-                      <td className="py-2 text-gray-900">
-                        {formatDate(inv.created)}
-                      </td>
-                      <td className="py-2 text-gray-900">
-                        {formatMoney(grossAmount, inv.currency)}
-                        {inv.amount_refunded > 0 && (
-                          <div className="text-xs text-orange-700 mt-0.5">
-                            −{formatMoney(inv.amount_refunded, inv.currency)} refunded
-                          </div>
-                        )}
-                      </td>
-                      <td className="py-2">
-                        {invoiceStatusBadge(
-                          inv.status,
-                          inv.fully_refunded,
-                          partialRefund
-                        )}
-                      </td>
-                      <td className="py-2 text-right space-x-2">
-                        {inv.hosted_invoice_url && (
-                          <a
-                            href={inv.hosted_invoice_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-blue-600 hover:text-blue-800"
-                          >
-                            View
-                          </a>
-                        )}
-                        {inv.invoice_pdf && (
-                          <a
-                            href={inv.invoice_pdf}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-blue-600 hover:text-blue-800"
-                          >
-                            PDF
-                          </a>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
+                {data.invoices.map((inv) => (
+                  <tr key={inv.id} className="border-b border-gray-50">
+                    <td className="py-2 text-gray-900">{formatDate(inv.created)}</td>
+                    <td className="py-2 text-gray-900">
+                      {formatMoney(inv.amount_paid || inv.amount_due, inv.currency)}
+                    </td>
+                    <td className="py-2">{invoiceStatusBadge(inv.status)}</td>
+                    <td className="py-2 text-right space-x-2">
+                      {inv.hosted_invoice_url && (
+                        <a
+                          href={inv.hosted_invoice_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-600 hover:text-blue-800"
+                        >
+                          View
+                        </a>
+                      )}
+                      {inv.invoice_pdf && (
+                        <a
+                          href={inv.invoice_pdf}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-600 hover:text-blue-800"
+                        >
+                          PDF
+                        </a>
+                      )}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

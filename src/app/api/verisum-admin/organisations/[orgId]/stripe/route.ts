@@ -110,30 +110,25 @@ export async function GET(
       planInterval = price.recurring?.interval ?? null;
     }
 
-    // Build invoice_id → refund_amount map from charges.
-    //
-    // In Stripe API 2026-01-28.clover, `charge.invoice` was removed from the
-    // TS types (Stripe restructured how Charges link to Invoices). The runtime
-    // payload may still include the field — we cast through `unknown` to read
-    // it defensively. If Stripe truly removed it, the map stays empty and the
-    // UI shows invoices without refund info (no regression vs prior behaviour).
+    // Refunds — in Stripe API 2026+, the invoice→charge link was restructured
+    // and `charge.invoice` is no longer reliable. Rather than try to thread
+    // refunds back to individual invoices, surface them as a separate list so
+    // admins can clearly see "this customer was refunded £X on this date".
     const charges =
       chargesResult.status === "fulfilled" ? chargesResult.value.data : [];
-    const invoiceRefundMap = new Map<string, { amount: number; fully: boolean }>();
-    for (const charge of charges) {
-      if (charge.amount_refunded <= 0) continue;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const linkedInvoice = (charge as unknown as { invoice?: string | { id?: string } }).invoice;
-      if (!linkedInvoice) continue;
-      const invoiceId =
-        typeof linkedInvoice === "string" ? linkedInvoice : linkedInvoice.id;
-      if (invoiceId) {
-        invoiceRefundMap.set(invoiceId, {
-          amount: charge.amount_refunded,
-          fully: charge.refunded === true,
-        });
-      }
-    }
+    const refunds = charges
+      .filter((charge) => charge.amount_refunded > 0)
+      .map((charge) => ({
+        charge_id: charge.id,
+        amount_refunded: charge.amount_refunded,
+        fully_refunded: charge.refunded === true,
+        currency: charge.currency,
+        // Charge.created is when the charge was made; we approximate refund
+        // time using this since precise refund timestamps require fetching
+        // each Refund object separately.
+        charge_created: charge.created,
+        description: charge.description ?? null,
+      }));
 
     return NextResponse.json({
       data: {
@@ -172,23 +167,19 @@ export async function GET(
               exp_year: paymentMethod.card.exp_year,
             }
           : null,
-        invoices: invoices.map((inv) => {
-          const refund = inv.id ? invoiceRefundMap.get(inv.id) : undefined;
-          return {
-            id: inv.id,
-            number: inv.number,
-            status: inv.status,
-            amount_paid: inv.amount_paid,
-            amount_due: inv.amount_due,
-            currency: inv.currency,
-            created: inv.created,
-            paid_at: inv.status_transitions?.paid_at ?? null,
-            hosted_invoice_url: inv.hosted_invoice_url,
-            invoice_pdf: inv.invoice_pdf,
-            amount_refunded: refund?.amount ?? 0,
-            fully_refunded: refund?.fully ?? false,
-          };
-        }),
+        invoices: invoices.map((inv) => ({
+          id: inv.id,
+          number: inv.number,
+          status: inv.status,
+          amount_paid: inv.amount_paid,
+          amount_due: inv.amount_due,
+          currency: inv.currency,
+          created: inv.created,
+          paid_at: inv.status_transitions?.paid_at ?? null,
+          hosted_invoice_url: inv.hosted_invoice_url,
+          invoice_pdf: inv.invoice_pdf,
+        })),
+        refunds,
         // Refunds removed from in-app actions in v1 — admins refund via the
         // "Open in Stripe" deep link below. Will be added back post-panel
         // once we map the new Invoice→Payment structure in Stripe API 2026+.
