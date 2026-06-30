@@ -26,7 +26,9 @@ const VCCAuthContext = createContext<VCCAuthContextValue>({
   hasPermission: () => false,
 });
 
-// Client-side permission check (mirrors server-side ROLE_PERMISSIONS)
+// Client-side permission check (mirrors server-side ROLE_PERMISSIONS in
+// src/lib/vcc/permissions.ts — KEEP IN SYNC manually until we refactor to
+// a single source of truth).
 const ROLE_PERMISSIONS: Record<AdminRole, Set<VCCPermission>> = {
   SUPER_ADMIN: new Set<VCCPermission>([
     "view_dashboard",
@@ -44,6 +46,10 @@ const ROLE_PERMISSIONS: Record<AdminRole, Set<VCCPermission>> = {
     "manage_roles",
     "view_audit_log",
     "apply_credits",
+    "resend_magic_link",
+    "view_stripe_billing",
+    "refund_payment",
+    "cancel_subscription",
   ]),
   ORG_SUPPORT: new Set<VCCPermission>([
     "view_dashboard",
@@ -56,6 +62,7 @@ const ROLE_PERMISSIONS: Record<AdminRole, Set<VCCPermission>> = {
     "flag_risk",
     "archive_systems",
     "view_audit_log",
+    "resend_magic_link",
   ]),
   BILLING_ADMIN: new Set<VCCPermission>([
     "view_dashboard",
@@ -65,6 +72,9 @@ const ROLE_PERMISSIONS: Record<AdminRole, Set<VCCPermission>> = {
     "override_limits",
     "view_audit_log",
     "apply_credits",
+    "view_stripe_billing",
+    "refund_payment",
+    "cancel_subscription",
   ]),
   ANALYTICS_VIEWER: new Set<VCCPermission>([
     "view_dashboard",
