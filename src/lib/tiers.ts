@@ -10,6 +10,10 @@ export type TierInfo = {
   plans: PlanName[];
 };
 
+// TODO(value-slice): Update highlights per tier as the features actually
+// ship. See docs/plans/2026-06-30-value-slice-pricing.md for the target
+// copy. Do NOT pre-announce features that aren't built yet — the modal
+// shouldn't lie about what upgrading actually delivers.
 export const TIERS: Record<VersiumTier, TierInfo> = {
   Core: {
     name: "Core",

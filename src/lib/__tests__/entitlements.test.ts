@@ -12,15 +12,24 @@ import {
   canManageTeam,
   canAccessWizard,
   getReportLevel,
+  // Value-slice (2026-06-30)
+  canAccessBasicDrift,
+  getMaxDriftSystems,
+  canUseNonChainLedger,
+  canUseChainAnchoring,
+  canVerifyExternalProofs,
+  canIssueAttestations,
+  canExportOwnData,
+  getBasicIncidentQuota,
 } from "@/lib/entitlements";
 
 // ---------------------------------------------------------------------------
 // getPlanLimits
 // ---------------------------------------------------------------------------
 describe("getPlanLimits", () => {
-  it("returns correct limits for explorer", () => {
+  it("returns correct limits for explorer (value-slice: canExport=true for own data)", () => {
     const limits = getPlanLimits("explorer");
-    expect(limits).toEqual({ maxSurveys: 1, maxSystems: 0, canExport: false });
+    expect(limits).toEqual({ maxSurveys: 1, maxSystems: 0, canExport: true });
   });
 
   it("returns correct limits for starter (Core)", () => {
@@ -97,8 +106,8 @@ describe("canCreateSystem", () => {
 // canExportResults
 // ---------------------------------------------------------------------------
 describe("canExportResults", () => {
-  it("returns false for explorer", () => {
-    expect(canExportResults("explorer")).toBe(false);
+  it("returns true for explorer (value-slice: free tier controls own data)", () => {
+    expect(canExportResults("explorer")).toBe(true);
   });
 
   it("returns true for starter (Core has CSV export)", () => {
@@ -291,5 +300,120 @@ describe("getReportLevel", () => {
 
   it('defaults null to "none" (explorer)', () => {
     expect(getReportLevel(null)).toBe("none");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Value-slice per-feature entitlements (2026-06-30)
+// See docs/plans/2026-06-30-value-slice-pricing.md
+// ---------------------------------------------------------------------------
+
+describe("canAccessBasicDrift (value-slice)", () => {
+  it("returns false for explorer", () => {
+    expect(canAccessBasicDrift("explorer")).toBe(false);
+  });
+
+  it("returns false for starter until Phase 2 ships Basic Drift", () => {
+    // ROADMAP: flip to true once feat/basic-drift-on-core lands.
+    expect(canAccessBasicDrift("starter")).toBe(false);
+  });
+
+  it("returns true for pro", () => {
+    expect(canAccessBasicDrift("pro")).toBe(true);
+  });
+
+  it("returns true for enterprise", () => {
+    expect(canAccessBasicDrift("enterprise")).toBe(true);
+  });
+});
+
+describe("getMaxDriftSystems (value-slice)", () => {
+  it("returns 0 for explorer", () => {
+    expect(getMaxDriftSystems("explorer")).toBe(0);
+  });
+
+  it("returns 0 for starter until Phase 2 (target: 2)", () => {
+    // ROADMAP: bump to 2 once Basic Drift ships for Core.
+    expect(getMaxDriftSystems("starter")).toBe(0);
+  });
+
+  it("returns 6 for pro", () => {
+    expect(getMaxDriftSystems("pro")).toBe(6);
+  });
+
+  it("returns Infinity for enterprise", () => {
+    expect(getMaxDriftSystems("enterprise")).toBe(Infinity);
+  });
+});
+
+describe("canUseNonChainLedger (value-slice)", () => {
+  it("returns false for explorer + starter (until Phase 4 ships non-chain code)", () => {
+    expect(canUseNonChainLedger("explorer")).toBe(false);
+    expect(canUseNonChainLedger("starter")).toBe(false);
+  });
+
+  it("returns false for pro (until Phase 4)", () => {
+    expect(canUseNonChainLedger("pro")).toBe(false);
+  });
+
+  it("returns true for enterprise", () => {
+    expect(canUseNonChainLedger("enterprise")).toBe(true);
+  });
+});
+
+describe("canUseChainAnchoring (value-slice: the Verify moat)", () => {
+  it("returns false for all non-enterprise plans", () => {
+    expect(canUseChainAnchoring("explorer")).toBe(false);
+    expect(canUseChainAnchoring("starter")).toBe(false);
+    expect(canUseChainAnchoring("pro")).toBe(false);
+  });
+
+  it("returns true for enterprise (the moat)", () => {
+    expect(canUseChainAnchoring("enterprise")).toBe(true);
+  });
+});
+
+describe("canVerifyExternalProofs (value-slice: viral hook)", () => {
+  it("returns true for any signed-in plan", () => {
+    expect(canVerifyExternalProofs("explorer")).toBe(true);
+    expect(canVerifyExternalProofs("starter")).toBe(true);
+    expect(canVerifyExternalProofs("pro")).toBe(true);
+    expect(canVerifyExternalProofs("enterprise")).toBe(true);
+  });
+
+  it("returns false for unauthenticated users until Phase 3 ships /verify public route", () => {
+    expect(canVerifyExternalProofs(null)).toBe(false);
+    expect(canVerifyExternalProofs(undefined)).toBe(false);
+  });
+});
+
+describe("canIssueAttestations (value-slice)", () => {
+  it("returns false for explorer + starter", () => {
+    expect(canIssueAttestations("explorer")).toBe(false);
+    expect(canIssueAttestations("starter")).toBe(false);
+  });
+
+  it("returns true for pro + enterprise", () => {
+    expect(canIssueAttestations("pro")).toBe(true);
+    expect(canIssueAttestations("enterprise")).toBe(true);
+  });
+});
+
+describe("canExportOwnData (value-slice: free tier controls own data)", () => {
+  it("returns true for every plan including explorer", () => {
+    expect(canExportOwnData("explorer")).toBe(true);
+    expect(canExportOwnData("starter")).toBe(true);
+    expect(canExportOwnData("pro")).toBe(true);
+    expect(canExportOwnData("enterprise")).toBe(true);
+    expect(canExportOwnData(null)).toBe(true);
+  });
+});
+
+describe("getBasicIncidentQuota (value-slice)", () => {
+  it("mirrors maxIncidentsPerMonth for parity", () => {
+    expect(getBasicIncidentQuota("explorer")).toBe(0);
+    expect(getBasicIncidentQuota("starter")).toBe(5);
+    expect(getBasicIncidentQuota("pro")).toBe(Infinity);
+    expect(getBasicIncidentQuota("enterprise")).toBe(Infinity);
   });
 });
