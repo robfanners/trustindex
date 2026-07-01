@@ -89,7 +89,12 @@ export async function POST(req: NextRequest, ctx: Ctx) {
   };
 
   const eventHash = hashPayload(payload);
-  const chainResult = await anchorOnChain(eventHash);
+  // Value-slice Phase 4: only Verify (enterprise) triggers on-chain anchoring.
+  // API-key path is already Verify-gated by authenticateApiKey above, so it's
+  // safe to treat the API-key branch as enterprise. Session path uses the
+  // authenticated user's actual plan.
+  const chainPlan = sessionAuth.error ? "enterprise" : sessionAuth.plan;
+  const chainResult = await anchorOnChain(eventHash, chainPlan);
   const now = new Date().toISOString();
 
   const update: Record<string, unknown> = {

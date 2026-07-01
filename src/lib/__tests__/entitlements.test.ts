@@ -16,6 +16,7 @@ import {
   canAccessBasicDrift,
   getMaxDriftSystems,
   canUseNonChainLedger,
+  canUseNonChainIncidentLock,
   canUseChainAnchoring,
   canVerifyExternalProofs,
   canIssueAttestations,
@@ -344,18 +345,39 @@ describe("getMaxDriftSystems (value-slice Phase 2)", () => {
   });
 });
 
-describe("canUseNonChainLedger (value-slice)", () => {
-  it("returns false for explorer + starter (until Phase 4 ships non-chain code)", () => {
+describe("canUseNonChainLedger (value-slice Phase 4)", () => {
+  it("returns false for explorer", () => {
     expect(canUseNonChainLedger("explorer")).toBe(false);
-    expect(canUseNonChainLedger("starter")).toBe(false);
   });
 
-  it("returns false for pro (until Phase 4)", () => {
-    expect(canUseNonChainLedger("pro")).toBe(false);
+  it("returns true for starter (Core gets non-chain Decision Ledger)", () => {
+    expect(canUseNonChainLedger("starter")).toBe(true);
+  });
+
+  it("returns true for pro", () => {
+    expect(canUseNonChainLedger("pro")).toBe(true);
+  });
+
+  it("returns true for enterprise (Verify gets on-chain too — canUseChainAnchoring)", () => {
+    expect(canUseNonChainLedger("enterprise")).toBe(true);
+  });
+});
+
+describe("canUseNonChainIncidentLock (value-slice Phase 4)", () => {
+  it("returns false for explorer", () => {
+    expect(canUseNonChainIncidentLock("explorer")).toBe(false);
+  });
+
+  it("returns true for starter (Core gets non-chain Incident Lock)", () => {
+    expect(canUseNonChainIncidentLock("starter")).toBe(true);
+  });
+
+  it("returns true for pro", () => {
+    expect(canUseNonChainIncidentLock("pro")).toBe(true);
   });
 
   it("returns true for enterprise", () => {
-    expect(canUseNonChainLedger("enterprise")).toBe(true);
+    expect(canUseNonChainIncidentLock("enterprise")).toBe(true);
   });
 });
 

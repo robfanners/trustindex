@@ -14,7 +14,10 @@ export async function GET(req: NextRequest) {
     const auth = await requireAuth();
     if (auth.error) return auth.error;
 
-    const tierCheck = checkTierAccess(auth.plan, "Verify");
+    // Value-slice Phase 4: Non-chain Incident Lock available to Core+.
+    // Only Verify (enterprise) triggers on-chain anchoring — the record
+    // itself is the same cryptographic hash + verification ID either way.
+    const tierCheck = checkTierAccess(auth.plan, "Core");
     if (tierCheck) return tierCheck;
 
     const params = req.nextUrl.searchParams;
@@ -54,7 +57,10 @@ export async function POST(req: NextRequest) {
     const auth = await requireAuth();
     if (auth.error) return auth.error;
 
-    const tierCheck = checkTierAccess(auth.plan, "Verify");
+    // Value-slice Phase 4: Non-chain Incident Lock available to Core+.
+    // Only Verify (enterprise) triggers on-chain anchoring — the record
+    // itself is the same cryptographic hash + verification ID either way.
+    const tierCheck = checkTierAccess(auth.plan, "Core");
     if (tierCheck) return tierCheck;
 
     const body = await req.json();
@@ -114,8 +120,9 @@ export async function POST(req: NextRequest) {
       locked_by: auth.user.id,
     });
 
-    // Attempt chain anchoring
-    const chainResult = await anchorOnChain(eventHash);
+    // Attempt chain anchoring — only Verify (enterprise) plans anchor.
+    // Core + Assure get chain_status: "skipped" (non-chain Incident Lock).
+    const chainResult = await anchorOnChain(eventHash, auth.plan);
 
     // Insert the lock record
     const { data, error } = await db

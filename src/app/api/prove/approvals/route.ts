@@ -145,8 +145,9 @@ export async function PATCH(req: NextRequest) {
       risk_level: existing.risk_level,
     });
 
-    // Attempt chain anchoring (returns "skipped" if chain not configured)
-    const chainResult = await anchorOnChain(eventHash);
+    // Attempt chain anchoring — only Verify (enterprise) plans anchor.
+    // Returns "skipped" for non-enterprise or when chain env not configured.
+    const chainResult = await anchorOnChain(eventHash, auth.plan);
 
     const { data, error } = await db
       .from("prove_approvals")

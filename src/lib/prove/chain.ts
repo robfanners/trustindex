@@ -35,12 +35,27 @@ export function generateVerificationId(data: Record<string, unknown>): string {
 
 /**
  * Anchor an event hash on-chain via the HAPP Registry contract.
- * Returns tx hash and status. If chain is not enabled, returns "skipped".
+ * Returns tx hash and status. Returns "skipped" if:
+ *   - chain is not enabled (env vars missing), OR
+ *   - the user's plan is not enterprise (Verify tier only)
+ *
+ * Value-slice Phase 4 (2026-06-30): On-chain anchoring is the Verify moat.
+ * Core and Assure users create records with the same cryptographic hash +
+ * verification ID, but the chain call is skipped and chain_status stays
+ * "skipped" — the record still exists, it just isn't on-chain-anchored.
+ *
  * Server-only function — never call from client components.
  */
 export async function anchorOnChain(
-  eventHash: string
+  eventHash: string,
+  plan?: string | null
 ): Promise<{ txHash: string | null; status: "anchored" | "failed" | "skipped" }> {
+  // Plan gate — only Verify (enterprise) gets on-chain anchoring.
+  // Undefined plan is allowed through for backwards compat with call sites
+  // that haven't been migrated yet; env-var check below still catches those.
+  if (plan !== undefined && plan !== "enterprise") {
+    return { txHash: null, status: "skipped" };
+  }
   if (!isChainEnabled()) {
     return { txHash: null, status: "skipped" };
   }

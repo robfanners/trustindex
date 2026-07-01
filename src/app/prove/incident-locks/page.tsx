@@ -1,12 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import TierGate from "@/components/TierGate";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import DetailPanel from "@/components/ui/DetailPanel";
 import OnboardingTour from "@/components/ui/OnboardingTour";
 import { showActionToast } from "@/components/ui/Toast";
+import { useAuth } from "@/context/AuthContext";
 
 type IncidentLock = {
   id: string;
@@ -68,6 +70,9 @@ const tourSteps = [
 ];
 
 export default function IncidentLocksPage() {
+  const { profile } = useAuth();
+  const isNonChainTier = profile?.plan === "starter" || profile?.plan === "pro";
+
   const [locks, setLocks] = useState<IncidentLock[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -153,7 +158,7 @@ export default function IncidentLocksPage() {
   const paginatedLocks = locks.slice((page - 1) * perPage, page * perPage);
 
   return (
-    <TierGate requiredTier="Verify" featureLabel="Incident Lock">
+    <TierGate requiredTier="Core" featureLabel="Incident Lock">
       <div className="space-y-6">
         {/* Header */}
         <div data-tour="page-header">
@@ -177,6 +182,29 @@ export default function IncidentLocksPage() {
             }
           />
         </div>
+
+        {/* Non-chain banner — Core + Assure users see this; Verify does not */}
+        {isNonChainTier && (
+          <div className="border border-border rounded-lg bg-muted/30 p-4 flex items-start gap-3">
+            <div className="shrink-0 p-1.5 rounded-full bg-brand/10 text-brand mt-0.5">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="flex-1 space-y-1">
+              <p className="text-sm font-medium">Off-chain Incident Lock</p>
+              <p className="text-xs text-muted-foreground">
+                Your locks are cryptographically hashed and verifiable, but not anchored on-chain. Upgrade to Verify for immutable on-chain proof that stands up to any auditor or regulator.
+              </p>
+            </div>
+            <Link
+              href="/upgrade?tier=Verify"
+              className="shrink-0 text-xs font-medium px-3 py-1.5 rounded-lg bg-brand text-white hover:bg-brand/90 transition-colors whitespace-nowrap"
+            >
+              See Verify
+            </Link>
+          </div>
+        )}
 
         {/* Lock Form */}
         {showForm && (

@@ -74,8 +74,8 @@ export async function POST(req: NextRequest) {
     attested_at: now,
   });
 
-  // Attempt chain anchoring
-  const chainResult = await anchorOnChain(eventHash);
+  // Attempt chain anchoring — only Verify (enterprise) plans anchor.
+  const chainResult = await anchorOnChain(eventHash, auth.plan);
 
   const db = auth.db;
   const { data, error } = await db

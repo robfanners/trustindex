@@ -10,22 +10,21 @@ export type TierInfo = {
   plans: PlanName[];
 };
 
-// TODO(value-slice): Continue updating highlights per tier as features
-// ship. Current state as of Phase 2 (2026-06-30) — Basic Drift on Core is
-// live. Phase 3 will add Verification for Explorer. Phase 4 will add non-
-// chain Ledger + Incident Lock for Core. See docs/plans/2026-06-30-value-
-// slice-pricing.md.
+// Value-slice highlights updated as features ship. Current state (Phase 4,
+// 2026-06-30): Basic Drift on Core, public Verification for anyone, non-
+// chain Decision Ledger + Incident Lock on Core, chain-anchoring as the
+// Verify moat. See docs/plans/2026-06-30-value-slice-pricing.md.
 export const TIERS: Record<VersiumTier, TierInfo> = {
   Core: {
     name: "Core",
     tagline: "Governance Intelligence Foundation",
     highlights: [
       "TrustOrg & TrustSys assessments (2 systems)",
-      "Governance health scoring",
       "AI system registry & vendor register",
-      "Gap prioritisation & actions",
       "AI Copilot (policy generation)",
       "Basic Drift monitoring (own 2 systems)",
+      "Decision Ledger (off-chain, tamper-evident)",
+      "Incident Lock (off-chain, tamper-evident)",
     ],
     plans: ["explorer", "starter"],
   },
@@ -35,9 +34,7 @@ export const TIERS: Record<VersiumTier, TierInfo> = {
     highlights: [
       "Everything in Core, plus:",
       "Full Drift across 6 systems",
-      "Escalation workflows",
-      "Runtime Signals monitoring",
-      "Incident capture & declarations",
+      "Escalation workflows + Runtime Signals",
       "Team management (5 users)",
       "Advanced reporting & audit timeline",
     ],
@@ -45,15 +42,16 @@ export const TIERS: Record<VersiumTier, TierInfo> = {
   },
   Verify: {
     name: "Verify",
-    tagline: "Cryptographic Proof & Trust Portability",
+    tagline: "On-chain cryptographic proof",
     highlights: [
       "Everything in Assure, plus:",
+      "On-chain anchored attestations",
+      "On-chain anchored Incident Lock",
+      "On-chain anchored Decision Ledger",
       "Human-verified approvals",
-      "Governance attestations",
       "Provenance certificates",
-      "Incident lock & forensic freeze",
       "Cross-org trust exchange",
-      "On-chain anchoring",
+      "API access + SSO/SAML",
     ],
     plans: ["enterprise"],
   },
