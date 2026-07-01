@@ -10,12 +10,39 @@ export type NavItem = {
   icon: CapabilityKey;
   /** If true, this item links to an existing page. If false, it's a new placeholder. */
   exists: boolean;
+  /**
+   * Value-slice per-item gating (2026-06-30). When set, this item locks
+   * independently of the parent section's minTier — enabling per-feature
+   * upgrade prompts rather than whole-section paywalls. Falls back to the
+   * section's minTier when unset (backwards compatible).
+   *
+   * See docs/plans/2026-06-30-value-slice-pricing.md.
+   */
+  minTier?: PlanName | null;
+  /**
+   * Tier badge text shown next to this item when locked. Overrides the
+   * section-level tierBadge. Only used when this item's minTier is set.
+   */
+  tierBadge?: string;
+  /**
+   * Reserved for future advanced feature-gating (e.g., items behind an
+   * entitlement flag that isn't purely tier-based, like chain-anchoring).
+   * Unused in Phase 1; wired in later phases.
+   */
+  featureKey?: string;
 };
 
 export type NavSection = {
   id: string;
   label: string;
-  /** Minimum plan tier required to access this section. null = available to all. */
+  /**
+   * Minimum plan tier required to access this section — applied to any
+   * item that doesn't set its own minTier. null = available to all.
+   *
+   * Value-slice roadmap: as items migrate to per-item minTier, section
+   * minTier will approach null across the board. Kept for backwards
+   * compatibility during the migration.
+   */
   minTier: PlanName | null;
   /** Tier badge text shown when locked (e.g., "Assure", "Verify") */
   tierBadge?: string;
@@ -23,6 +50,23 @@ export type NavSection = {
   href?: string;
   items: NavItem[];
 };
+
+/**
+ * Resolve the effective minTier for a nav item, falling back to the parent
+ * section's minTier when the item doesn't set its own. Enables value-slice
+ * per-item gating without breaking sections that still gate as a bundle.
+ */
+export function getItemMinTier(item: NavItem, section: NavSection): PlanName | null {
+  return item.minTier !== undefined ? item.minTier : section.minTier;
+}
+
+/**
+ * Resolve the effective tier badge for a nav item, falling back to the
+ * parent section's badge when the item doesn't set its own.
+ */
+export function getItemTierBadge(item: NavItem, section: NavSection): string | undefined {
+  return item.tierBadge ?? section.tierBadge;
+}
 
 /** Ordered plan tiers from lowest to highest */
 const TIER_ORDER: PlanName[] = ["explorer", "starter", "pro", "enterprise"];

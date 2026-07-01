@@ -45,7 +45,11 @@ export type PlanLimits = {
 // ---------------------------------------------------------------------------
 
 const LIMITS: Record<PlanName, PlanLimits> = {
-  explorer: { maxSurveys: 1, maxSystems: 0, canExport: false },
+  // Value-slice update (2026-06-30): Explorer now exports their OWN data.
+  // Free tier should give full control of own single result — see
+  // docs/plans/2026-06-30-value-slice-pricing.md. Multi-user / advanced
+  // export features still gated by tier.
+  explorer: { maxSurveys: 1, maxSystems: 0, canExport: true },
   starter: { maxSurveys: 2, maxSystems: 2, canExport: true },
   pro: { maxSurveys: 6, maxSystems: 6, canExport: true },
   enterprise: { maxSurveys: Infinity, maxSystems: Infinity, canExport: true },
@@ -209,6 +213,106 @@ export function canViewIBG(plan: string | null | undefined): boolean {
 export function canManageIBG(plan: string | null | undefined): boolean {
   const p = plan ?? "explorer";
   return p === "pro" || p === "enterprise";
+}
+
+// ---------------------------------------------------------------------------
+// Value-slice per-feature entitlements (2026-06-30)
+//
+// See docs/plans/2026-06-30-value-slice-pricing.md.
+//
+// Under value-slice pricing, every tier gets *some* capability in every
+// product pillar (Govern, Monitor, Prove). These helpers gate individual
+// features per-plan rather than gating entire modules by minTier.
+//
+// Currently these mirror the old bundle behaviour so nothing breaks on
+// merge. Phase 2+ PRs will progressively relax specific gates (e.g., move
+// Basic Drift from Pro+ down to Starter+ once the Basic Drift feature ships).
+// ---------------------------------------------------------------------------
+
+/**
+ * Can the user access Basic Drift monitoring on their own AI systems?
+ *
+ * VALUE-SLICE ROADMAP: This will move to `starter+` once Phase 2 ships the
+ * basic drift feature (read-only alerts on 2 systems, no escalation). Until
+ * then it mirrors the current gate.
+ */
+export function canAccessBasicDrift(plan: string | null | undefined): boolean {
+  const p = plan ?? "explorer";
+  return p === "pro" || p === "enterprise";
+}
+
+/** Maximum number of AI systems the user can enable drift monitoring on. */
+export function getMaxDriftSystems(plan: string | null | undefined): number {
+  const p = (plan ?? "explorer") as PlanName;
+  // Value-slice roadmap target: Core = 2, Assure = 6, Verify = Infinity.
+  // Current gate mirrors old behaviour (Pro+ only) until Phase 2.
+  if (p === "enterprise") return Infinity;
+  if (p === "pro") return 6;
+  return 0;
+}
+
+/**
+ * Can the user access the non-chain Decision Ledger (own records, tamper-
+ * evident but not on-chain-anchored)? VALUE-SLICE ROADMAP: Core+.
+ */
+export function canUseNonChainLedger(plan: string | null | undefined): boolean {
+  const p = plan ?? "explorer";
+  // Currently gated to enterprise until Phase 4 ships non-chain code path.
+  return p === "enterprise";
+}
+
+/**
+ * Can the user access on-chain cryptographic anchoring for attestations,
+ * incidents, and provenance? This is the Verify moat — should stay
+ * Enterprise-only permanently.
+ */
+export function canUseChainAnchoring(plan: string | null | undefined): boolean {
+  const p = plan ?? "explorer";
+  return p === "enterprise";
+}
+
+/**
+ * Can this user verify a proof that was sent to them (receive-only)?
+ *
+ * VALUE-SLICE VIRAL HOOK: This should return true for EVERYONE, including
+ * unauthenticated users, once Phase 3 ships the public /verify route.
+ * Until then, restrict to signed-in users so we don't advertise capability
+ * that isn't built.
+ */
+export function canVerifyExternalProofs(plan: string | null | undefined): boolean {
+  // Signed-in Explorer and above can verify. Public/no-auth verification
+  // lands in Phase 3.
+  return plan !== null && plan !== undefined;
+}
+
+/**
+ * Can the user issue attestations (signed proofs) to third parties?
+ * VALUE-SLICE ROADMAP: Assure+ (basic, non-chain), Verify (on-chain).
+ */
+export function canIssueAttestations(plan: string | null | undefined): boolean {
+  const p = plan ?? "explorer";
+  return p === "pro" || p === "enterprise";
+}
+
+/**
+ * Can the user export their OWN data (single survey result CSV, own
+ * assessment PDF)? Under value-slice, this is true for every tier including
+ * Explorer — free tier should give full control of own data.
+ *
+ * Distinct from `canExportResults()` which historically gated multi-org /
+ * bulk export for paid tiers.
+ */
+export function canExportOwnData(_plan: string | null | undefined): boolean {
+  return true;
+}
+
+/**
+ * Monthly incident-logging quota under value-slice.
+ * Aliases {@link maxIncidentsPerMonth} for symmetry with other value-slice
+ * helpers; behaviour is identical.
+ */
+export function getBasicIncidentQuota(plan: string | null | undefined): number {
+  return maxIncidentsPerMonth(plan);
 }
 
 // ---------------------------------------------------------------------------

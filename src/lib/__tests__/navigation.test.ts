@@ -1,5 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { meetsMinTier, getTierName, navSections } from "@/lib/navigation";
+import {
+  meetsMinTier,
+  getTierName,
+  navSections,
+  getItemMinTier,
+  getItemTierBadge,
+  type NavItem,
+  type NavSection,
+} from "@/lib/navigation";
 
 // ---------------------------------------------------------------------------
 // meetsMinTier
@@ -99,5 +107,92 @@ describe("navSections", () => {
         expect(typeof item.exists).toBe("boolean");
       }
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Value-slice per-item gating helpers (2026-06-30)
+// See docs/plans/2026-06-30-value-slice-pricing.md
+// ---------------------------------------------------------------------------
+
+const mockSection: NavSection = {
+  id: "monitor",
+  label: "MONITOR",
+  minTier: "pro",
+  tierBadge: "Assure",
+  items: [],
+};
+
+describe("getItemMinTier (value-slice)", () => {
+  it("falls back to section minTier when item has none set", () => {
+    const item: NavItem = {
+      label: "Drift & Alerts",
+      href: "/monitor/drift",
+      icon: "drift-alerts",
+      exists: true,
+    };
+    expect(getItemMinTier(item, mockSection)).toBe("pro");
+  });
+
+  it("uses item's own minTier when set (Phase 2+ can move items down-tier)", () => {
+    const item: NavItem = {
+      label: "Drift & Alerts",
+      href: "/monitor/drift",
+      icon: "drift-alerts",
+      exists: true,
+      minTier: "starter", // Phase 2 target for Basic Drift
+    };
+    expect(getItemMinTier(item, mockSection)).toBe("starter");
+  });
+
+  it("honours item's explicit null (available to all) even if section is locked", () => {
+    const item: NavItem = {
+      label: "Verification",
+      href: "/prove/verification",
+      icon: "verification",
+      exists: true,
+      minTier: null, // Verification is a viral hook — available at any tier
+    };
+    expect(getItemMinTier(item, mockSection)).toBe(null);
+  });
+});
+
+describe("getItemTierBadge (value-slice)", () => {
+  it("falls back to section tierBadge when item has none set", () => {
+    const item: NavItem = {
+      label: "Escalations",
+      href: "/monitor/escalations",
+      icon: "escalations",
+      exists: true,
+    };
+    expect(getItemTierBadge(item, mockSection)).toBe("Assure");
+  });
+
+  it("uses item's own tierBadge when set (e.g., chain-anchored item inside Assure section)", () => {
+    const item: NavItem = {
+      label: "Chain-Anchored Attestations",
+      href: "/prove/attestations",
+      icon: "attestations",
+      exists: true,
+      minTier: "enterprise",
+      tierBadge: "Verify",
+    };
+    expect(getItemTierBadge(item, mockSection)).toBe("Verify");
+  });
+
+  it("returns undefined when neither section nor item sets a badge", () => {
+    const bareSection: NavSection = {
+      id: "overview",
+      label: "",
+      minTier: null,
+      items: [],
+    };
+    const item: NavItem = {
+      label: "Control Centre",
+      href: "/dashboard",
+      icon: "layout-dashboard",
+      exists: true,
+    };
+    expect(getItemTierBadge(item, bareSection)).toBeUndefined();
   });
 });

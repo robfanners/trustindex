@@ -11,7 +11,12 @@ import QuickCreate from "@/components/header/QuickCreate";
 import NotificationBell from "@/components/header/NotificationBell";
 import UserMenu from "@/components/header/UserMenu";
 import HelpMenu from "@/components/header/HelpMenu";
-import { navSections, meetsMinTier } from "@/lib/navigation";
+import {
+  navSections,
+  meetsMinTier,
+  getItemMinTier,
+  getItemTierBadge,
+} from "@/lib/navigation";
 import UpgradeModal from "@/components/UpgradeModal";
 import type { VersiumTier } from "@/lib/tiers";
 import { canSeeSection } from "@/lib/roles";
@@ -300,7 +305,12 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
                   >
                     {section.items.map((item) => {
                       const isActive = activeNav === item.href;
-                      const href = isLocked ? "#" : item.href;
+                      // Value-slice: compute lock state per-item, falling back
+                      // to section-level minTier when item doesn't override.
+                      const effectiveMinTier = getItemMinTier(item, section);
+                      const itemLocked = !meetsMinTier(profile?.plan, effectiveMinTier);
+                      const itemTierBadge = getItemTierBadge(item, section);
+                      const href = itemLocked ? "#" : item.href;
 
                       return (
                         <Link
@@ -308,9 +318,9 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
                           href={href}
                           title={sidebarCollapsed ? item.label : undefined}
                           onClick={(e) => {
-                            if (isLocked) {
+                            if (itemLocked) {
                               e.preventDefault();
-                              setUpgradeModalTier((section.tierBadge as VersiumTier) ?? "Assure");
+                              setUpgradeModalTier((itemTierBadge as VersiumTier) ?? "Assure");
                               setUpgradeModalFeature(item.label);
                               setUpgradeModalOpen(true);
                               return;
@@ -320,7 +330,7 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
                           className={`
                             flex items-center gap-3 py-2 rounded-lg text-sm transition-all
                             ${sidebarCollapsed ? "lg:justify-center lg:px-0 px-3" : "px-3"}
-                            ${isLocked
+                            ${itemLocked
                               ? "text-muted-foreground/40 cursor-default"
                               : isActive
                                 ? "bg-brand/10 text-brand font-medium"
@@ -332,7 +342,7 @@ function AuthenticatedShellInner({ children }: AuthenticatedShellProps) {
                           <span className={sidebarCollapsed ? "lg:hidden" : ""}>
                             {item.label}
                           </span>
-                          {isLocked && !sidebarCollapsed && (
+                          {itemLocked && !sidebarCollapsed && (
                             <NavIcon icon="lock" />
                           )}
                         </Link>
