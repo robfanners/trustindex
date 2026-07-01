@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
     reviewed_at: now,
   });
 
-  const chainResult = await anchorOnChain(eventHash);
+  const chainResult = await anchorOnChain(eventHash, auth.plan);
 
   // Parse data_sources: accept comma-separated string or array
   let sources: string[] | null = null;

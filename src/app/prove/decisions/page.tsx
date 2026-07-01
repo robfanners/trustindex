@@ -1,11 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import TierGate from "@/components/TierGate";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import DetailPanel from "@/components/ui/DetailPanel";
 import { showActionToast } from "@/components/ui/Toast";
+import { useAuth } from "@/context/AuthContext";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -133,6 +135,9 @@ const headerIcon = (
 // ---------------------------------------------------------------------------
 
 export default function DecisionLedgerPage() {
+  const { profile } = useAuth();
+  const isNonChainTier = profile?.plan === "starter" || profile?.plan === "pro";
+
   // List state
   const [decisions, setDecisions] = useState<DecisionRecord[]>([]);
   const [total, setTotal] = useState(0);
@@ -366,7 +371,7 @@ export default function DecisionLedgerPage() {
   const selectClass = "px-3 py-1.5 rounded-lg border border-border bg-background text-sm";
 
   return (
-    <TierGate requiredTier="Verify" featureLabel="Decision Ledger">
+    <TierGate requiredTier="Core" featureLabel="Decision Ledger">
       <div className="space-y-6">
         <PageHeader
           icon={headerIcon}
@@ -385,6 +390,29 @@ export default function DecisionLedgerPage() {
             </button>
           }
         />
+
+        {/* Non-chain banner — Core + Assure users see this; Verify does not */}
+        {isNonChainTier && (
+          <div className="border border-border rounded-lg bg-muted/30 p-4 flex items-start gap-3">
+            <div className="shrink-0 p-1.5 rounded-full bg-brand/10 text-brand mt-0.5">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="flex-1 space-y-1">
+              <p className="text-sm font-medium">Off-chain Decision Ledger</p>
+              <p className="text-xs text-muted-foreground">
+                Every decision is cryptographically hashed and verifiable, but not anchored on-chain. Upgrade to Verify for immutable on-chain proof that stands up to any auditor or regulator.
+              </p>
+            </div>
+            <Link
+              href="/upgrade?tier=Verify"
+              className="shrink-0 text-xs font-medium px-3 py-1.5 rounded-lg bg-brand text-white hover:bg-brand/90 transition-colors whitespace-nowrap"
+            >
+              See Verify
+            </Link>
+          </div>
+        )}
 
         {/* Record Decision Form */}
         {showForm && (

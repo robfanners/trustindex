@@ -253,12 +253,27 @@ export function getMaxDriftSystems(plan: string | null | undefined): number {
 
 /**
  * Can the user access the non-chain Decision Ledger (own records, tamper-
- * evident but not on-chain-anchored)? VALUE-SLICE ROADMAP: Core+.
+ * evident but not on-chain-anchored)?
+ *
+ * Value-slice Phase 4 (2026-06-30): Core+ gets non-chain Decision Ledger.
+ * The same cryptographic hash + verification ID pipeline runs regardless
+ * of tier — only the on-chain call is gated to Verify (enterprise).
  */
 export function canUseNonChainLedger(plan: string | null | undefined): boolean {
   const p = plan ?? "explorer";
-  // Currently gated to enterprise until Phase 4 ships non-chain code path.
-  return p === "enterprise";
+  return p === "starter" || p === "pro" || p === "enterprise";
+}
+
+/**
+ * Can the user use the non-chain Incident Lock feature (freeze governance
+ * state around an incident with tamper-evident hash but no chain anchor)?
+ *
+ * Value-slice Phase 4 (2026-06-30): Core+ gets non-chain Incident Lock.
+ * Verify (enterprise) gets the same feature with on-chain anchoring.
+ */
+export function canUseNonChainIncidentLock(plan: string | null | undefined): boolean {
+  const p = plan ?? "explorer";
+  return p === "starter" || p === "pro" || p === "enterprise";
 }
 
 /**
