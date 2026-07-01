@@ -371,7 +371,7 @@ describe("canUseChainAnchoring (value-slice: the Verify moat)", () => {
   });
 });
 
-describe("canVerifyExternalProofs (value-slice: viral hook)", () => {
+describe("canVerifyExternalProofs (value-slice Phase 3: viral hook)", () => {
   it("returns true for any signed-in plan", () => {
     expect(canVerifyExternalProofs("explorer")).toBe(true);
     expect(canVerifyExternalProofs("starter")).toBe(true);
@@ -379,9 +379,12 @@ describe("canVerifyExternalProofs (value-slice: viral hook)", () => {
     expect(canVerifyExternalProofs("enterprise")).toBe(true);
   });
 
-  it("returns false for unauthenticated users until Phase 3 ships /verify public route", () => {
-    expect(canVerifyExternalProofs(null)).toBe(false);
-    expect(canVerifyExternalProofs(undefined)).toBe(false);
+  it("returns true for unauthenticated users (public /verify/[id] route is live)", () => {
+    // Phase 3 shipped 2026-06-30 — verification is now the Explorer viral
+    // hook, available to anyone with a verification ID without a Verisum
+    // account. See src/app/verify/[id]/page.tsx + proxy.ts whitelist.
+    expect(canVerifyExternalProofs(null)).toBe(true);
+    expect(canVerifyExternalProofs(undefined)).toBe(true);
   });
 });
 

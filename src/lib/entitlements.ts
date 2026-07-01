@@ -274,15 +274,16 @@ export function canUseChainAnchoring(plan: string | null | undefined): boolean {
 /**
  * Can this user verify a proof that was sent to them (receive-only)?
  *
- * VALUE-SLICE VIRAL HOOK: This should return true for EVERYONE, including
- * unauthenticated users, once Phase 3 ships the public /verify route.
- * Until then, restrict to signed-in users so we don't advertise capability
- * that isn't built.
+ * VALUE-SLICE VIRAL HOOK: Returns true for EVERYONE, including
+ * unauthenticated users. Public verification is the Explorer-level viral
+ * hook — every attestation a Verify customer issues can be verified by
+ * anyone without a Verisum account. Public route lives at /verify/[id]
+ * (no auth required, see proxy.ts whitelist).
+ *
+ * Phase 3 shipped 2026-06-30 — see docs/plans/2026-06-30-value-slice-pricing.md.
  */
-export function canVerifyExternalProofs(plan: string | null | undefined): boolean {
-  // Signed-in Explorer and above can verify. Public/no-auth verification
-  // lands in Phase 3.
-  return plan !== null && plan !== undefined;
+export function canVerifyExternalProofs(_plan: string | null | undefined): boolean {
+  return true;
 }
 
 /**
