@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import AppShell from "@/components/AppShell";
 
@@ -118,6 +119,58 @@ function ChainStatusIndicator({ status, txHash }: { status: string; txHash: stri
         </div>
       );
   }
+}
+
+// ---------------------------------------------------------------------------
+// Signup CTA — value-slice Phase 3 (2026-06-30)
+//
+// Every public verification is a conversion opportunity. Someone arrives at
+// this page because a Verisum customer sent them a signed proof — they've
+// already experienced the value. Turn the moment into a signup funnel.
+//
+// Two variants:
+// - "verified": strong moment (they just saw proof work) — offer the free
+//   assessment
+// - "not-found": softer (their verification failed) — invite them to learn
+//   how Verisum works
+// ---------------------------------------------------------------------------
+
+function SignupCTA({ variant }: { variant: "verified" | "not-found" }) {
+  if (variant === "verified") {
+    return (
+      <div className="mt-8 border border-border rounded-xl bg-brand/5 px-6 py-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        <div className="flex-1 space-y-1">
+          <p className="text-sm font-semibold">Prove your own AI governance</p>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            You just verified a Verisum governance record. See how your organisation stacks up with a free self-assessment — no signup required to start.
+          </p>
+        </div>
+        <Link
+          href="/try"
+          className="shrink-0 text-sm font-medium px-4 py-2 rounded-lg bg-brand text-white hover:bg-brand/90 transition-colors whitespace-nowrap"
+        >
+          Try Verisum free →
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-8 border border-border rounded-xl bg-muted/30 px-6 py-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+      <div className="flex-1 space-y-1">
+        <p className="text-sm font-semibold">New to Verisum?</p>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          Verisum helps organisations govern, monitor, and cryptographically prove their AI decisions. Take a free self-assessment to see how yours measures up.
+        </p>
+      </div>
+      <Link
+        href="/try"
+        className="shrink-0 text-sm font-medium px-4 py-2 rounded-lg bg-brand text-white hover:bg-brand/90 transition-colors whitespace-nowrap"
+      >
+        Try Verisum free →
+      </Link>
+    </div>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -349,6 +402,9 @@ export default function PublicVerifyPage() {
             </div>
           </div>
 
+          {/* Signup CTA — value-slice viral hook */}
+          <SignupCTA variant="verified" />
+
           {/* Footer */}
           <div className="text-center mt-12">
             <p className="text-xs text-muted-foreground">
@@ -398,6 +454,9 @@ export default function PublicVerifyPage() {
             </p>
           </div>
         </div>
+
+        {/* Signup CTA — value-slice viral hook */}
+        <SignupCTA variant="not-found" />
 
         {/* Footer */}
         <div className="text-center mt-12">
