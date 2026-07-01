@@ -37,7 +37,7 @@ const tiers: PlanTier[] = [
     tierTagline: "Governance Intelligence Foundation",
     price: "Free to try",
     period: "",
-    yearlyNote: "then \u00a379/month or \u00a3711/year",
+    yearlyNote: "then \u00a3129/month or \u00a31,238/year (save \u00a3310)",
     description:
       "Get your AI governance sorted in 30 minutes. Start with a free self-assessment, then unlock the full governance suite.",
     sectionLabel: "Govern",
@@ -62,9 +62,9 @@ const tiers: PlanTier[] = [
     slug: "pro",
     tier: "Assure",
     tierTagline: "Continuous Alignment & Runtime Governance",
-    price: "\u00a3199",
+    price: "\u00a3499",
     period: "/month",
-    yearlyNote: "or \u00a31,788/year (save \u00a3600)",
+    yearlyNote: "or \u00a34,790/year (save \u00a31,198)",
     description:
       "Full AI governance suite with continuous monitoring, escalation workflows, and board-ready reports.",
     sectionLabel: "Govern + Monitor",
