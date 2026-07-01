@@ -146,12 +146,18 @@ export default function MFAEnroll({ onComplete, onCancel, intro }: MFAEnrollProp
         </p>
       )}
 
-      {/* QR code */}
+      {/* QR code — Supabase returns totp.qr_code as a data URL
+          ("data:image/svg+xml;utf-8,<svg>..."), which needs an <img> tag,
+          not dangerouslySetInnerHTML (that would render the prefix as text). */}
       <div className="flex flex-col items-center gap-3">
-        <div
-          className="w-48 h-48 border border-border rounded-lg p-2 bg-white"
-          dangerouslySetInnerHTML={{ __html: qrSvg }}
-        />
+        <div className="w-48 h-48 border border-border rounded-lg p-2 bg-white flex items-center justify-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={qrSvg}
+            alt="Scan this QR code with your authenticator app"
+            className="w-full h-full"
+          />
+        </div>
         <details className="text-xs text-muted-foreground">
           <summary className="cursor-pointer hover:text-foreground">Can&apos;t scan? Enter this key manually.</summary>
           <code className="block mt-2 px-3 py-2 bg-muted/50 rounded font-mono text-[11px] break-all select-all">
