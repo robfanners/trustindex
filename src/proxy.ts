@@ -93,6 +93,61 @@ export async function proxy(request: NextRequest) {
   const isStaticFile =
     pathname.match(/\.(js|css|png|jpg|jpeg|svg|gif|ico|webp|woff|woff2|ttf|eot)$/);
 
+  // --- 2FA enforcement (task #36) ---
+  //
+  // Two cases handled here, both using JWT-based assurance levels
+  // (getAuthenticatorAssuranceLevel — no DB round-trip):
+  //
+  // Case 1: Session at aal1 but user has MFA enrolled (nextLevel === "aal2")
+  //         → redirect to login to complete the MFA challenge. This catches
+  //         sessions that started before MFA was enrolled and pages loaded
+  //         mid-challenge.
+  //
+  // Case 2: No MFA enrolled AND user signed up on/after
+  //         MFA_ENFORCE_NEW_SIGNUPS_FROM (env var) → redirect to
+  //         /auth/setup-mfa. Existing users pre-enforcement bypass this
+  //         and can opt in via Settings → Security.
+  //
+  // If MFA_ENFORCE_NEW_SIGNUPS_FROM is unset, Case 2 is off entirely.
+  const enforceFrom = process.env.MFA_ENFORCE_NEW_SIGNUPS_FROM;
+  if (
+    user &&
+    !pathname.startsWith("/auth/") &&
+    !isPublicPath &&
+    !isStaticFile
+  ) {
+    const { data: aal } =
+      await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+
+    // Case 1: MFA enrolled, current session hasn't completed challenge
+    if (aal && aal.nextLevel === "aal2" && aal.currentLevel === "aal1") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/auth/login";
+      url.searchParams.set("next", `${pathname}${search || ""}`);
+      return NextResponse.redirect(url);
+    }
+
+    // Case 2: No MFA enrolled + enforcement window active
+    if (
+      aal &&
+      aal.nextLevel === "aal1" &&
+      enforceFrom &&
+      user.created_at
+    ) {
+      const createdAt = new Date(user.created_at);
+      const enforceDate = new Date(enforceFrom);
+      if (
+        !isNaN(enforceDate.getTime()) &&
+        createdAt >= enforceDate
+      ) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/auth/setup-mfa";
+        url.searchParams.set("next", `${pathname}${search || ""}`);
+        return NextResponse.redirect(url);
+      }
+    }
+  }
+
   if (!isPublicPath && !isStaticFile && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
