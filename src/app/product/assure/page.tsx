@@ -27,9 +27,9 @@ export default function ProductAssurePage() {
             Know when your governance posture drifts — before regulators do.
           </p>
           <div className="mt-6">
-            <span className="text-3xl font-bold">£199</span>
+            <span className="text-3xl font-bold">£499</span>
             <span className="text-muted-foreground text-sm">/month</span>
-            <span className="text-muted-foreground text-xs ml-2">or £1,788/year (save £600)</span>
+            <span className="text-muted-foreground text-xs ml-2">or £4,790/year (save £1,198)</span>
           </div>
         </div>
       </section>

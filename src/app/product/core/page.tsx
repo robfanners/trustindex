@@ -24,7 +24,7 @@ export default function ProductCorePage() {
           </p>
           <div className="mt-6">
             <span className="text-3xl font-bold">Free to try</span>
-            <span className="text-muted-foreground text-sm ml-2">then £79/month</span>
+            <span className="text-muted-foreground text-sm ml-2">then £129/month</span>
           </div>
         </div>
       </section>

@@ -121,14 +121,14 @@ export default function VCCDashboardPage() {
             label="Core"
             value={metrics.planCounts.starter}
             accent="blue"
-            sub="£79/mo"
+            sub="£129/mo"
             href="/verisum-admin/organisations?plan=starter"
           />
           <MetricCard
             label="Assure"
             value={metrics.planCounts.pro}
             accent="blue"
-            sub="£199/mo"
+            sub="£499/mo"
             href="/verisum-admin/organisations?plan=pro"
           />
           <MetricCard
