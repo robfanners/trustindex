@@ -95,6 +95,22 @@ describe("navSections", () => {
     expect(monitor!.minTier).toBe("pro");
   });
 
+  it('Drift & Alerts has value-slice item-level minTier "starter" (Phase 2 — Basic Drift on Core)', () => {
+    const monitor = navSections.find((s) => s.id === "monitor");
+    const drift = monitor!.items.find((i) => i.href === "/monitor/drift");
+    expect(drift).toBeDefined();
+    expect(drift!.minTier).toBe("starter");
+  });
+
+  it("other Monitor items still fall back to section-level pro gate (no item override)", () => {
+    const monitor = navSections.find((s) => s.id === "monitor");
+    const nonDriftItems = monitor!.items.filter((i) => i.href !== "/monitor/drift");
+    for (const item of nonDriftItems) {
+      // No per-item minTier set — falls through to section.minTier ("pro")
+      expect(item.minTier).toBeUndefined();
+    }
+  });
+
   it("all items have required fields (label, href, icon, exists)", () => {
     for (const section of navSections) {
       for (const item of section.items) {

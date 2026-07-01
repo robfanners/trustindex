@@ -8,6 +8,8 @@ import EmptyState from "@/components/ui/EmptyState";
 import DetailPanel from "@/components/ui/DetailPanel";
 import OnboardingTour from "@/components/ui/OnboardingTour";
 import { getCapabilityIcon } from "@/lib/capabilityIcons";
+import { useAuth } from "@/context/AuthContext";
+import { getMaxDriftSystems } from "@/lib/entitlements";
 
 // TG-52 — page header icon sourced from the canonical capability registry.
 const DriftIcon = getCapabilityIcon("drift-alerts");
@@ -54,6 +56,7 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 export default function DriftPage() {
+  const { profile } = useAuth();
   const [events, setEvents] = useState<DriftEvent[]>([]);
   const [total, setTotal] = useState(0);
   const [reassessment, setReassessment] = useState<ReassessmentItem[]>([]);
@@ -65,6 +68,12 @@ export default function DriftPage() {
   const [page, setPage] = useState(1);
   const perPage = 20;
   const [selectedItem, setSelectedItem] = useState<DriftEvent | null>(null);
+
+  // Value-slice Phase 2: Core users see a Basic Drift banner explaining
+  // what they have and what upgrading to Assure unlocks. Assure+ users
+  // see no banner.
+  const maxSystems = getMaxDriftSystems(profile?.plan);
+  const isBasicDrift = profile?.plan === "starter";
 
   const fetchDrift = useCallback(async () => {
     setLoading(true);
@@ -100,7 +109,7 @@ export default function DriftPage() {
   const nextDue = reassessment.find((r) => r.next_due && r.status !== "overdue");
 
   return (
-    <TierGate requiredTier="Assure" featureLabel="Drift & Alerts">
+    <TierGate requiredTier="Core" featureLabel="Drift & Alerts">
       <div className="space-y-6">
         {/* Header */}
         <div data-tour="page-header">
@@ -114,6 +123,29 @@ export default function DriftPage() {
             ]}
           />
         </div>
+
+        {/* Basic Drift banner — Core users only */}
+        {isBasicDrift && (
+          <div className="border border-brand/20 bg-brand/5 rounded-lg p-4 flex items-start gap-3">
+            <div className="shrink-0 p-1.5 rounded-full bg-brand/10 text-brand mt-0.5">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="flex-1 space-y-1">
+              <p className="text-sm font-medium">Basic Drift — included with Core</p>
+              <p className="text-xs text-muted-foreground">
+                You&apos;re monitoring drift on up to <span className="font-medium text-foreground">{maxSystems} AI systems</span>. Upgrade to Assure to add escalation workflows, unlimited incidents, runtime signals, and drift across 6 systems.
+              </p>
+            </div>
+            <Link
+              href="/upgrade?tier=Assure"
+              className="shrink-0 text-xs font-medium px-3 py-1.5 rounded-lg bg-brand text-white hover:bg-brand/90 transition-colors whitespace-nowrap"
+            >
+              See Assure
+            </Link>
+          </div>
+        )}
 
         {/* Error */}
         {error && (

@@ -308,14 +308,13 @@ describe("getReportLevel", () => {
 // See docs/plans/2026-06-30-value-slice-pricing.md
 // ---------------------------------------------------------------------------
 
-describe("canAccessBasicDrift (value-slice)", () => {
+describe("canAccessBasicDrift (value-slice Phase 2)", () => {
   it("returns false for explorer", () => {
     expect(canAccessBasicDrift("explorer")).toBe(false);
   });
 
-  it("returns false for starter until Phase 2 ships Basic Drift", () => {
-    // ROADMAP: flip to true once feat/basic-drift-on-core lands.
-    expect(canAccessBasicDrift("starter")).toBe(false);
+  it("returns true for starter (Core gets Basic Drift, Phase 2 live)", () => {
+    expect(canAccessBasicDrift("starter")).toBe(true);
   });
 
   it("returns true for pro", () => {
@@ -327,17 +326,16 @@ describe("canAccessBasicDrift (value-slice)", () => {
   });
 });
 
-describe("getMaxDriftSystems (value-slice)", () => {
+describe("getMaxDriftSystems (value-slice Phase 2)", () => {
   it("returns 0 for explorer", () => {
     expect(getMaxDriftSystems("explorer")).toBe(0);
   });
 
-  it("returns 0 for starter until Phase 2 (target: 2)", () => {
-    // ROADMAP: bump to 2 once Basic Drift ships for Core.
-    expect(getMaxDriftSystems("starter")).toBe(0);
+  it("returns 2 for starter (Core = Basic Drift on 2 systems)", () => {
+    expect(getMaxDriftSystems("starter")).toBe(2);
   });
 
-  it("returns 6 for pro", () => {
+  it("returns 6 for pro (Assure = Full Drift on 6 systems)", () => {
     expect(getMaxDriftSystems("pro")).toBe(6);
   });
 
