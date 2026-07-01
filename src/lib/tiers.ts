@@ -10,21 +10,22 @@ export type TierInfo = {
   plans: PlanName[];
 };
 
-// TODO(value-slice): Update highlights per tier as the features actually
-// ship. See docs/plans/2026-06-30-value-slice-pricing.md for the target
-// copy. Do NOT pre-announce features that aren't built yet — the modal
-// shouldn't lie about what upgrading actually delivers.
+// TODO(value-slice): Continue updating highlights per tier as features
+// ship. Current state as of Phase 2 (2026-06-30) — Basic Drift on Core is
+// live. Phase 3 will add Verification for Explorer. Phase 4 will add non-
+// chain Ledger + Incident Lock for Core. See docs/plans/2026-06-30-value-
+// slice-pricing.md.
 export const TIERS: Record<VersiumTier, TierInfo> = {
   Core: {
     name: "Core",
     tagline: "Governance Intelligence Foundation",
     highlights: [
-      "TrustOrg & TrustSys assessments",
+      "TrustOrg & TrustSys assessments (2 systems)",
       "Governance health scoring",
       "AI system registry & vendor register",
       "Gap prioritisation & actions",
-      "Board-ready reports",
       "AI Copilot (policy generation)",
+      "Basic Drift monitoring (own 2 systems)",
     ],
     plans: ["explorer", "starter"],
   },
@@ -33,10 +34,11 @@ export const TIERS: Record<VersiumTier, TierInfo> = {
     tagline: "Continuous Alignment & Runtime Governance",
     highlights: [
       "Everything in Core, plus:",
-      "Drift detection & alerts",
+      "Full Drift across 6 systems",
       "Escalation workflows",
-      "Runtime monitoring",
+      "Runtime Signals monitoring",
       "Incident capture & declarations",
+      "Team management (5 users)",
       "Advanced reporting & audit timeline",
     ],
     plans: ["pro"],

@@ -12,7 +12,11 @@ export async function GET(req: NextRequest) {
     const auth = await requireAuth();
     if (auth.error) return auth.error;
 
-    const tierCheck = checkTierAccess(auth.plan, "Assure");
+    // Value-slice Phase 2 (2026-06-30): Basic Drift ships to Core.
+    // Same endpoint serves both Core (Basic) and Assure+ (Full) — the
+    // underlying data is filtered by org, and Core users only have
+    // access to 2 systems anyway (see getMaxDriftSystems).
+    const tierCheck = checkTierAccess(auth.plan, "Core");
     if (tierCheck) return tierCheck;
 
     const orgId = auth.orgId;

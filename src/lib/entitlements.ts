@@ -230,24 +230,24 @@ export function canManageIBG(plan: string | null | undefined): boolean {
 // ---------------------------------------------------------------------------
 
 /**
- * Can the user access Basic Drift monitoring on their own AI systems?
- *
- * VALUE-SLICE ROADMAP: This will move to `starter+` once Phase 2 ships the
- * basic drift feature (read-only alerts on 2 systems, no escalation). Until
- * then it mirrors the current gate.
+ * Can the user access Drift monitoring on their own AI systems?
+ * Value-slice Phase 2 (2026-06-30): Core+ gets Basic Drift (2 systems,
+ * read-only alerts, no escalation, no signals). Assure+ gets Full Drift.
  */
 export function canAccessBasicDrift(plan: string | null | undefined): boolean {
   const p = plan ?? "explorer";
-  return p === "pro" || p === "enterprise";
+  return p === "starter" || p === "pro" || p === "enterprise";
 }
 
-/** Maximum number of AI systems the user can enable drift monitoring on. */
+/**
+ * Maximum number of AI systems the user can enable drift monitoring on.
+ * Core = 2 (Basic Drift), Assure = 6 (Full Drift), Verify = unlimited.
+ */
 export function getMaxDriftSystems(plan: string | null | undefined): number {
   const p = (plan ?? "explorer") as PlanName;
-  // Value-slice roadmap target: Core = 2, Assure = 6, Verify = Infinity.
-  // Current gate mirrors old behaviour (Pro+ only) until Phase 2.
   if (p === "enterprise") return Infinity;
   if (p === "pro") return 6;
+  if (p === "starter") return 2;
   return 0;
 }
 

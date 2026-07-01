@@ -123,7 +123,16 @@ export const navSections: NavSection[] = [
     tierBadge: "Assure",
     href: "/monitor",
     items: [
-      { label: "Drift & Alerts", href: "/monitor/drift", icon: "drift-alerts", exists: true },
+      // Value-slice Phase 2: Basic Drift ships to Core (2 systems, read-only).
+      // Per-item override — despite section requiring Pro (Assure), this
+      // specific item is accessible from Starter (Core) upwards.
+      {
+        label: "Drift & Alerts",
+        href: "/monitor/drift",
+        icon: "drift-alerts",
+        exists: true,
+        minTier: "starter",
+      },
       { label: "Escalations", href: "/monitor/escalations", icon: "escalations", exists: true },
       { label: "Incidents", href: "/monitor/incidents", icon: "incidents", exists: true },
       { label: "Declarations", href: "/monitor/declarations", icon: "declarations", exists: true },
