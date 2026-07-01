@@ -6,6 +6,14 @@ import { useAuth } from "@/context/AuthContext";
 import { getClientOrigin, safeRedirectPath } from "@/lib/url";
 import AppShell from "@/components/AppShell";
 
+// MFA (2FA) step state — shown after primary auth succeeds when the user
+// has an enrolled TOTP factor. Guards proceed by challenging + verifying
+// against Supabase's MFA API. Session upgrades from aal1 → aal2 on success.
+type MfaChallenge = {
+  factorId: string;
+  challengeId: string;
+};
+
 export default function LoginPage() {
   const { user, loading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
@@ -16,6 +24,8 @@ export default function LoginPage() {
   const [otp, setOtp] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [password, setPassword] = useState("");
+  const [mfa, setMfa] = useState<MfaChallenge | null>(null);
+  const [mfaCode, setMfaCode] = useState("");
 
   const supabase = createSupabaseBrowserClient();
 
@@ -35,6 +45,51 @@ export default function LoginPage() {
 
   const siteUrl = getClientOrigin();
 
+  /**
+   * After a primary auth method succeeds (password or OTP), check whether
+   * the user has an MFA factor. If they do, initiate a TOTP challenge and
+   * show the code entry form instead of proceeding to `next`.
+   * Returns true when MFA is required (caller should NOT redirect).
+   */
+  async function requireMfaIfEnrolled(): Promise<boolean> {
+    const { data: aal, error: aalErr } =
+      await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aalErr || !aal) return false;
+    if (aal.nextLevel !== "aal2" || aal.currentLevel === "aal2") return false;
+
+    // User has an MFA factor and hasn't yet completed the challenge.
+    const { data: factors, error: fErr } = await supabase.auth.mfa.listFactors();
+    if (fErr) return false;
+    const totp = factors?.totp?.find((f) => f.status === "verified");
+    if (!totp) return false;
+
+    const { data: challenge, error: cErr } = await supabase.auth.mfa.challenge({
+      factorId: totp.id,
+    });
+    if (cErr || !challenge) return false;
+    setMfa({ factorId: totp.id, challengeId: challenge.id });
+    return true;
+  }
+
+  async function handleMfaSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!mfa) return;
+    setError(null);
+    setLoading(true);
+    const { error: verifyErr } = await supabase.auth.mfa.verify({
+      factorId: mfa.factorId,
+      challengeId: mfa.challengeId,
+      code: mfaCode,
+    });
+    setLoading(false);
+    if (verifyErr) {
+      setError("Incorrect code. Check your authenticator app and try again.");
+      setMfaCode("");
+      return;
+    }
+    window.location.href = next;
+  }
+
   async function handleVerifyOtp(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -46,13 +101,15 @@ export default function LoginPage() {
       type: "magiclink",
     });
 
-    setLoading(false);
-
     if (otpError) {
+      setLoading(false);
       setError("Invalid or expired code. Please request a new magic link and try again.");
-    } else {
-      window.location.href = next;
+      return;
     }
+
+    const needsMfa = await requireMfaIfEnrolled();
+    setLoading(false);
+    if (!needsMfa) window.location.href = next;
   }
 
   async function handlePasswordLogin(e: React.FormEvent) {
@@ -65,13 +122,15 @@ export default function LoginPage() {
       password,
     });
 
-    setLoading(false);
-
     if (authError) {
+      setLoading(false);
       setError("Invalid email or password.");
-    } else {
-      window.location.href = next;
+      return;
     }
+
+    const needsMfa = await requireMfaIfEnrolled();
+    setLoading(false);
+    if (!needsMfa) window.location.href = next;
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -115,7 +174,63 @@ export default function LoginPage() {
             needed — works for new and existing accounts.
           </p>
 
-          {sent ? (
+          {mfa ? (
+            <form onSubmit={handleMfaSubmit} className="space-y-4">
+              <div className="bg-brand/10 border border-brand/30 rounded-lg p-4 text-sm text-center">
+                Enter the 6-digit code from your authenticator app
+              </div>
+              <div>
+                <label
+                  htmlFor="mfa-code"
+                  className="block text-sm font-medium text-foreground mb-1"
+                >
+                  Authentication code
+                </label>
+                <input
+                  id="mfa-code"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  autoFocus
+                  required
+                  maxLength={6}
+                  value={mfaCode}
+                  onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ""))}
+                  placeholder="000000"
+                  className="w-full px-3 py-2 border border-border rounded-lg text-sm text-center tracking-[0.3em] font-mono
+                    focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent
+                    placeholder:text-muted-foreground/60"
+                />
+              </div>
+
+              {error && (
+                <p className="text-sm text-destructive">{error}</p>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading || mfaCode.length !== 6}
+                className="w-full py-2.5 px-5 bg-brand text-white font-semibold rounded-full
+                  shadow-lg shadow-brand/20 hover:bg-brand-hover hover:-translate-y-0.5 hover:shadow-brand/30
+                  transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              >
+                {loading ? "Verifying..." : "Verify and sign in"}
+              </button>
+
+              <button
+                type="button"
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  setMfa(null);
+                  setMfaCode("");
+                  setError(null);
+                }}
+                className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                ← Cancel and sign in as someone else
+              </button>
+            </form>
+          ) : sent ? (
             <div className="space-y-4">
               <div className="bg-brand/10 border border-brand/30 rounded-lg p-6 text-center">
                 <p className="text-foreground font-medium mb-1">
